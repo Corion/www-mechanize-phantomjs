@@ -2,6 +2,7 @@ package WWW::Mechanize::WebDriver;
 use strict;
 
 use Selenium::Remote::Driver;
+use WWW::Mechanize::Plugin::Selector;
 
 sub new {
     my ($class, %options) = @_;
