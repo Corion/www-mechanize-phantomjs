@@ -8,6 +8,8 @@ sub new {
     
     $options{ port } ||= 4446;
     
+    # XXX Need autodie
+    
     # Launch PhantomJs
     $options{ launch_exe } ||= 'phantomjs';
     $options{ launch_arg } ||= [ "--webdriver=$options{ port }", "--webdriver-loglevel=ERROR",];
@@ -36,6 +38,7 @@ sub DESTROY {
 sub get {
     my ($self, $url) = @_;
     $self->driver->get( $url );
+    # XXX Need to return a HTTP::Response
 };
 
 sub decoded_content {
