@@ -1,0 +1,12 @@
+Makefile
+Makefile.old
+*.tar.gz
+*.bak
+pm_to_blib
+blib/
+WWW-Mechanize-WebDriver-*
+WWW-Mechanize-WebDriver-*/
+phantomjs-versions/
+.releaserc
+cover_db
+MYMETA.*
