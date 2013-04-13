@@ -71,10 +71,31 @@ This method is implemented via L<WWW::Mechanize::Plugin::Selector>.
 
 sub xpath {
     my( $self, $query, %options) = @_;
+    
+    if ('ARRAY' ne (ref $query||'')) {
+        $query = [$query];
+    };
+
+    # XXX I fear we can only search within The One Document, and not
+    #     conveniently within IFRAMEs etc.
+    if ($options{ node }) {
+        $options{ document } ||= $options{ node }->{ownerDocument};
+    } else {
+        $options{ document } ||= $self->document;
+    };
 
     # XXX Determine if we want only one element
     #     or a list, like WWW::Mechanize::Firefox
-    $_[0]->driver->find_elements($query);
+
+    # Now find the elements
+    my @elements;
+    if( $options{ node }) {
+        @elements= map { $self->driver->find_child_elements( $options{ node }, $_ => 'xpath' ) } @$query;
+    } else {
+        @elements= map { $self->driver->find_elements( $_ => 'xpath' ) } @$query;
+    };
+
+    @elements
 }
 
 1;
