@@ -35,8 +35,37 @@ sub DESTROY {
     kill 9 => $_[0]->{ pid }
 }
 
+=head1 NAVIGATION METHODS
+
+=head2 C<< $mech->get( $url, %options ) >>
+
+  $mech->get( $url, ':content_file' => $tempfile );
+
+Retrieves the URL C<URL>.
+
+It returns a faked L<HTTP::Response> object for interface compatibility
+with L<WWW::Mechanize>. It seems that Selenium and thus L<Selenium::Remote::Driver>
+have no concept of HTTP status code and thus no way of returning the
+HTTP status code.
+
+Recognized options:
+
+=over 4
+
+=item *
+
+C<< :content_file >> - filename to store the data in
+
+=item *
+
+C<< no_cache >> - if true, bypass the browser cache
+
+=back
+
+=cut
+
 sub get {
-    my ($self, $url) = @_;
+    my ($self, $url, %options ) = @_;
     $self->driver->get( $url );
     # XXX Need to return a HTTP::Response
 };
