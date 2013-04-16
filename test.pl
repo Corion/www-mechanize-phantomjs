@@ -6,6 +6,8 @@ use WWW::Mechanize::WebDriver;
 
 my $mech= WWW::Mechanize::WebDriver->new(
     launch_exe => 'phantomjs-versions\phantomjs-1.9.0-windows\phantomjs',
+    launch_arg => ['ghostdriver\src\main.js' ],
+    port => 8910,
 );
 my $res= $mech->get('http://google.de');
 print Dumper $res;

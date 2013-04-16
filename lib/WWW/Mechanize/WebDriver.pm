@@ -12,7 +12,8 @@ sub new {
     
     # Launch PhantomJs
     $options{ launch_exe } ||= 'phantomjs';
-    $options{ launch_arg } ||= [ "--webdriver=$options{ port }", "--webdriver-loglevel=ERROR",];
+    $options{ launch_arg } ||= [ "--webdriver=$options{ port }", #"--webdriver-loglevel=ERROR",
+                               ];
     my $cmd= "| $options{ launch_exe } @{ $options{ launch_arg } }";
     $options{ pid } ||= open my $fh, $cmd
         or die "Couldn't launch [$cmd]: $! / $?";
