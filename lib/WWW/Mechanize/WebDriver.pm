@@ -2,6 +2,8 @@ package WWW::Mechanize::WebDriver;
 use strict;
 use Selenium::Remote::Driver;
 use WWW::Mechanize::Plugin::Selector;
+use HTTP::Response;
+use HTTP::Headers;
 
 sub new {
     my ($class, %options) = @_;
@@ -65,10 +67,23 @@ C<< no_cache >> - if true, bypass the browser cache
 
 =cut
 
+sub update_response {
+    my( $self, $phantom_res ) = @_;
+
+    my @headers= map {;%$_} @{ $phantom_res->{headers} };
+    my $res= HTTP::Response->new( $phantom_res->{status}, $phantom_res->{statusText}, \@headers );
+
+    # XXX should we fetch the response body?!
+
+    $self->{response} = $res
+};
+
 sub get {
     my ($self, $url, %options ) = @_;
-    $self->driver->get( $url );
-    # XXX Need to return a HTTP::Response
+    # We need to stringify $url so it can pass through JSON
+    my $phantom_res= $self->driver->get( "$url" );
+
+    $self->update_response( $phantom_res );
 };
 
 sub decoded_content {
@@ -82,6 +97,27 @@ sub content {
 sub title {
     $_[0]->driver->get_title;
 };
+
+sub response { $_[0]->{response} };
+*res = \&response;
+
+=head2 C<< $mech->success() >>
+
+    $mech->get('http://google.com');
+    print "Yay"
+        if $mech->success();
+
+Returns a boolean telling whether the last request was successful.
+If there hasn't been an operation yet, returns false.
+
+This is a convenience function that wraps C<< $mech->res->is_success >>.
+
+=cut
+
+sub success {
+    my $res = $_[0]->response( headers => 0 );
+    $res and $res->is_success
+}
 
 =head2 C<< $mech->selector( $css_selector, %options ) >>
 
