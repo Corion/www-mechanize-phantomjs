@@ -5,6 +5,15 @@ use WWW::Mechanize::Plugin::Selector;
 use HTTP::Response;
 use HTTP::Headers;
 
+use vars qw($VERSION);
+$VERSION= '0.01';
+
+=head1 NAME
+
+WWW::Mechanize::WebDriver - automate a Selenium webdriver capable browser
+
+=cut
+
 sub new {
     my ($class, %options) = @_;
     
