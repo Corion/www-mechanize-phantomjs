@@ -44,6 +44,9 @@ sub driver {
 };
 
 sub DESTROY {
+    if( my $dr= delete ${ $_[0]}{ driver }) {
+        $dr->quit;
+    };
     kill 9 => $_[0]->{ pid }
 }
 
