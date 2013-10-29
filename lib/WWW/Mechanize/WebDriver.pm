@@ -98,6 +98,10 @@ sub get {
     $self->update_response( $phantom_res );
 };
 
+# If things get nasty, we could fall back to PhantomJS.webpage.plainText
+# var page = require('webpage').create();
+# page.open('http://somejsonpage.com', function () {
+#     var jsonSource = page.plainText;
 sub decoded_content {
     $_[0]->driver->get_page_source
 };
