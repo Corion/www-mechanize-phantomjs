@@ -17,7 +17,7 @@ if (my $err = t::helper::default_unavailable) {
 my $mech=
     WWW::Mechanize::WebDriver->new(
         autodie => 0,
-        launch_exe => 'phantomjs-versions\phantomjs-1.9.0-windows\phantomjs',
+        launch_exe => 'phantomjs-versions\phantomjs-1.9.2-windows\phantomjs',
         launch_arg => ['ghostdriver\src\main.js' ],
         port => 8910, # XXX
         #log => [qw[debug]],
