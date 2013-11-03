@@ -6,6 +6,7 @@ use HTTP::Response;
 use HTTP::Headers;
 use Scalar::Util qw( blessed );
 use File::Basename;
+use Carp qw(croak);
 
 use vars qw($VERSION);
 $VERSION= '0.01';
@@ -44,6 +45,74 @@ sub new {
 sub driver {
     $_[0]->{driver}
 };
+
+sub autodie {
+    warn "->autodie() is currently a dummy.";
+}
+
+sub allow {
+    warn "->allow() is currently a dummy.";
+}
+
+=head2 C<< $mech->eval_in_page( $str [, $env [, $document]] ) >>
+
+=head2 C<< $mech->eval( $str [, $env [, $document]] ) >>
+
+  my ($value, $type) = $mech->eval( '2+2' );
+
+Evaluates the given Javascript fragment in the
+context of the web page.
+Returns a pair of value and Javascript type.
+
+This allows access to variables and functions declared
+"globally" on the web page.
+
+The returned result needs to be treated with
+extreme care because
+it might lead to Javascript execution in the context of
+your application instead of the context of the webpage.
+This should be evident for functions and complex data
+structures like objects. When working with results from
+untrusted sources, you can only safely use simple
+types like C<string>.
+
+If you want to modify the environment the code is run under,
+pass in a hash reference as the second parameter. All keys
+will be inserted into the C<this> object as well as
+C<this.window>. Also, complex data structures are only
+supported if they contain no objects.
+If you need finer control, you'll have to
+write the Javascript yourself.
+
+This method is special to WWW::Mechanize::Firefox.
+
+Also, using this method opens a potential B<security risk> as
+the returned values can be objects and using these objects
+can execute malicious code in the context of the Firefox application.
+
+=cut
+
+sub eval_in_page {
+    my ($self,$str) = @_;
+    #$env ||= {};
+    #my $js_env = {};
+    #$doc ||= $self->document;
+
+#    my $eval_in_sandbox = $self->driver->execute_async_script(<<'JS');
+#        var args= Array.prototype.slice(arguments);
+#        var cb= args.pop();
+#        cb( eval( args ));
+#JS
+    my $eval_in_sandbox = $self->driver->execute_script("return $str");
+    # Report errors from scope of caller
+    # This feels weirdly backwards here, but oh well:
+    #local @CARP_NOT = (ref $self->repl); # we trust this
+
+    #my ($caller,$line) = (caller)[1,2];
+
+    #$eval_in_sandbox->($window,$doc,$str,$js_env,$caller,$line);
+};
+*eval = \&eval_in_page;
 
 sub ua {
     # page.settings.userAgent = 'Mozilla/5.0 (Windows NT 5.1; rv:8.0) Gecko/20100101 Firefox/7.0';
@@ -231,6 +300,16 @@ sub title {
     $_[0]->driver->get_title;
 };
 
+# Call croak or carp, depending on the C< autodie > setting
+sub signal_condition {
+    my ($self,$msg) = @_;
+    if ($self->{autodie}) {
+        croak $msg
+    } else {
+        carp $msg
+    }
+};
+
 sub response { $_[0]->{response} };
 *res = \&response;
 
@@ -384,6 +463,35 @@ sub xpath {
 
 }
 
+=head2 C<< $mech->by_id( $id, %options ) >>
+
+  my @text = $mech->by_id('_foo:bar');
+
+Returns all nodes matching the given ids. If
+C<$id> is an array reference, it returns
+all nodes matched by any of the ids in the array.
+
+This method is equivalent to calling C<< ->xpath >> :
+
+    $self->xpath(qq{//*[\@id="$_"], %options)
+
+It is convenient when your element ids get mistaken for
+CSS selectors.
+
+=cut
+
+sub by_id {
+    my ($self,$query,%options) = @_;
+    if ('ARRAY' ne (ref $query||'')) {
+        $query = [$query];
+    };
+    $options{ user_info } ||= "id "
+                            . join(" or ", map {qq{'$_'}} @$query)
+                            . " found";
+    $query = [map { qq{.//*[\@id="$_"]} } @$query];
+    $self->xpath($query, %options)
+}
+
 =head2 C<< $mech->click( $name [,$x ,$y] ) >>
 
   $mech->click( 'go' );
@@ -506,6 +614,39 @@ sub click {
         return $self->response
     };
 }
+
+# Internal method to run either an XPath, CSS or id query against the DOM
+# Returns the element(s) found
+my %rename = (
+    xpath => 'xpath',
+    selector => 'selector',
+    id => 'by_id',
+    by_id => 'by_id',
+);
+
+sub _option_query {
+    my ($self,%options) = @_;
+    my ($method,$q);
+    for my $meth (keys %rename) {
+        if (exists $options{ $meth }) {
+            $q = delete $options{ $meth };
+            $method = $rename{ $meth } || $meth;
+        }
+    };
+    _default_limiter( 'one' => \%options );
+    croak "Need either a name, a selector or an xpath key!"
+        if not $method;
+    return $self->$method( $q, %options );
+};
+
+# Return the default limiter if no other limiting option is set:
+sub _default_limiter {
+    my ($default, $options) = @_;
+    if (! grep { exists $options->{ $_ } } qw(single one maybe all any)) {
+        $options->{ $default } = 1;
+    };
+    return ()
+};
 
 # Internal convenience method for dipatching a call either synchronized
 # or not

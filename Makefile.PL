@@ -24,6 +24,7 @@ WriteMakefile1(
     'LICENSE'       => 'perl',
     'VERSION_FROM'  => 'lib/WWW/Mechanize/WebDriver.pm', # finds $VERSION
     'PREREQ_PM'     => { 
+                        'Carp' => 0,
                         'Scalar::Util' => 0, # for blessed()
                         'HTTP::Response' => 0,
                         'Selenium::Remote::Driver' => 0,
