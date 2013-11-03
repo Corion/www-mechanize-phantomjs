@@ -1620,7 +1620,7 @@ sub submit {
         $dom_form->submit(); # why don't we ->synchronize here??
         $self->signal_http_status;
 
-        #$self->clear_current_form;
+        $self->clear_current_form;
         1;
     } else {
         croak "I don't know which form to submit, sorry.";
