@@ -1,16 +1,21 @@
 #!perl -w
 use strict;
-use WWW::Mechanize::Firefox;
 use Test::More;
+use WWW::Mechanize::WebDriver;
+use lib 'inc', '../inc';
+use Test::HTTP::LocalServer;
 
-my $mech = eval { WWW::Mechanize::Firefox->new( 
-    autodie => 0,
-    #log => [qw[debug]]
+my $mech = eval { WWW::Mechanize::WebDriver->new( 
+    autodie => 1,
+    launch_exe => 'phantomjs-versions\phantomjs-1.9.2-windows\phantomjs',
+    launch_arg => ['ghostdriver\src\main.js' ],
+    port => 8910, # XXX
+    #log => [qw[debug]],
+    #on_event => 1,
 )};
 
 if (! $mech) {
-    my $err = $@;
-    plan skip_all => "Couldn't connect to MozRepl: $@";
+    plan skip_all => "Couldn't connect to PhantomJS: $@";
     exit
 } else {
     plan tests => 13;
