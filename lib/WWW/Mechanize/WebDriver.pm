@@ -6,9 +6,10 @@ use HTTP::Response;
 use HTTP::Headers;
 use Scalar::Util qw( blessed );
 use File::Basename;
-use Carp qw(croak);
+use Carp qw(croak carp);
+use WWW::Mechanize::Link;
 
-use vars qw($VERSION);
+use vars qw($VERSION %link_spec);
 $VERSION= '0.01';
 
 =head1 NAME
@@ -250,6 +251,27 @@ sub content {
     $_[0]->driver->get_page_source
 };
 
+=head2 C<< $mech->base() >>
+
+  print $mech->base;
+
+Returns the URL base for the current page.
+
+The base is either specified through a C<base>
+tag or is the current URL.
+
+This method is specific to WWW::Mechanize::Firefox
+
+=cut
+
+sub base {
+    my ($self) = @_;
+    (my $base) = $self->selector('base');
+    $base = $base->{href}
+        if $base;
+    $base ||= $self->uri;
+};
+
 =head2 C<< $mech->content_type() >>
 
 =head2 C<< $mech->ct() >>
@@ -299,6 +321,72 @@ Returns the current document title.
 sub title {
     $_[0]->driver->get_title;
 };
+
+=head1 EXTRACTION METHODS
+
+=head2 C<< $mech->links() >>
+
+  print $_->text . " -> " . $_->url . "\n"
+      for $mech->links;
+
+Returns all links in the document as L<WWW::Mechanize::Link> objects.
+
+Currently accepts no parameters. See C<< ->xpath >>
+or C<< ->selector >> when you want more control.
+
+=cut
+
+%link_spec = (
+    a      => { url => 'href', },
+    area   => { url => 'href', },
+    frame  => { url => 'src', },
+    iframe => { url => 'src', },
+    link   => { url => 'href', },
+    meta   => { url => 'content', xpath => (join '',
+                    q{translate(@http-equiv,'ABCDEFGHIJKLMNOPQRSTUVWXYZ',},
+                    q{'abcdefghijklmnopqrstuvwxyz')="refresh"}), },
+);
+# taken from WWW::Mechanize. This should possibly just be reused there
+sub make_link {
+    my ($self,$node,$base) = @_;
+
+    my $tag = lc $node->get_tag_name;
+    my $url;
+    if ($tag) {
+        if( ! exists $link_spec{ $tag }) {
+            carp "Unknown link-spec tag '$tag'";
+            $url= '';
+        } else {
+            $url = $node->{ $link_spec{ $tag }->{url} };
+        };
+    };
+    
+    if ($tag eq 'meta') {
+        my $content = $url;
+        if ( $content =~ /^\d+\s*;\s*url\s*=\s*(\S+)/i ) {
+            $url = $1;
+            $url =~ s/^"(.+)"$/$1/ or $url =~ s/^'(.+)'$/$1/;
+        }
+        else {
+            undef $url;
+        }
+    };
+    
+    if (defined $url) {
+        my $res = WWW::Mechanize::Link->new({
+            tag   => $tag,
+            name  => $node->{name},
+            base  => $base,
+            url   => $url,
+            text  => $node->{innerHTML},
+            attrs => {},
+        });
+        
+        $res
+    } else {
+        ()
+    };
+}
 
 # Call croak or carp, depending on the C< autodie > setting
 sub signal_condition {
@@ -406,6 +494,397 @@ This method is implemented via L<WWW::Mechanize::Plugin::Selector>.
 =cut
 
 *selector = \&WWW::Mechanize::Plugin::Selector::selector;
+
+=head2 C<< $mech->find_link_dom( %options ) >>
+
+  print $_->{innerHTML} . "\n"
+      for $mech->find_link_dom( text_contains => 'CPAN' );
+
+A method to find links, like L<WWW::Mechanize>'s
+C<< ->find_links >> method. This method returns DOM objects from
+Firefox instead of WWW::Mechanize::Link objects.
+
+Note that Firefox
+might have reordered the links or frame links in the document
+so the absolute numbers passed via C<n>
+might not be the same between
+L<WWW::Mechanize> and L<WWW::Mechanize::Firefox>.
+
+Returns the DOM object as L<MozRepl::RemoteObject>::Instance.
+
+The supported options are:
+
+=over 4
+
+=item *
+
+C<< text >> and C<< text_contains >> and C<< text_regex >>
+
+Match the text of the link as a complete string, substring or regular expression.
+
+Matching as a complete string or substring is a bit faster, as it is
+done in the XPath engine of Firefox.
+
+=item *
+
+C<< id >> and C<< id_contains >> and C<< id_regex >>
+
+Matches the C<id> attribute of the link completely or as part
+
+=item *
+
+C<< name >> and C<< name_contains >> and C<< name_regex >>
+
+Matches the C<name> attribute of the link
+
+=item *
+
+C<< url >> and C<< url_regex >>
+
+Matches the URL attribute of the link (C<href>, C<src> or C<content>).
+
+=item *
+
+C<< class >> - the C<class> attribute of the link
+
+=item *
+
+C<< n >> - the (1-based) index. Defaults to returning the first link.
+
+=item *
+
+C<< single >> - If true, ensure that only one element is found. Otherwise croak
+or carp, depending on the C<autodie> parameter.
+
+=item *
+
+C<< one >> - If true, ensure that at least one element is found. Otherwise croak
+or carp, depending on the C<autodie> parameter.
+
+The method C<croak>s if no link is found. If the C<single> option is true,
+it also C<croak>s when more than one link is found.
+
+=back
+
+=cut
+
+use vars '%xpath_quote';
+%xpath_quote = (
+    '"' => '\"',
+    #"'" => "\\'",
+    #'[' => '&#91;',
+    #']' => '&#93;',
+    #'[' => '[\[]',
+    #'[' => '\[',
+    #']' => '[\]]',
+);
+
+sub quote_xpath($) {
+    local $_ = $_[0];
+    s/(['"\[\]])/$xpath_quote{$1} || $1/ge;
+    $_
+};
+
+sub find_link_dom {
+    my ($self,%opts) = @_;
+    my %xpath_options;
+    
+    for (qw(node document frames)) {
+        # Copy over XPath options that were passed in
+        if (exists $opts{ $_ }) {
+            $xpath_options{ $_ } = delete $opts{ $_ };
+        };
+    };
+    
+    my $single = delete $opts{ single };
+    my $one = delete $opts{ one } || $single;
+    if ($single and exists $opts{ n }) {
+        croak "It doesn't make sense to use 'single' and 'n' option together"
+    };
+    my $n = (delete $opts{ n } || 1);
+    $n--
+        if ($n ne 'all'); # 1-based indexing
+    my @spec;
+    
+    # Decode text and text_contains into XPath
+    for my $lvalue (qw( text id name class )) {
+        my %lefthand = (
+            text => 'text()',
+        );
+        my %match_op = (
+            '' => q{%s="%s"},
+            'contains' => q{contains(%s,"%s")},
+            # Ideally we would also handle *_regex here, but PhantomJS XPath
+            # does not support fn:matches() :-(
+            #'regex' => q{matches(%s,"%s","%s")},
+        );
+        my $lhs = $lefthand{ $lvalue } || '@'.$lvalue;
+        for my $op (keys %match_op) {
+            my $v = $match_op{ $op };
+            $op = '_'.$op if length($op);
+            my $key = "${lvalue}$op";
+
+            if (exists $opts{ $key }) {
+                my $p = delete $opts{ $key };
+                push @spec, sprintf $v, $lhs, $p;
+            };
+        };
+    };
+
+    if (my $p = delete $opts{ url }) {
+        push @spec, sprintf '@href = "%s" or @src="%s"', quote_xpath $p, quote_xpath $p;
+    }
+    my @tags = (sort keys %link_spec);
+    if (my $p = delete $opts{ tag }) {
+        @tags = $p;
+    };
+    if (my $p = delete $opts{ tag_regex }) {
+        @tags = grep /$p/, @tags;
+    };
+    my $q = join '|', 
+            map {
+                my $xp= exists $link_spec{ $_ } ? $link_spec{$_}->{xpath} : undef;
+                my @full = map {qq{($_)}} grep {defined} (@spec, $xp);
+                if (@full) {
+                    sprintf "//%s[%s]", $_, join " and ", @full;
+                } else {
+                    sprintf "//%s", $_
+                };
+            }  (@tags);
+    warn $q;
+    
+    my @res = $self->xpath($q, %xpath_options );
+    
+    if (keys %opts) {
+        # post-filter the remaining links through WWW::Mechanize
+        # for all the options we don't support with XPath
+        
+        my $base = $self->base;
+        require WWW::Mechanize;
+        @res = grep { 
+            WWW::Mechanize::_match_any_link_parms($self->make_link($_,$base),\%opts) 
+        } @res;
+    };
+    
+    if ($one) {
+        if (0 == @res) { $self->signal_condition( "No link found matching '$q'" )};
+        if ($single) {
+            if (1 <  @res) {
+                $self->highlight_node(@res);
+                $self->signal_condition(
+                    sprintf "%d elements found found matching '%s'", scalar @res, $q
+                );
+            };
+        };
+    };
+    
+    if ($n eq 'all') {
+        return @res
+    };
+    $res[$n]
+}
+
+=head2 C<< $mech->find_link( %options ) >>
+
+  print $_->text . "\n"
+      for $mech->find_link_dom( text_contains => 'CPAN' );
+
+A method quite similar to L<WWW::Mechanize>'s method.
+The options are documented in C<< ->find_link_dom >>.
+
+Returns a L<WWW::Mechanize::Link> object.
+
+This defaults to not look through child frames.
+
+=cut
+
+sub find_link {
+    my ($self,%opts) = @_;
+    my $base = $self->base;
+    croak "Option 'all' not available for ->find_link. Did you mean to call ->find_all_links()?"
+        if 'all' eq ($opts{n} || '');
+    if (my $link = $self->find_link_dom(frames => 0, %opts)) {
+        return $self->make_link($link, $base)
+    } else {
+        return
+    };
+};
+
+=head2 C<< $mech->find_all_links( %options ) >>
+
+  print $_->text . "\n"
+      for $mech->find_link_dom( text_regex => qr/google/i );
+
+Finds all links in the document.
+The options are documented in C<< ->find_link_dom >>.
+
+Returns them as list or an array reference, depending
+on context.
+
+This defaults to not look through child frames.
+
+=cut
+
+sub find_all_links {
+    my ($self, %opts) = @_;
+    $opts{ n } = 'all';
+    my $base = $self->base;
+    my @matches = map {
+        $self->make_link($_, $base);
+    } $self->find_all_links_dom( frames => 0, %opts );
+    return @matches if wantarray;
+    return \@matches;
+};
+
+=head2 C<< $mech->find_all_links_dom %options >>
+
+  print $_->{innerHTML} . "\n"
+      for $mech->find_link_dom( text_regex => qr/google/i );
+
+Finds all matching linky DOM nodes in the document.
+The options are documented in C<< ->find_link_dom >>.
+
+Returns them as list or an array reference, depending
+on context.
+
+This defaults to not look through child frames.
+
+=cut
+
+sub find_all_links_dom {
+    my ($self,%opts) = @_;
+    $opts{ n } = 'all';
+    my @matches = $self->find_link_dom( frames => 0, %opts );
+    return @matches if wantarray;
+    return \@matches;
+};
+
+=head2 C<< $mech->follow_link( $link ) >>
+
+=head2 C<< $mech->follow_link( %options ) >>
+
+  $mech->follow_link( xpath => '//a[text() = "Click here!"]' );
+
+Follows the given link. Takes the same parameters that C<find_link_dom>
+uses. In addition, C<synchronize> can be passed to (not) force
+waiting for a new page to be loaded.
+
+Note that C<< ->follow_link >> will only try to follow link-like
+things like C<A> tags.
+
+=cut
+
+sub follow_link {
+    my ($self,$link,%opts);
+    if (@_ == 2) { # assume only a link parameter
+        ($self,$link) = @_;
+        $self->click($link);
+    } else {
+        ($self,%opts) = @_;
+        _default_limiter( one => \%opts );
+        $link = $self->find_link_dom(%opts);
+        $self->click({ dom => $link, %opts });
+    }
+}
+
+=head2 C<< $mech->xpath( $query, %options ) >>
+
+    my $link = $mech->xpath('//a[id="clickme"]', one => 1);
+    # croaks if there is no link or more than one link found
+
+    my @para = $mech->xpath('//p');
+    # Collects all paragraphs
+
+    my @para_text = $mech->xpath('//p/text()', type => $mech->xpathResult('STRING_TYPE'));
+    # Collects all paragraphs as text
+
+Runs an XPath query in Firefox against the current document.
+
+If you need more information about the returned results,
+use the C<< ->xpathEx() >> function.
+
+The options allow the following keys:
+
+=over 4
+
+=item *
+
+C<< document >> - document in which the query is to be executed. Use this to
+search a node within a specific subframe of C<< $mech->document >>.
+
+=item *
+
+C<< frames >> - if true, search all documents in all frames and iframes.
+This may or may not conflict with C<node>. This will default to the
+C<frames> setting of the WWW::Mechanize::Firefox object.
+
+=item *
+
+C<< node >> - node relative to which the query is to be executed. Note
+that you will have to use a relative XPath expression as well. Use
+
+  .//foo
+
+instead of
+
+  //foo
+
+=item *
+
+C<< single >> - If true, ensure that only one element is found. Otherwise croak
+or carp, depending on the C<autodie> parameter.
+
+=item *
+
+C<< one >> - If true, ensure that at least one element is found. Otherwise croak
+or carp, depending on the C<autodie> parameter.
+
+=item *
+
+C<< maybe >> - If true, ensure that at most one element is found. Otherwise
+croak or carp, depending on the C<autodie> parameter.
+
+=item *
+
+C<< all >> - If true, return all elements found. This is the default.
+You can use this option if you want to use C<< ->xpath >> in scalar context
+to count the number of matched elements, as it will otherwise emit a warning
+for each usage in scalar context without any of the above restricting options.
+
+=item *
+
+C<< any >> - no error is raised, no matter if an item is found or not.
+
+=item *
+
+C<< type >> - force the return type of the query.
+
+  type => $mech->xpathResult('ORDERED_NODE_SNAPSHOT_TYPE'),
+
+WWW::Mechanize::Firefox tries a best effort in giving you the appropriate
+result of your query, be it a DOM node or a string or a number. In the case
+you need to restrict the return type, you can pass this in.
+
+The allowed strings are documented in the MDN. Interesting types are
+
+  ANY_TYPE     (default, uses whatever things the query returns)
+  STRING_TYPE
+  NUMBER_TYPE
+  ORDERED_NODE_SNAPSHOT_TYPE
+
+=back
+
+Returns the matched results.
+
+You can pass in a list of queries as an array reference for the first parameter.
+The result will then be the list of all elements matching any of the queries.
+
+This is a method that is not implemented in WWW::Mechanize.
+
+In the long run, this should go into a general plugin for
+L<WWW::Mechanize>.
+
+=cut
 
 sub xpath {
     my( $self, $query, %options) = @_;
