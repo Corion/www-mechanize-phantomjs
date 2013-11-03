@@ -25,7 +25,7 @@ $mech->get_local('50-form2.html');
 is $mech->current_form, undef, "At start, we have no current form";
 $mech->form_number(2);
 my $button = $mech->selector('#btn_ok', single => 1);
-isa_ok $button, 'MozRepl::RemoteObject::Instance', "The button image";
+isa_ok $button, 'Selenium::Remote::WebElement', "The button image";
 ok $mech->submit, 'Sent the page';
 is $mech->current_form, undef, "After a submit, we have no current form";
 
