@@ -18,11 +18,11 @@ WWW::Mechanize::WebDriver - automate a Selenium webdriver capable browser
 
 sub new {
     my ($class, %options) = @_;
-    
+
     $options{ port } ||= 4446;
-    
+
     # XXX Need autodie
-    
+
     # Launch PhantomJs
     $options{ launch_exe } ||= 'phantomjs';
     $options{ launch_arg } ||= [ "--webdriver=$options{ port }", #"--webdriver-loglevel=ERROR",
@@ -31,19 +31,43 @@ sub new {
     $options{ pid } ||= open my $fh, $cmd
         or die "Couldn't launch [$cmd]: $! / $?";
     $options{ fh } = $fh;
-    
+
     # Connect to it
     $options{ driver } ||= Selenium::Remote::Driver->new(
         'port' => $options{ port },
         auto_close => 1,
      );
-     
+
      bless \%options => $class;
 };
 
 sub driver {
     $_[0]->{driver}
 };
+
+sub ua {
+    # page.settings.userAgent = 'Mozilla/5.0 (Windows NT 5.1; rv:8.0) Gecko/20100101 Firefox/7.0';
+}
+
+# Render as png
+=for png
+ page.viewportSize = { width: 1024, height: 768 }
+ page.open(address, function (status) {
+    if (status == 'fail') {
+       console.log('Unable to load the address! ' + address);
+       phantom.exit();
+       console.log('Unable to load the address! ' + address);
+    } else {
+     window.setTimeout(function () {
+     page.clipRect = { top: 0, left: 0, width: 990, height: 745 };
+     page.render(output);
+     console.log(status);
+     phantom.exit();
+     }, 200);
+    }
+
+ });
+=cut
 
 sub events { [] };
 
@@ -228,7 +252,7 @@ sub back {
                      ? $self->events
                      : []
     };
-    
+
     $self->_sync_call($synchronize, sub {
         $self->driver->go_back;
     });
@@ -252,7 +276,7 @@ sub forward {
                      ? $self->events
                      : []
     };
-    
+
     $self->_sync_call($synchronize, sub {
         $self->driver->go_forward;
     });
@@ -306,7 +330,7 @@ This method is implemented via L<WWW::Mechanize::Plugin::Selector>.
 
 sub xpath {
     my( $self, $query, %options) = @_;
-    
+
     if ('ARRAY' ne (ref $query||'')) {
         $query = [$query];
     };
@@ -423,7 +447,7 @@ as the list of events to wait for.
 
 Returns a L<HTTP::Response> object.
 
-As a deviation from the WWW::Mechanize API, you can also pass a 
+As a deviation from the WWW::Mechanize API, you can also pass a
 hash reference as the first parameter. In it, you can specify
 the parameters to search much like for the C<find_link> calls.
 
@@ -433,7 +457,7 @@ sub click {
     my ($self,$name,$x,$y) = @_;
     my %options;
     my @buttons;
-    
+
     if (! defined $name) {
         croak("->click called with undef link");
     } elsif (ref $name and blessed($name) and $name->can('click')) {
@@ -443,20 +467,20 @@ sub click {
     } else {
         $options{ name } = $name;
     };
-    
+
     if (exists $options{ name }) {
         $name = quotemeta($options{ name }|| '');
         $options{ xpath } = [
-                       sprintf( q{//*[(translate(local-name(.), "ABCDEFGHIJKLMNOPQRSTUVWXYZ", "abcdefghijklmnopqrstuvwxyz")="button" and @name="%s") or (translate(local-name(.), "ABCDEFGHIJKLMNOPQRSTUVWXYZ", "abcdefghijklmnopqrstuvwxyz")="input" and (@type="button" or @type="submit" or @type="image") and @name="%s")]}, $name, $name), 
+                       sprintf( q{//*[(translate(local-name(.), "ABCDEFGHIJKLMNOPQRSTUVWXYZ", "abcdefghijklmnopqrstuvwxyz")="button" and @name="%s") or (translate(local-name(.), "ABCDEFGHIJKLMNOPQRSTUVWXYZ", "abcdefghijklmnopqrstuvwxyz")="input" and (@type="button" or @type="submit" or @type="image") and @name="%s")]}, $name, $name),
         ];
         if ($options{ name } eq '') {
-            push @{ $options{ xpath }}, 
+            push @{ $options{ xpath }},
                        q{//*[(translate(local-name(.), "ABCDEFGHIJKLMNOPQRSTUVWXYZ", "abcdefghijklmnopqrstuvwxyz") = "button" or translate(local-name(.), "ABCDEFGHIJKLMNOPQRSTUVWXYZ", "abcdefghijklmnopqrstuvwxyz")="input") and @type="button" or @type="submit" or @type="image"]},
             ;
         };
         $options{ user_info } = "Button with name '$name'";
     };
-    
+
     if (! exists $options{ synchronize }) {
         #$options{ synchronize } = $self->events;
     } elsif( ! ref $options{ synchronize }) {
@@ -465,13 +489,13 @@ sub click {
         #                        : [],
     };
     $options{ synchronize } ||= [];
-    
+
     if ($options{ dom }) {
         @buttons = $options{ dom };
     } else {
         @buttons = $self->_option_query(%options);
     };
-    
+
     $self->_sync_call(
         $options{ synchronize }, sub { # ,'abort'
             $buttons[0]->click();
@@ -492,7 +516,7 @@ sub _sync_call {
         $self->synchronize( $events, $cb );
     } else {
         $cb->();
-    };    
+    };
 };
 
 =head2 C<< $mech->click_button( ... ) >>
@@ -565,22 +589,22 @@ sub click_button {
     if ($node) {
         $self->click({ dom => $node, %options });
     } else {
-        
+
         $self->signal_condition($user_message);
     };
-    
+
 }
 
 sub current_form {
     my( $self, %options )= @_;
     # Find the first <FORM> element from the currently active element
     my $focus= $self->driver->get_active_element;
-    
+
     if( !$focus ) {
         # XXX Signal the error
         return
     };
-    
+
     $self->xpath( './/ancestor-or-self::FORM', node => $focus );
 }
 
