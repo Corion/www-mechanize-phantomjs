@@ -991,7 +991,7 @@ sub xpath {
     };
 
     if (! $two_allowed and @res > 1) {
-        $self->highlight_node(@res);
+        #$self->highlight_node(@res);
         $self->signal_condition( (scalar @res) . " elements found for $options{ user_info }" );
     };
 
@@ -1563,9 +1563,9 @@ sub get_set_value {
     if ($fields[0]) {
         my $tag = $fields[0]->{tagName};
         if ($set_value) {
-            for my $ev (@$pre) {
-                $fields[0]->__event($ev);
-            };
+            #for my $ev (@$pre) {
+            #    $fields[0]->__event($ev);
+            #};
 
             if ('select' eq $tag) {
                 $self->select($fields[0], $value);
@@ -1573,9 +1573,9 @@ sub get_set_value {
                 $fields[0]->{value} = $value;
             };
 
-            for my $ev (@$post) {
-                $fields[0]->__event($ev);
-            };
+            #for my $ev (@$post) {
+            #    $fields[0]->__event($ev);
+            #};
         };
         # What about 'checkbox'es/radioboxes?
 
