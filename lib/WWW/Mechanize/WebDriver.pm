@@ -5,6 +5,7 @@ use WWW::Mechanize::Plugin::Selector;
 use HTTP::Response;
 use HTTP::Headers;
 use Scalar::Util qw( blessed );
+use File::Basename;
 
 use vars qw($VERSION);
 $VERSION= '0.01';
@@ -101,6 +102,49 @@ sub get {
     $self->update_response( $phantom_res );
 };
 
+=head2 C<< $mech->get_local( $filename , %options ) >>
+
+  $mech->get_local('test.html');
+
+Shorthand method to construct the appropriate
+C<< file:// >> URI and load it into Firefox. Relative
+paths will be interpreted as relative to C<$0>.
+
+This method accepts the same options as C<< ->get() >>.
+
+This method is special to WWW::Mechanize::Firefox but could
+also exist in WWW::Mechanize through a plugin.
+
+=cut
+
+sub get_local {
+    my ($self, $htmlfile, %options) = @_;
+    require Cwd;
+    require File::Spec;
+    my $fn= File::Spec->file_name_is_absolute( $htmlfile )
+          ? $htmlfile
+          : File::Spec->rel2abs(
+                 File::Spec->catfile(dirname($0),$htmlfile),
+                 Cwd::getcwd(),
+             );
+    $fn =~ s!\\!/!g; # fakey "make file:// URL"
+    my $url= "file:/$fn";
+    #warn $url;
+
+    my $res= $self->get($url, %options);
+    #use Data::Dumper;
+    #warn Dumper $res;
+    # PhantomJS is not helpful with its error messages for local URLs
+    if( 0+$res->headers->header_field_names) {
+        # We need to fake the content headers from <meta> tags too...
+        # Maybe this even needs to go into ->get()
+        $res->code( 200 );
+    } else {
+        $res->code( 400 ); # Must have been "not found"
+    };
+    $res
+}
+
 # If things get nasty, we could fall back to PhantomJS.webpage.plainText
 # var page = require('webpage').create();
 # page.open('http://somejsonpage.com', function () {
@@ -112,6 +156,52 @@ sub decoded_content {
 sub content {
     $_[0]->driver->get_page_source
 };
+
+=head2 C<< $mech->content_type() >>
+
+=head2 C<< $mech->ct() >>
+
+  print $mech->content_type;
+
+Returns the content type of the currently loaded document
+
+=cut
+
+sub content_type {
+    my ($self) = @_;
+    # Let's trust the <meta http-equiv first, and the header second:
+    # Also, a pox on PhantomJS for not having lower-case or upper-case
+    if( my $meta = $self->xpath( q{//meta[translate(@http-equiv,'ABCDEFGHIJKLMNOPQRSTUVWXYZ','abcdefghijklmnopqrstuvwxyz')="content-type"]}, maybe => 1 )) {
+        (my $ct= $meta->get_attribute('content')) =~ s/;.*$//;
+        return $ct
+    } else {
+        $self->response->header('Content-Type');
+    };
+};
+
+*ct = \&content_type;
+
+=head2 C<< $mech->is_html() >>
+
+  print $mech->is_html();
+
+Returns true/false on whether our content is HTML, according to the
+HTTP headers.
+
+=cut
+
+sub is_html {
+    my $self = shift;
+    return defined $self->ct && ($self->ct eq 'text/html');
+}
+
+=head2 C<< $mech->title() >>
+
+  print "We are on page " . $mech->title;
+
+Returns the current document title.
+
+=cut
 
 sub title {
     $_[0]->driver->get_title;
@@ -243,18 +333,19 @@ sub xpath {
 
     # XXX I fear we can only search within The One Document, and not
     #     conveniently within IFRAMEs etc.
+    my @res;
+
+    # Now find the elements
     if ($options{ node }) {
-        $options{ document } ||= $options{ node }->{ownerDocument};
+        @res= map { $self->driver->find_child_elements( $options{ node }, $_ => 'xpath' ) } @$query;
+        #$options{ document } ||= $options{ node }->{ownerDocument};
     } else {
-        $options{ node }= $self->driver->get_active_element;
-        $options{ document } ||= $self->document;
+        #$options{ document } ||= $self->document;
+        @res= map { $self->driver->find_elements( $_ => 'xpath' ) } @$query;
     };
 
     # XXX Determine if we want only one element
     #     or a list, like WWW::Mechanize::Firefox
-
-    # Now find the elements
-    my @res= map { $self->driver->find_child_elements( $options{ node }, $_ => 'xpath' ) } @$query;
 
     if (! $zero_allowed and @res == 0) {
         $self->signal_condition( "No elements found for $options{ user_info }" );
