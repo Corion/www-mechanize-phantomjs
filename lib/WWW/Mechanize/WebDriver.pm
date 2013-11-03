@@ -1293,14 +1293,28 @@ and on calls to C<< ->submit() >> and C<< ->submit_with_fields >>.
 sub current_form {
     my( $self, %options )= @_;
     # Find the first <FORM> element from the currently active element
+    $self->{current_form};
+}
+
+sub clear_current_form {
+    undef $_[0]->{current_form};
+};
+
+sub active_form {
+    my( $self, %options )= @_;
+    # Find the first <FORM> element from the currently active element
     my $focus= $self->driver->get_active_element;
 
     if( !$focus ) {
         # XXX Signal the error
+        warn "No active element, hence no active form";
         return
     };
 
-    my $form= $self->xpath( './/ancestor-or-self::FORM', node => $focus, maybe => 1 );
+    #my $form= $self->xpath( './/ancestor-or-self::FORM', node => $focus, maybe => 1 );
+    #my $form= $self->xpath( './ancestor-or-self::FORM', node => $focus, maybe => 1 );
+    my $form= $self->xpath( './ancestor-or-self::FORM', node => $focus, maybe => 1 );
+
 }
 
 =head2 C<< $mech->form_name( $name [, %options] ) >>
