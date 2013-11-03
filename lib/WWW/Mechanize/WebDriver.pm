@@ -214,6 +214,8 @@ sub update_response {
 
     # XXX should we fetch the response body?!
 
+    delete $self->{ current_form };
+
     $self->{response} = $res
 };
 
