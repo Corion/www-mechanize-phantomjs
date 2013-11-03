@@ -1537,7 +1537,7 @@ sub _field_by_name {
         @fields = $name;
     } else {
         _default_limiter( single => \%options );
-        my $query = $self->application->element_query([qw[input select textarea]], { $attr => $name });
+        my $query = $self->element_query([qw[input select textarea]], { $attr => $name });
         #warn $query;
         @fields = $self->xpath($query,%options);
     };
