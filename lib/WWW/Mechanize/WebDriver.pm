@@ -226,8 +226,7 @@ sub get_local {
     #warn $url;
 
     my $res= $self->get($url, %options);
-    #use Data::Dumper;
-    #warn Dumper $res;
+
     # PhantomJS is not helpful with its error messages for local URLs
     if( 0+$res->headers->header_field_names) {
         # We need to fake the content headers from <meta> tags too...
