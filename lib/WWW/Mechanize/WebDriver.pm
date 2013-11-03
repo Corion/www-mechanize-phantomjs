@@ -18,6 +18,35 @@ WWW::Mechanize::WebDriver - automate a Selenium webdriver capable browser
 
 =cut
 
+=head2 C<< $api->element_query( \@elements, \%attributes ) >>
+
+    my $query = $element_query(['input', 'select', 'textarea'],
+                               { name => 'foo' });
+
+Returns the XPath query that searches for all elements with C<tagName>s
+in C<@elements> having the attributes C<%attributes>. The C<@elements>
+will form an C<or> condition, while the attributes will form an C<and>
+condition.
+
+=cut
+
+sub element_query {
+    my ($self, $elements, $attributes) = @_;
+        my $query =
+            './/*[(' .
+                join( ' or ',
+                    map {
+                        sprintf qq{local-name(.)="%s"}, lc $_
+                    } @$elements
+                )
+            . ') and '
+            . join( " and ",
+                map { sprintf q{@%s="%s"}, $_, $attributes->{$_} }
+                  sort keys(%$attributes)
+            )
+            . ']';
+};
+
 sub new {
     my ($class, %options) = @_;
 
@@ -397,6 +426,19 @@ sub signal_condition {
     }
 };
 
+# Call croak on the C< autodie > setting if we have a non-200 status
+sub signal_http_status {
+    my ($self) = @_;
+    if ($self->{autodie}) {
+        if ($self->status !~ /^2/) {
+            # there was an error
+            croak ($self->response(headers => 0)->message || sprintf "Got status code %d", $self->status );
+        };
+    } else {
+        # silent
+    }
+};
+
 sub response { $_[0]->{response} };
 *res = \&response;
 
@@ -477,6 +519,22 @@ sub success {
     my $res = $_[0]->response( headers => 0 );
     $res and $res->is_success
 }
+
+=head2 C<< $mech->status() >>
+
+    $mech->get('http://google.com');
+    print $mech->status();
+    # 200
+
+Returns the HTTP status code of the response.
+This is a 3-digit number like 200 for OK, 404 for not found, and so on.
+
+=cut
+
+sub status {
+    my ($self) = @_;
+    return $self->response( headers => 0 )->code
+};
 
 =head2 C<< $mech->selector( $css_selector, %options ) >>
 
@@ -1214,6 +1272,24 @@ sub click_button {
 
 }
 
+=head1 FORM METHODS
+
+=head2 C<< $mech->current_form() >>
+
+  print $mech->current_form->{name};
+
+Returns the current form.
+
+This method is incompatible with L<WWW::Mechanize>.
+It returns the DOM C<< <form> >> object and not
+a L<HTML::Form> instance.
+
+The current form will be reset by WWW::Mechanize::WebDriver
+on calls to C<< ->get() >> and C<< ->get_local() >>,
+and on calls to C<< ->submit() >> and C<< ->submit_with_fields >>.
+
+=cut
+
 sub current_form {
     my( $self, %options )= @_;
     # Find the first <FORM> element from the currently active element
@@ -1224,7 +1300,317 @@ sub current_form {
         return
     };
 
-    $self->xpath( './/ancestor-or-self::FORM', node => $focus );
+    my $form= $self->xpath( './/ancestor-or-self::FORM', node => $focus, maybe => 1 );
 }
+
+=head2 C<< $mech->form_name( $name [, %options] ) >>
+
+  $mech->form_name( 'search' );
+
+Selects the current form by its name. The options
+are identical to those accepted by the L<< /$mech->xpath >> method.
+
+=cut
+
+sub form_name {
+    my ($self,$name,%options) = @_;
+    $name = quote_xpath $name;
+    _default_limiter( single => \%options );
+    $self->{current_form} = $self->selector("form[name='$name']",
+        user_info => "form name '$name'",
+        %options
+    );
+};
+
+=head2 C<< $mech->form_id( $id [, %options] ) >>
+
+  $mech->form_id( 'login' );
+
+Selects the current form by its C<id> attribute.
+The options
+are identical to those accepted by the L<< /$mech->xpath >> method.
+
+This is equivalent to calling
+
+    $mech->by_id($id,single => 1,%options)
+
+=cut
+
+sub form_id {
+    my ($self,$name,%options) = @_;
+
+    _default_limiter( single => \%options );
+    $self->{current_form} = $self->by_id($name,
+        user_info => "form with id '$name'",
+        %options
+    );
+};
+
+=head2 C<< $mech->form_number( $number [, %options] ) >>
+
+  $mech->form_number( 2 );
+
+Selects the I<number>th form.
+The options
+are identical to those accepted by the L<< /$mech->xpath >> method.
+
+=cut
+
+sub form_number {
+    my ($self,$number,%options) = @_;
+
+    _default_limiter( single => \%options );
+    $self->{current_form} = $self->xpath("(//form)[$number]",
+        user_info => "form number $number",
+        %options
+    );
+};
+
+=head2 C<< $mech->form_with_fields( [$options], @fields ) >>
+
+  $mech->form_with_fields(
+      'user', 'password'
+  );
+
+Find the form which has the listed fields.
+
+If the first argument is a hash reference, it's taken
+as options to C<< ->xpath >>.
+
+See also L<< /$mech->submit_form >>.
+
+=cut
+
+sub form_with_fields {
+    my ($self,@fields) = @_;
+    my $options = {};
+    if (ref $fields[0] eq 'HASH') {
+        $options = shift @fields;
+    };
+    my @clauses  = map { $self->element_query([qw[input select textarea]], { 'name' => $_ })} @fields;
+
+
+    my $q = "//form[" . join( " and ", @clauses)."]";
+    #warn $q;
+    _default_limiter( single => $options );
+    $self->{current_form} = $self->xpath($q,
+        user_info => "form with fields [@fields]",
+        %$options
+    );
+};
+
+=head2 C<< $mech->forms( %options ) >>
+
+  my @forms = $mech->forms();
+
+When called in a list context, returns a list
+of the forms found in the last fetched page.
+In a scalar context, returns a reference to
+an array with those forms.
+
+The options
+are identical to those accepted by the L<< /$mech->selector >> method.
+
+The returned elements are the DOM C<< <form> >> elements.
+
+=cut
+
+sub forms {
+    my ($self, %options) = @_;
+    my @res = $self->selector('form', %options);
+    return wantarray ? @res
+                     : \@res
+};
+
+=head2 C<< $mech->field( $selector, $value, [,\@pre_events [,\@post_events]] ) >>
+
+  $mech->field( user => 'joe' );
+  $mech->field( not_empty => '', [], [] ); # bypass JS validation
+
+Sets the field with the name given in C<$selector> to the given value.
+Returns the value.
+
+The method understands very basic CSS selectors in the value for C<$selector>,
+like the L<HTML::Form> find_input() method.
+
+A selector prefixed with '#' must match the id attribute of the input.
+A selector prefixed with '.' matches the class attribute. A selector
+prefixed with '^' or with no prefix matches the name attribute.
+
+By passing the array reference C<@pre_events>, you can indicate which
+Javascript events you want to be triggered before setting the value.
+C<@post_events> contains the events you want to be triggered
+after setting the value.
+
+By default, the events set in the
+constructor for C<pre_events> and C<post_events>
+are triggered.
+
+=cut
+
+sub field {
+    my ($self,$name,$value,$pre,$post) = @_;
+    $self->get_set_value(
+        name => $name,
+        value => $value,
+        pre => $pre,
+        post => $post,
+        node => $self->current_form,
+    );
+}
+
+=head2 C<< $mech->value( $selector_or_element, [%options] ) >>
+
+    print $mech->value( 'user' );
+
+Returns the value of the field given by C<$selector_or_name> or of the
+DOM element passed in.
+
+The legacy form of
+
+    $mech->value( name => value );
+
+is also still supported but will likely be deprecated
+in favour of the C<< ->field >> method.
+
+For fields that can have multiple values, like a C<select> field,
+the method is context sensitive and returns the first selected
+value in scalar context and all values in list context.
+
+=cut
+
+sub value {
+    if (@_ == 3) {
+        my ($self,$name,$value) = @_;
+        return $self->field($name => $value);
+    } else {
+        my ($self,$name,%options) = @_;
+        return $self->get_set_value(
+            node => $self->current_form,
+            %options,
+            name => $name,
+        );
+    };
+};
+
+=head2 C<< $mech->get_set_value( %options ) >>
+
+Allows fine-grained access to getting/setting a value
+with a different API. Supported keys are:
+
+  pre
+  post
+  name
+  value
+
+in addition to all keys that C<< $mech->xpath >> supports.
+
+=cut
+
+sub _field_by_name {
+    my ($self,%options) = @_;
+    my @fields;
+    my $name  = delete $options{ name };
+    my $attr = 'name';
+    if ($name =~ s/^\^//) { # if it starts with ^, it's supposed to be a name
+        $attr = 'name'
+    } elsif ($name =~ s/^#//) {
+        $attr = 'id'
+    } elsif ($name =~ s/^\.//) {
+        $attr = 'class'
+    };
+    if (blessed $name) {
+        @fields = $name;
+    } else {
+        _default_limiter( single => \%options );
+        my $query = $self->application->element_query([qw[input select textarea]], { $attr => $name });
+        #warn $query;
+        @fields = $self->xpath($query,%options);
+    };
+    @fields
+}
+
+sub get_set_value {
+    my ($self,%options) = @_;
+    my $set_value = exists $options{ value };
+    my $value = delete $options{ value };
+    my $pre   = delete $options{pre}  || $self->{pre_value};
+    my $post  = delete $options{post} || $self->{post_value};
+    my $name  = delete $options{ name };
+    my @fields = $self->_field_by_name(
+                     name => $name,
+                     user_info => "input with name '$name'",
+                     %options );
+    $pre = [$pre]
+        if (! ref $pre);
+    $post = [$post]
+        if (! ref $post);
+
+    if ($fields[0]) {
+        my $tag = $fields[0]->{tagName};
+        if ($set_value) {
+            for my $ev (@$pre) {
+                $fields[0]->__event($ev);
+            };
+
+            if ('select' eq $tag) {
+                $self->select($fields[0], $value);
+            } else {
+                $fields[0]->{value} = $value;
+            };
+
+            for my $ev (@$post) {
+                $fields[0]->__event($ev);
+            };
+        };
+        # What about 'checkbox'es/radioboxes?
+
+        # Don't bother to fetch the field's value if it's not wanted
+        return unless defined wantarray;
+
+        # We could save some work here for the simple case of single-select
+        # dropdowns by not enumerating all options
+        if ('SELECT' eq uc $tag) {
+            my @options = $self->xpath('.//option', node => $fields[0] );
+            my @values = map { $_->{value} } grep { $_->{selected} } @options;
+            if (wantarray) {
+                return @values
+            } else {
+                return $values[0];
+            }
+        } else {
+            return $fields[0]->{value}
+        };
+    } else {
+        return
+    }
+}
+
+=head2 C<< $mech->submit( $form ) >>
+
+  $mech->submit;
+
+Submits the form. Note that this does B<not> fire the C<onClick>
+event and thus also does not fire eventual Javascript handlers.
+Maybe you want to use C<< $mech->click >> instead.
+
+The default is to submit the current form as returned
+by C<< $mech->current_form >>.
+
+=cut
+
+sub submit {
+    my ($self,$dom_form) = @_;
+    $dom_form ||= $self->current_form;
+    if ($dom_form) {
+        $dom_form->submit(); # why don't we ->synchronize here??
+        $self->signal_http_status;
+
+        #$self->clear_current_form;
+        1;
+    } else {
+        croak "I don't know which form to submit, sorry.";
+    }
+};
 
 1;

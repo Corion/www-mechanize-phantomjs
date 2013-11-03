@@ -22,14 +22,14 @@ if (! $mech) {
     plan skip_all => "Couldn't connect to PhantomJS: $@";
     exit
 } else {
-    plan tests => 9;
+    plan tests => 8;
 };
 
 $mech->get_local('50-form3.html');
 $mech->form_number(1);
 my $the_form_dom_node = $mech->current_form;
 my $button = $mech->selector('#btn_ok', single => 1);
-isa_ok $button, 'MozRepl::RemoteObject::Instance', "The button image";
+isa_ok $button, 'Selenium::Remote::WebElement', "The button image";
 
 ok $mech->submit, 'Sent the page';
 
@@ -72,9 +72,3 @@ my $old_DESTROY = \&MozRepl::RemoteObject::DESTROY;
        goto $old_DESTROY;
    }
 };
-
-$MozRepl::RemoteObject::WARN_ON_LEAKS = 1;
-undef $the_form_dom_node;
-undef $button;
-undef $mech;
-is $destroyed, 1, "Bridge was torn down";
