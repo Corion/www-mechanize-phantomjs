@@ -407,7 +407,7 @@ sub make_link {
             $url = $node->{ $link_spec{ $tag }->{url} };
         };
     };
-    
+
     if ($tag eq 'meta') {
         my $content = $url;
         if ( $content =~ /^\d+\s*;\s*url\s*=\s*(\S+)/i ) {
@@ -418,7 +418,7 @@ sub make_link {
             undef $url;
         }
     };
-    
+
     if (defined $url) {
         my $res = WWW::Mechanize::Link->new({
             tag   => $tag,
@@ -428,7 +428,7 @@ sub make_link {
             text  => $node->{innerHTML},
             attrs => {},
         });
-        
+
         $res
     } else {
         ()
@@ -664,14 +664,14 @@ sub quote_xpath($) {
 sub find_link_dom {
     my ($self,%opts) = @_;
     my %xpath_options;
-    
+
     for (qw(node document frames)) {
         # Copy over XPath options that were passed in
         if (exists $opts{ $_ }) {
             $xpath_options{ $_ } = delete $opts{ $_ };
         };
     };
-    
+
     my $single = delete $opts{ single };
     my $one = delete $opts{ one } || $single;
     if ($single and exists $opts{ n }) {
@@ -681,7 +681,7 @@ sub find_link_dom {
     $n--
         if ($n ne 'all'); # 1-based indexing
     my @spec;
-    
+
     # Decode text and text_contains into XPath
     for my $lvalue (qw( text id name class )) {
         my %lefthand = (
@@ -717,7 +717,7 @@ sub find_link_dom {
     if (my $p = delete $opts{ tag_regex }) {
         @tags = grep /$p/, @tags;
     };
-    my $q = join '|', 
+    my $q = join '|',
             map {
                 my $xp= exists $link_spec{ $_ } ? $link_spec{$_}->{xpath} : undef;
                 my @full = map {qq{($_)}} grep {defined} (@spec, $xp);
@@ -728,20 +728,20 @@ sub find_link_dom {
                 };
             }  (@tags);
     warn $q;
-    
+
     my @res = $self->xpath($q, %xpath_options );
-    
+
     if (keys %opts) {
         # post-filter the remaining links through WWW::Mechanize
         # for all the options we don't support with XPath
-        
+
         my $base = $self->base;
         require WWW::Mechanize;
-        @res = grep { 
-            WWW::Mechanize::_match_any_link_parms($self->make_link($_,$base),\%opts) 
+        @res = grep {
+            WWW::Mechanize::_match_any_link_parms($self->make_link($_,$base),\%opts)
         } @res;
     };
-    
+
     if ($one) {
         if (0 == @res) { $self->signal_condition( "No link found matching '$q'" )};
         if ($single) {
@@ -753,7 +753,7 @@ sub find_link_dom {
             };
         };
     };
-    
+
     if ($n eq 'all') {
         return @res
     };
@@ -1008,7 +1008,6 @@ sub xpath {
     if (! $zero_allowed and @res == 0) {
         $self->signal_condition( "No elements found for $options{ user_info }" );
     };
-
     if (! $two_allowed and @res > 1) {
         #$self->highlight_node(@res);
         $self->signal_condition( (scalar @res) . " elements found for $options{ user_info }" );
