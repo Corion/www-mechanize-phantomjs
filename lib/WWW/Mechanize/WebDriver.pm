@@ -144,6 +144,23 @@ sub eval_in_page {
 };
 *eval = \&eval_in_page;
 
+=head2 C<< $mech->webdriver_elementToJS >>
+
+Returns the Javascript fragment to turn a Selenium::Remote::WebDriver
+id back to a Javascript object.
+
+=cut
+
+sub webdriver_elementToJS {
+    <<'JS'
+    function(id,doc_opt){
+        var d = doc_opt || document;
+        var c= d['$wdc_'];
+        return c[id]
+    };
+JS
+}
+
 sub ua {
     # page.settings.userAgent = 'Mozilla/5.0 (Windows NT 5.1; rv:8.0) Gecko/20100101 Firefox/7.0';
 }
@@ -1563,7 +1580,7 @@ sub get_set_value {
         if (! ref $post);
 
     if ($fields[0]) {
-        my $tag = $fields[0]->{tagName};
+        my $tag = $fields[0]->get_tag_name();
         if ($set_value) {
             #for my $ev (@$pre) {
             #    $fields[0]->__event($ev);
@@ -1572,7 +1589,15 @@ sub get_set_value {
             if ('select' eq $tag) {
                 $self->select($fields[0], $value);
             } else {
-                $fields[0]->{value} = $value;
+                my $get= $self->webdriver_elementToJS();
+                my $val= quotemeta($value);
+                my $js= <<JS;
+                    var g=$get;
+                    var el=g("$fields[0]->{id}");
+                    el.value="$val";
+JS
+                $js= quotemeta($js);
+                $self->eval("eval('$js')"); # for some reason, Selenium/Ghostdriver don't like the JS as plain JS
             };
 
             #for my $ev (@$post) {
