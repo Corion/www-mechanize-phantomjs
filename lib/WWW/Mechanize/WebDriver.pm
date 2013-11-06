@@ -295,8 +295,36 @@ sub decoded_content {
 };
 
 sub content {
-    $_[0]->driver->get_page_source
+    my ($self, %options) = @_;
+    $options{ format } ||= 'html';
+    my $format = delete $options{ format } || 'html';
+
+    my $content;
+    if( 'html' eq $format ) {
+        $content= $self->driver->get_page_source
+    } elsif ( $format eq 'text' ) {
+        $content= $self->text;
+    } else {
+        $self->die( qq{Unknown "format" parameter "$format"} );
+    };
 };
+
+=head2 C<< $mech->text() >>
+
+    print $mech->text();
+
+Returns the text of the current HTML content.  If the content isn't
+HTML, $mech will die.
+
+=cut
+
+sub text {
+    my $self = shift;
+    
+    # Waugh - this is highly inefficient but conveniently short to write
+    # Maybe this should skip SCRIPT nodes...
+    join '', map { $_->get_text() } $self->xpath('//*/text()');
+}
 
 =head2 C<< $mech->content_encoding() >>
 
