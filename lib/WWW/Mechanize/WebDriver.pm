@@ -133,14 +133,12 @@ sub eval_in_page {
 #        var cb= args.pop();
 #        cb( eval( args ));
 #JS
-    my $eval_in_sandbox = $self->driver->execute_script("return $str");
+
     # Report errors from scope of caller
     # This feels weirdly backwards here, but oh well:
-    #local @CARP_NOT = (ref $self->repl); # we trust this
+    local @Selenium::Remote::Driver::CARP_NOT= (@Selenium::Remote::Driver::CARP_NOT, (ref $self)); # we trust this
+    my $eval_in_sandbox = $self->driver->execute_script("return $str");
 
-    #my ($caller,$line) = (caller)[1,2];
-
-    #$eval_in_sandbox->($window,$doc,$str,$js_env,$caller,$line);
 };
 *eval = \&eval_in_page;
 
