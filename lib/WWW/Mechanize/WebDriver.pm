@@ -999,6 +999,7 @@ sub xpath {
     my $maybe  = $options{ maybe };
     my $any    = $options{ any };
     my $return_first_element = ($single or $first or $maybe or $any );
+    $options{ user_info }||= join "|", @$query;
 
     # Construct some helper variables
     my $zero_allowed = not ($single or $first);
