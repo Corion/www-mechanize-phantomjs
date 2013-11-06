@@ -226,7 +226,7 @@ C<< no_cache >> - if true, bypass the browser cache
 sub update_response {
     my( $self, $phantom_res ) = @_;
 
-    my @headers= map {;%$_} @{ $phantom_res->{headers} };
+    my @headers= map {;@{$_}{qw(name value)}} @{ $phantom_res->{headers} };
     my $res= HTTP::Response->new( $phantom_res->{status}, $phantom_res->{statusText}, \@headers );
 
     # XXX should we fetch the response body?!
@@ -354,12 +354,16 @@ sub content_type {
     my ($self) = @_;
     # Let's trust the <meta http-equiv first, and the header second:
     # Also, a pox on PhantomJS for not having lower-case or upper-case
-    if( my $meta = $self->xpath( q{//meta[translate(@http-equiv,'ABCDEFGHIJKLMNOPQRSTUVWXYZ','abcdefghijklmnopqrstuvwxyz')="content-type"]}, maybe => 1 )) {
-        (my $ct= $meta->get_attribute('content')) =~ s/;.*$//;
-        return $ct
-    } else {
-        $self->response->header('Content-Type');
+    my $ct;
+    if(my( $meta )= $self->xpath( q{//meta[translate(@http-equiv,'ABCDEFGHIJKLMNOPQRSTUVWXYZ','abcdefghijklmnopqrstuvwxyz')="content-type"]}, first => 1 )) {
+        $ct= $meta->get_attribute('content');
     };
+    if(!$ct and my $r= $self->response ) {
+        my $h= $r->headers;
+        $ct= $h->header('Content-Type');
+    };
+    $ct =~ s/;.*$//;
+    $ct
 };
 
 *ct = \&content_type;
