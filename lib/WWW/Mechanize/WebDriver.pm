@@ -298,6 +298,27 @@ sub content {
     $_[0]->driver->get_page_source
 };
 
+=head2 C<< $mech->content_encoding() >>
+
+    print "The content is encoded as ", $mech->content_encoding;
+
+Returns the encoding that the content is in. This can be used
+to convert the content from UTF-8 back to its native encoding.
+
+=cut
+
+sub content_encoding {
+    my ($self) = @_;
+    # Let's trust the <meta http-equiv first, and the header second:
+    # Also, a pox on PhantomJS for not having lower-case or upper-case
+    if(( my $meta )= $self->xpath( q{//meta[translate(@http-equiv,'ABCDEFGHIJKLMNOPQRSTUVWXYZ','abcdefghijklmnopqrstuvwxyz')="content-type"]}, first => 1 )) {
+        (my $ct= $meta->get_attribute('content')) =~ s/^.*;\s*charset=\s*//i;
+        return $ct
+            if( $ct );
+    };
+    $self->response->header('Content-Type');
+};
+
 =head2 C<< $mech->base() >>
 
   print $mech->base;
