@@ -285,8 +285,11 @@ paths will be interpreted as relative to C<$0>.
 
 This method accepts the same options as C<< ->get() >>.
 
-This method is special to WWW::Mechanize::Firefox but could
+This method is special to WWW::Mechanize::WebDriver but could
 also exist in WWW::Mechanize through a plugin.
+
+B<Warning>: PhantomJs does not handle local files well. Especially
+subframes do not get loaded properly.
 
 =cut
 
