@@ -182,8 +182,12 @@ sub webdriver_elementToJS {
 JS
 }
 
-sub ua {
+sub agent {
+    my($self, $ua) = @_;
     # page.settings.userAgent = 'Mozilla/5.0 (Windows NT 5.1; rv:8.0) Gecko/20100101 Firefox/7.0';
+    $self->eval_in_phantomjs(<<'JS', $ua);
+       this.settings.userAgent= arguments[0] 
+JS
 }
 
 # Render as png
