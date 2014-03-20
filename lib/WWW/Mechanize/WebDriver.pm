@@ -213,10 +213,16 @@ JS
 sub events { [] };
 
 sub DESTROY {
-    if( my $dr= delete ${ $_[0]}{ driver }) {
-        $dr->quit;
-    };
-    kill 9 => $_[0]->{ pid }
+    #warn "Destroying " . ref $_[0];
+    my $pid= delete $_[0]->{pid};
+    #my $dr= delete $_[0]->{ driver };
+    #if($dr) {
+    #    $dr->quit;
+    #};
+    #warn "Killing $pid";
+    kill 9 => $pid
+        if $pid;
+    %{ $_[0] }= (); # clean out all other held references
 }
 
 =head1 NAVIGATION METHODS
