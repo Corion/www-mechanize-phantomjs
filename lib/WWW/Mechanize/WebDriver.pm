@@ -541,6 +541,20 @@ sub content_encoding {
     $self->response->header('Content-Type');
 };
 
+=head2 C<< $mech->update_html( $html ) >>
+
+  $mech->update_html($html);
+
+Writes C<$html> into the current document. This is mostly
+implemented as a convenience method for L<HTML::Display::MozRepl>.
+
+=cut
+
+sub update_html {
+    my ($self,$content) = @_;
+    $self->eval_in_phantomjs('this.setContent(arguments[0], arguments[1])', $content);
+};
+
 =head2 C<< $mech->base() >>
 
   print $mech->base;
