@@ -69,4 +69,4 @@ is $response->code, 404, 'We got the correct error number (404)';
 
 undef $mech;
 
-$MozRepl::RemoteObject::WARN_ON_LEAKS = 1;
+#$MozRepl::RemoteObject::WARN_ON_LEAKS = 1;

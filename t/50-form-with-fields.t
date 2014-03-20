@@ -11,7 +11,7 @@ use Test::More;
 
 my $mech = eval { WWW::Mechanize::WebDriver->new( 
     autodie => 1,
-    launch_exe => 'phantomjs-versions\phantomjs-1.9.2-windows\phantomjs',
+    launch_exe => 'phantomjs-versions\phantomjs-1.9.7-windows\phantomjs',
     launch_arg => ['ghostdriver\src\main.js' ],
     port => 8910, # XXX
     #log => [qw[debug]],
