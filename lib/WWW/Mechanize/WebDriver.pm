@@ -84,6 +84,10 @@ sub allow {
     warn "->allow() is currently a dummy.";
 }
 
+sub document {
+    $_[0]->driver->find_element('html','tag_name');
+}
+
 =head2 C<< $mech->eval_in_page( $str [, $env [, $document]] ) >>
 
 =head2 C<< $mech->eval( $str [, $env [, $document]] ) >>
