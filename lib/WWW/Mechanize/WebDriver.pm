@@ -137,6 +137,34 @@ sub eval_in_page {
 };
 *eval = \&eval_in_page;
 
+=head2 C<< $mech->eval_in_phantomjs $code, @args >>
+
+  $mech->eval_in_phantomjs(<<'JS', "Foobar/1.0");
+      this.settings.userAgent= arguments[0]
+  JS
+
+Evaluates Javascript code in the context of PhantomJS.
+
+This allows you to modify properties of PhantomJS.
+
+=cut
+
+sub eval_in_phantomjs {
+    my ($self, $code, @args) = @_;
+    #my $tab = $self->tab;
+
+    $self->{driver}->{commands}->{'phantomExecute'}||= {
+        'method' => 'POST',
+        'url' => "session/:sessionId/phantom/execute"
+    };
+
+    my $params= {
+        args => \@args,
+        script => $code,
+    };
+    $self->driver->_execute_command({ command => 'phantomExecute' }, $params);
+};
+
 =head2 C<< $mech->webdriver_elementToJS >>
 
 Returns the Javascript fragment to turn a Selenium::Remote::WebDriver
