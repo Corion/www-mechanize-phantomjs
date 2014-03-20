@@ -320,6 +320,67 @@ sub get_local {
     $res
 }
 
+=head2 C<< $mech->add_header( $name => $value, ... ) >>
+
+    $mech->add_header(
+        'X-WWW-Mechanize-Firefox' => "I'm using it",
+        Encoding => 'text/klingon',
+    );
+
+This method sets up custom headers that will be sent with B<every> HTTP(S)
+request that Firefox makes.
+
+Using multiple instances of WWW::Mechanize::Firefox objects with the same
+application together with changed request headers will most likely have weird
+effects. So don't do that.
+
+Note that currently, we only support one value per header.
+
+=cut
+
+sub add_header {
+    my ($self, @headers) = @_;
+    my $headers= $self->eval_in_phantomjs('this.customHeaders');
+    
+    while( my ($k,$v) = splice @headers, 0, 2 ) {
+        $headers->{$k} = $v;
+    };
+    $self->eval_in_phantomjs('this.customHeaders= arguments[0]', $headers);
+};
+
+=head2 C<< $mech->delete_header( $name , $name2... ) >>
+
+    $mech->delete_header( 'User-Agent' );
+    
+Removes HTTP headers from the agent's list of special headers. Note
+that Firefox may still send a header with its default value.
+
+=cut
+
+sub delete_header {
+    my ($self, @headers) = @_;
+    
+    my $headers= $self->eval_in_phantomjs('this.customHeaders');
+    if( @headers ) {
+        delete $headers->{$_}
+            for( @headers );
+    };
+    $self->eval_in_phantomjs('this.customHeaders= arguments[0]', $headers);
+};
+
+=head2 C<< $mech->reset_headers >>
+
+    $mech->reset_headers();
+
+Removes all custom headers and makes Firefox send its defaults again.
+
+=cut
+
+sub reset_headers {
+    my ($self) = @_;
+    $self->eval_in_phantomjs('this.customHeaders= {}');
+};
+
 # If things get nasty, we could fall back to PhantomJS.webpage.plainText
 # var page = require('webpage').create();
 # page.open('http://somejsonpage.com', function () {
