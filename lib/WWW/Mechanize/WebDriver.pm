@@ -127,21 +127,12 @@ can execute malicious code in the context of the Firefox application.
 =cut
 
 sub eval_in_page {
-    my ($self,$str) = @_;
-    #$env ||= {};
-    #my $js_env = {};
-    #$doc ||= $self->document;
-
-#    my $eval_in_sandbox = $self->driver->execute_async_script(<<'JS');
-#        var args= Array.prototype.slice(arguments);
-#        var cb= args.pop();
-#        cb( eval( args ));
-#JS
+    my ($self,$str,@args) = @_;
 
     # Report errors from scope of caller
     # This feels weirdly backwards here, but oh well:
     local @Selenium::Remote::Driver::CARP_NOT= (@Selenium::Remote::Driver::CARP_NOT, (ref $self)); # we trust this
-    my $eval_in_sandbox = $self->driver->execute_script("return $str");
+    my $eval_in_sandbox = $self->driver->execute_script("return $str", @args);
 
 };
 *eval = \&eval_in_page;
