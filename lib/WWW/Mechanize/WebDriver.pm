@@ -1011,6 +1011,60 @@ sub follow_link {
     }
 }
 
+# We need to trace the path from the root element to every webelement
+# because stupid GhostDriver/Selenium caches elements per document,
+# and not globally, keyed by document. Switching the implied reference
+# document makes lots of API calls fail :-(
+sub activate_parent_container {
+    my( $self, $doc )= @_;
+    $self->activate_container( $doc, 1 );
+};
+
+sub activate_container {
+    my( $self, $doc, $just_parent )= @_;
+    my $driver= $self->driver;
+
+    if( ! $doc->{__path}) {
+        die "Invalid document without __path encountered. I'm sorry.";
+    };
+    # Activate the root window/frame
+    #warn "Activating root frame:";
+    #$driver->switch_to_frame();
+    #warn "Activating root frame done.";
+
+    for my $el ( @{ $doc->{__path} }) {
+        #warn "Switching frames downwards ($el)";
+        #warn "Tag: " . $el->get_tag_name;
+        #use Data::Dumper;
+        #warn Dumper $el;
+        warn sprintf "Switching during path to %s %s", $el->get_tag_name, $el->get_attribute('src');
+        $driver->switch_to_frame( $el );
+    };
+    
+    if( ! $just_parent ) {
+        warn sprintf "Activating container %s too", $doc->{id};
+        # Now, unless it's the root frame, activate the container. The root frame
+        # already is activated above.
+        warn "Getting tag";
+        my $tag= $doc->get_tag_name;
+        #my $src= $doc->get_attribute('src');
+        if( 'html' ne $tag and '' ne $tag) {
+            #warn sprintf "Switching to final container %s %s", $tag, $src;
+            $driver->switch_to_frame( $doc );
+        };
+        #warn sprintf "Switched to final/main container %s %s", $tag, $src;
+    };
+    #warn $self->driver->get_current_url;
+    #warn $self->driver->get_title;
+    #my $body= $doc->get_attribute('contentDocument');
+    my $body= $driver->find_element('/*', 'xpath');
+    if( $body ) {
+        warn "Now active container: " . $body->get_attribute('innerHTML');
+        #$body= $body->get_attribute('document');
+        #warn $body->get_attribute('innerHTML');
+    };
+};
+
 =head2 C<< $mech->xpath( $query, %options ) >>
 
     my $link = $mech->xpath('//a[id="clickme"]', one => 1);
@@ -1117,6 +1171,10 @@ sub xpath {
         $query = [$query];
     };
 
+    if( not exists $options{ frames }) {
+        $options{ frames }= $self->{frames};
+    };
+
     my $single = $options{ single };
     my $first  = $options{ one };
     my $maybe  = $options{ maybe };
@@ -1138,18 +1196,93 @@ sub xpath {
         ) if defined wantarray and !wantarray;
     };
 
-    # XXX I fear we can only search within The One Document, and not
-    #     conveniently within IFRAMEs etc.
     my @res;
 
-    # Now find the elements
-    if ($options{ node }) {
-        @res= map { $self->driver->find_child_elements( $options{ node }, $_ => 'xpath' ) } @$query;
-        #$options{ document } ||= $options{ node }->{ownerDocument};
-    } else {
-        #$options{ document } ||= $self->document;
-        @res= map { $self->driver->find_elements( $_ => 'xpath' ) } @$query;
+    # Save the current frame, because maybe we switch frames while searching
+    # We should ideally save the complete path here, not just the current position
+    if( $options{ document }) {
+        warn sprintf "Document %s", $options{ document }->{id};
     };
+    #my $original_frame= $self->current_frame;
+    
+    # XXX Here we should reset to the main frame?!
+    DOCUMENTS: {
+        my $doc= $options{ document } || $self->document;
+        
+        # This stores the path to this document
+        $doc->{__path}||= [];
+
+        # @documents stores pairs of (containing document element, child element)
+        my @documents= ($doc);
+
+        # recursively join the results of sub(i)frames if wanted
+
+        while (@documents) {
+            my $doc = shift @documents;
+
+            #$self->activate_container( $doc );
+
+            my $q = join "|", @$query;
+            #warn $q;
+            
+            my @found;
+            # Now find the elements
+            if ($options{ node }) {
+                #$doc ||= $options{ node }->get_attribute( 'documentElement' );
+                #if( $options{ document } and $options{ document }->get_tag_name =~ /^i?frame$/i) {
+                #    $self->driver->switch_to_frame( $options{ document });
+                #} elsif( $options{ document } and $options{ document }->get_tag_name =~ /^html$/i) {
+                #    $self->driver->switch_to_frame();
+                #} elsif( $options{ document }) {
+                #    die sprintf "Don't know how to switch to a '%s'", $options{ document }->get_tag_name;
+                #};
+                @found= map { $self->driver->find_child_elements( $options{ node }, $_ => 'xpath' ) } @$query;
+            } else {
+                #warn "Collecting frames";
+                #my $tag= $doc->get_tag_name;
+                #warn "Searching $doc->{id} for @$query";
+                @found= map { $self->driver->find_elements( $_ => 'xpath' ) } @$query;
+                if( ! @found ) {
+                    #warn "Nothing found matching @$query in frame";
+                    #warn $self->content;
+                    #$self->driver->switch_to_frame();
+                };
+                #$self->driver->switch_to_frame();
+                #warn $doc->get_text;
+            };
+            
+            # Remember the path to each found element
+            for( @found ) {
+                # We reuse the reference here instead of copying the list. So don't modify the list.
+                $_->{__path}= $doc->{__path};
+            };
+            
+            push @res, @found;
+            
+            # A small optimization to return if we already have enough elements
+            # We can't do this on $return_first as there might be more elements
+            #if( @res and $options{ return_first } and grep { $_->{resultSize} } @res ) {
+            #    @res= grep { $_->{resultSize} } @res;
+            #    last DOCUMENTS;
+            #};
+            use Data::Dumper;
+            #warn Dumper \@documents;
+            if ($options{ frames } and not $options{ node }) {
+                #warn "Expanding subframes";
+                #warn ">Expanding below " . $doc->get_tag_name() . ' - ' . $doc->get_attribute('title');
+                #local $nesting .= "--";
+                my @d; # = $self->expand_frames( $options{ frames }, $doc );
+                #warn sprintf("Found %s %s pointing to %s", $_->get_tag_name, $_->{id}, $_->get_attribute('src')) for @d;
+                push @documents, @d;
+            };
+        };
+    };
+
+    # Restore frame context
+    #warn "Switching back";
+    #$self->activate_container( $original_frame );
+
+    #@res
 
     # XXX Determine if we want only one element
     #     or a list, like WWW::Mechanize::Firefox
@@ -1579,6 +1712,8 @@ sub form_with_fields {
         user_info => "form with fields [@fields]",
         %$options
     );
+    #warn $form;
+    $self->{current_form};
 };
 
 =head2 C<< $mech->forms( %options ) >>
@@ -1793,7 +1928,9 @@ sub submit {
     my ($self,$dom_form) = @_;
     $dom_form ||= $self->current_form;
     if ($dom_form) {
+        #warn sprintf "Submitting %s %s", $dom_form->get_tag_name, ref $dom_form;
         $dom_form->submit(); # why don't we ->synchronize here??
+        #warn "Submitted";
         $self->signal_http_status;
 
         $self->clear_current_form;
@@ -1801,6 +1938,376 @@ sub submit {
     } else {
         croak "I don't know which form to submit, sorry.";
     }
+};
+
+=head2 C<< $mech->submit_form( %options ) >>
+
+  $mech->submit_form(
+      with_fields => {
+          user => 'me',
+          pass => 'secret',
+      }
+  );
+
+This method lets you select a form from the previously fetched page,
+fill in its fields, and submit it. It combines the form_number/form_name,
+set_fields and click methods into one higher level call. Its arguments are
+a list of key/value pairs, all of which are optional.
+
+=over 4
+
+=item *
+
+C<< form => $mech->current_form() >>
+
+Specifies the form to be filled and submitted. Defaults to the current form.
+
+=item *
+
+C<< fields => \%fields >>
+
+Specifies the fields to be filled in the current form
+
+=item *
+
+C<< with_fields => \%fields >>
+
+Probably all you need for the common case. It combines a smart form selector
+and data setting in one operation. It selects the first form that contains
+all fields mentioned in \%fields. This is nice because you don't need to
+know the name or number of the form to do this.
+
+(calls L<< /$mech->form_with_fields() >> and L<< /$mech->set_fields() >>).
+
+If you choose this, the form_number, form_name, form_id and fields options
+will be ignored.
+
+=back
+
+=cut
+
+sub submit_form {
+    my ($self,%options) = @_;
+    
+    my $form = delete $options{ form };
+    my $fields;
+    if (! $form) {
+        if ($fields = delete $options{ with_fields }) {
+            my @names = keys %$fields;
+            warn Dumper \%options;
+            $form = $self->form_with_fields( \%options, @names );
+            if (! $form) {
+                $self->signal_condition("Couldn't find a matching form for @names.");
+                return
+            };
+        } else {
+            $fields = delete $options{ fields } || {};
+            $form = $self->current_form;
+        };
+    };
+    
+    if (! $form) {
+        $self->signal_condition("No form found to submit.");
+        return
+    };
+    $self->do_set_fields( form => $form, fields => $fields );
+    $self->submit($form);
+}
+
+=head2 C<< $mech->set_fields( $name => $value, ... ) >>
+
+  $mech->set_fields(
+      user => 'me',
+      pass => 'secret',
+  );
+
+This method sets multiple fields of the current form. It takes a list of
+field name and value pairs. If there is more than one field with the same
+name, the first one found is set. If you want to select which of the
+duplicate field to set, use a value which is an anonymous array which
+has the field value and its number as the 2 elements.
+
+=cut
+
+sub set_fields {
+    my ($self, %fields) = @_;
+    my $f = $self->current_form;
+    if (! $f) {
+        croak "Can't set fields: No current form set.";
+    };
+    $self->do_set_fields(form => $f, fields => \%fields);
+};
+
+sub do_set_fields {
+    my ($self, %options) = @_;
+    my $form = delete $options{ form };
+    my $fields = delete $options{ fields };
+    
+    while (my($n,$v) = each %$fields) {
+        if (ref $v) {
+            ($v,my $num) = @$v;
+            warn "Index larger than 1 not supported, ignoring"
+                unless $num == 1;
+        };
+        
+        $self->get_set_value( node => $form, name => $n, value => $v, %options );
+    }
+};
+
+=head2 C<< $mech->expand_frames( $spec ) >>
+
+  my @frames = $mech->expand_frames();
+
+Expands the frame selectors (or C<1> to match all frames)
+into their respective WebDriver nodes according to the current
+document. All frames will be visited in breadth first order.
+
+This is mostly an internal method.
+
+=cut
+
+sub expand_frames {
+    my ($self, $spec, $document) = @_;
+    $spec ||= $self->{frames};
+    my @spec = ref $spec ? @$spec : $spec;
+    $document ||= $self->document;
+    
+    if (! ref $spec and $spec !~ /\D/ and $spec == 1) {
+        # All frames
+        @spec = qw( frame iframe );
+    };
+    
+    # Optimize the default case of only names in @spec
+    my @res;
+    if (! grep {ref} @spec) {
+        @res = $self->selector(
+                        \@spec,
+                        document => $document,
+                        frames => 0, # otherwise we'll recurse :)
+                    );
+    } else {
+        @res = 
+            map { #warn "Expanding $_";
+                    ref $_
+                  ? $_
+                  # Just recurse into the above code path
+                  : $self->expand_frames( $_, $document );
+            } @spec;
+    }
+    
+    @res
+};
+
+
+=head2 C<< $mech->current_frame >>
+
+    my $last_frame= $mech->current_frame;
+    # Switch frame somewhere else
+    
+    # Switch back
+    $mech->activate_container( $last_frame );
+
+Returns the currently active frame as a WebElement.
+
+This is mostly an internal method.
+
+B<XXX> This should return the path to the current frame, not just the single frame.
+
+See also
+
+L<http://code.google.com/p/selenium/issues/detail?id=4305>
+
+=cut
+
+sub current_frame {
+    my( $self )= @_;
+    my @res;
+    my $current= $self->make_WebElement( $self->eval('window'));
+    warn sprintf "Current_frame: bottom: %s", $current->{id};
+    
+    # Now climb up until the root window
+    my $f= $current;
+    my @chain;
+    warn "Walking up to root document";
+    while( $f= $self->driver->execute_script('return arguments[0].frameElement', $f )) {
+        $f= $self->make_WebElement( $f );
+        unshift @res, $f;
+        warn sprintf "One more level up, now in %s", 
+            $f->{id};
+        warn $self->driver->execute_script('return arguments[0].title', $res[0]);
+        unshift @chain,
+            sprintf "Frame chain: %s %s", $res[0]->get_tag_name, $res[0]->{id};
+        # Activate that frame
+        $self->switch_to_parent_frame();
+        warn "Going up once more, maybe";
+    };
+    warn "Chain complete";
+    warn $_
+        for @chain;
+    
+    # Now fake the element into 
+    my $el= $self->make_WebElement( $current );
+    for( @res ) {
+        warn sprintf "Path has (web element) id %s", $_->{id};
+    };
+    $el->{__path}= \@res;
+    $el
+}
+
+sub switch_to_parent_frame {
+    #use JSON;
+    my ( $self ) = @_;
+
+    $self->{driver}->{commands}->{'switchToParentFrame'}||= {
+        'method' => 'POST',
+        'url' => "session/:sessionId/frame/parent"
+    };
+
+    #my $json_null = JSON::null;
+    my $params;
+    #$id = ( defined $id ) ? $id : $json_null;
+
+    my $res    = { 'command' => 'switchToParentFrame' };
+    return $self->driver->_execute_command( $res, $params );
+}
+
+sub make_WebElement {
+    my( $self, $e )= @_;
+    return $e
+        if( blessed $e and $e->isa('Selenium::Remote::WebElement'));
+    my $res= Selenium::Remote::WebElement->new( $e->{WINDOW} || $e->{ELEMENT}, $self->driver );
+    croak "No id in " . Dumper $res
+        unless $res->{id};
+    
+    $res
+}
+
+=head1 IMAGE METHODS
+
+=head2 C<< $mech->content_as_png( [$tab, \%coordinates, \%target_size ] ) >>
+
+    my $png_data = $mech->content_as_png();
+
+    # Create scaled-down 480px wide preview
+    my $png_data = $mech->content_as_png(undef, undef, { width => 480 });
+
+Returns the given tab or the current page rendered as PNG image.
+
+All parameters are optional. 
+
+=over 4
+
+=item *
+
+C<$tab> defaults to the current tab.
+
+=item *
+
+If the coordinates are given, that rectangle will be cut out.
+The coordinates should be a hash with the four usual entries,
+C<left>,C<top>,C<width>,C<height>.
+
+=item *
+
+The target size of the image can also be given. It defaults to
+the size of the image. The allowed parameters in the hash are
+
+C<scalex>, C<scaley> - for specifying the scale, default is 1.0 in each direction.
+
+C<width>, C<height> - for specifying the target size
+
+If you want the resulting image to be 480 pixels wide, specify
+
+    { width => 480 }
+
+The height will then be calculated from the ratio of original width to
+original height.
+
+=back
+
+This method is specific to WWW::Mechanize::Firefox.
+
+Currently, the data transfer between Firefox and Perl
+is done Base64-encoded. It would be beneficial to find what's
+necessary to make JSON handle binary data more gracefully.
+
+=cut
+
+sub content_as_png {
+    my ($self, $tab, $rect, $target_rect) = @_;
+    #$tab ||= $self->tab;
+    $rect ||= {};
+    $target_rect ||= {};
+    
+    require MIME::Base64;
+    my $png_base64 = $self->driver->screenshot();
+    return MIME::Base64::decode_base64($png_base64);
+};
+
+=head2 C<< $mech->viewport_size >>
+
+  print Dumper $mech->viewport_size;
+  $mech->viewport_size({ width => 1388, height => 792 });
+
+Returns (or sets) the new size of the viewport (the "window").
+
+=cut
+
+sub viewport_size {
+    my( $self, $new )= @_;
+    
+    $self->eval_in_phantomjs( <<'JS', $new );
+        var viewportSize= this.clipRect;
+        if( arguments[0]) {
+            this.clipRect= arguments[0];
+        };
+        viewportSize
+JS
+};
+
+=head2 C<< $mech->element_as_png( $element ) >>
+
+    my $shiny = $mech->selector('#shiny', single => 1);
+    my $i_want_this = $mech->element_as_png($shiny);
+
+Returns PNG image data for a single element
+
+=cut
+
+sub element_as_png {
+    my ($self, $element) = @_;
+
+    my $cliprect = $self->element_coordinates( $element );
+
+    my $code = <<'JS';
+       var old= this.clipRect;
+       this.clipRect= arguments[0];
+JS
+
+    my $old= $self->eval_in_phantomjs( $code, $cliprect );
+    my $png= $self->content_as_png();
+    warn Dumper $old;
+    $self->eval_in_phantomjs( $code, $old );
+    $png
+};
+
+=head2 C<< $mech->element_coordinates( $element ) >>
+
+    my $shiny = $mech->selector('#shiny', single => 1);
+    my ($pos) = $mech->element_coordinates($shiny);
+    print $pos->{left},',', $pos->{top};
+
+Returns the page-coordinates of the C<$element>
+in pixels as a hash with four entries, C<left>, C<top>, C<width> and C<height>.
+
+This function might get moved into another module more geared
+towards rendering HTML.
+
+=cut
+
+sub element_coordinates {
+    my ($self, $element) = @_;
+    my $cliprect = $self->eval('arguments[0].getBoundingClientRect()', $element );
 };
 
 1;
