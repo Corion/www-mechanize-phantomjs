@@ -92,9 +92,9 @@ sub document {
     $_[0]->driver->find_element('html','tag_name');
 }
 
-=head2 C<< $mech->eval_in_page( $str [, $env [, $document]] ) >>
+=head2 C<< $mech->eval_in_page( $str, @args ) >>
 
-=head2 C<< $mech->eval( $str [, $env [, $document]] ) >>
+=head2 C<< $mech->eval( $str, @args ) >>
 
   my ($value, $type) = $mech->eval( '2+2' );
 
@@ -105,28 +105,7 @@ Returns a pair of value and Javascript type.
 This allows access to variables and functions declared
 "globally" on the web page.
 
-The returned result needs to be treated with
-extreme care because
-it might lead to Javascript execution in the context of
-your application instead of the context of the webpage.
-This should be evident for functions and complex data
-structures like objects. When working with results from
-untrusted sources, you can only safely use simple
-types like C<string>.
-
-If you want to modify the environment the code is run under,
-pass in a hash reference as the second parameter. All keys
-will be inserted into the C<this> object as well as
-C<this.window>. Also, complex data structures are only
-supported if they contain no objects.
-If you need finer control, you'll have to
-write the Javascript yourself.
-
-This method is special to WWW::Mechanize::Firefox.
-
-Also, using this method opens a potential B<security risk> as
-the returned values can be objects and using these objects
-can execute malicious code in the context of the Firefox application.
+This method is special to WWW::Mechanize::WebDriver.
 
 =cut
 
@@ -137,7 +116,6 @@ sub eval_in_page {
     # This feels weirdly backwards here, but oh well:
     local @Selenium::Remote::Driver::CARP_NOT= (@Selenium::Remote::Driver::CARP_NOT, (ref $self)); # we trust this
     my $eval_in_sandbox = $self->driver->execute_script("return $str", @args);
-
 };
 *eval = \&eval_in_page;
 
