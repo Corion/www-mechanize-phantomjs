@@ -52,11 +52,15 @@ sub new {
 
     $options{ port } ||= 4446;
 
-    # XXX Need autodie
+    if (! exists $options{ autodie }) { $options{ autodie } = 1 };
+
+    if( ! exists $options{ frames }) {
+        $options{ frames }= 1;
+    };
 
     # Launch PhantomJs
     $options{ launch_exe } ||= 'phantomjs';
-    $options{ launch_arg } ||= [ "--webdriver=$options{ port }", #"--webdriver-loglevel=ERROR",
+    $options{ launch_arg } ||= [ "--webdriver=$options{ port }",
                                ];
     my $cmd= "| $options{ launch_exe } @{ $options{ launch_arg } }";
     $options{ pid } ||= open my $fh, $cmd
@@ -305,7 +309,6 @@ sub get_local {
              );
     $fn =~ s!\\!/!g; # fakey "make file:// URL"
     my $url= "file:/$fn";
-    #warn $url;
 
     my $res= $self->get($url, %options);
 
@@ -318,6 +321,101 @@ sub get_local {
         $res->code( 400 ); # Must have been "not found"
     };
     $res
+}
+
+=head2 C<< $mech->post( $url, %options ) >>
+
+  $mech->post( 'http://example.com',
+      params => { param => "Hello World" },
+      headers => {
+        "Content-Type" => 'application/x-www-form-urlencoded',
+      },
+      charset => 'utf-8',
+  );
+
+Sends a POST request to C<$url>.
+
+A C<Content-Length> header will be automatically calculated if
+it is not given.
+
+The following options are recognized:
+
+=over 4
+
+=item *
+
+C<headers> - a hash of HTTP headers to send. If not given,
+the content type will be generated automatically.
+
+=item *
+
+C<data> - the raw data to send, if you've encoded it already.
+
+=back
+
+=cut
+
+sub post {
+    my ($self, $url, %options) = @_;
+    #my $b = $self->tab->{linkedBrowser};
+    $self->clear_current_form;
+
+    #my $flags = 0;
+    #if ($options{no_cache}) {
+    #  $flags = $self->repl->constant('nsIWebNavigation.LOAD_FLAGS_BYPASS_CACHE');
+    #};
+    #if (! exists $options{synchronize}) {
+    #  $options{synchronize} = $self->events;
+    #};
+    #if( !ref $options{synchronize}) {
+    #  $options{synchronize} = $options{synchronize}
+    #                          ? $self->events
+    #                          : []
+    #};
+
+    # If we don't have data, encode the parameters:
+    if( !$options{ data }) {
+        my $req= HTTP::Request::Common::POST( $url, $options{params} );
+        #warn $req->content;
+        carp "Faking content from parameters is not yet supported.";
+        #$options{ data } = $req->content;
+    };
+
+    #$options{ charset } ||= 'utf-8';
+    #$options{ headers } ||= {};
+    #$options{ headers }->{"Content-Type"} ||= "application/x-www-form-urlencoded";
+    #if( $options{ charset }) {
+    #    $options{ headers }->{"Content-Type"} .= "; charset=$options{ charset }";
+    #};
+
+    # Javascript POST implementation taken from
+    # http://stackoverflow.com/questions/133925/javascript-post-request-like-a-form-submit
+    $self->eval(<<'JS', $url, $options{ params }, 'POST');
+        function (path, params, method) {
+            method = method || "post"; // Set method to post by default if not specified.
+
+            // The rest of this code assumes you are not using a library.
+            // It can be made less wordy if you use one.
+            var form = document.createElement("form");
+            form.setAttribute("method", method);
+            form.setAttribute("action", path);
+
+            for(var key in params) {
+                if(params.hasOwnProperty(key)) {
+                    var hiddenField = document.createElement("input");
+                    hiddenField.setAttribute("type", "hidden");
+                    hiddenField.setAttribute("name", key);
+                    hiddenField.setAttribute("value", params[key]);
+
+                    form.appendChild(hiddenField);
+                 }
+            }
+
+            document.body.appendChild(form);
+            form.submit();
+        }
+JS
+    # XXX Now, how to trick Selenium into fetching the response?
 }
 
 =head2 C<< $mech->add_header( $name => $value, ... ) >>
@@ -389,6 +487,7 @@ sub decoded_content {
     $_[0]->driver->get_page_source
 };
 
+# Also webPage.setContent() for ->update_html()
 sub content {
     my ($self, %options) = @_;
     $options{ format } ||= 'html';
@@ -597,7 +696,7 @@ sub signal_condition {
 sub signal_http_status {
     my ($self) = @_;
     if ($self->{autodie}) {
-        if ($self->status !~ /^2/) {
+        if ($self->status and $self->status !~ /^2/ and $self->status != 0) {
             # there was an error
             croak ($self->response(headers => 0)->message || sprintf "Got status code %d", $self->status );
         };
@@ -875,7 +974,7 @@ sub find_link_dom {
                     sprintf "//%s", $_
                 };
             }  (@tags);
-    warn $q;
+    #warn $q;
 
     my @res = $self->xpath($q, %xpath_options );
 
