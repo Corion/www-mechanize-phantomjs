@@ -416,12 +416,16 @@ Note that currently, we only support one value per header.
 
 sub add_header {
     my ($self, @headers) = @_;
-    my $headers= $self->eval_in_phantomjs('this.customHeaders');
+    use Data::Dumper;
+    #warn Dumper $headers;
     
     while( my ($k,$v) = splice @headers, 0, 2 ) {
-        $headers->{$k} = $v;
+        $self->eval_in_phantomjs(<<'JS', , $k, $v);
+            var h= this.customHeaders;
+            h[arguments[0]]= arguments[1];
+            this.customHeaders= h;
+JS
     };
-    $self->eval_in_phantomjs('this.customHeaders= arguments[0]', $headers);
 };
 
 =head2 C<< $mech->delete_header( $name , $name2... ) >>
@@ -436,12 +440,13 @@ that Firefox may still send a header with its default value.
 sub delete_header {
     my ($self, @headers) = @_;
     
-    my $headers= $self->eval_in_phantomjs('this.customHeaders');
-    if( @headers ) {
-        delete $headers->{$_}
-            for( @headers );
-    };
-    $self->eval_in_phantomjs('this.customHeaders= arguments[0]', $headers);
+    $self->eval_in_phantomjs(<<'JS', @headers);
+        var headers= this.customHeaders;
+        for( var i = 0; i < arguments.length; i++ ) {
+            delete headers[arguments[i]];
+        };
+        this.customHeaders= headers;
+JS
 };
 
 =head2 C<< $mech->reset_headers >>
