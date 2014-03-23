@@ -10,3 +10,6 @@ phantomjs-versions/
 .releaserc
 cover_db
 MYMETA.*
+ghostdriver/binding
+ghostdriver/test
+ghostdriver/tools
