@@ -73,7 +73,18 @@ sub new {
         auto_close => 1,
      );
 
-     bless \%options => $class;
+     my $self= bless \%options => $class;
+     
+     $self->eval_in_phantomjs(<<'JS');
+         var page= this;
+         page.errors= [];
+         page.onError= function(msg, trace) {
+             //_log.warn("Caught JS error", msg);
+             page.errors.push({ "message": msg, "trace": trace });
+         };
+JS
+     
+     $self
 };
 
 sub driver {
@@ -81,12 +92,62 @@ sub driver {
 };
 
 sub autodie {
-    warn "->autodie() is currently a dummy.";
+    my( $self, $val )= @_;
+    $self->{autodie} = $val
+        if @_ == 2;
+    $_[0]->{autodie}
 }
 
 sub allow {
-    warn "->allow() is currently a dummy.";
+    my($self,%options)= @_;
+    for my $opt (keys %options) {
+        if( 'javascript' eq $opt ) {
+            $self->eval_in_phantomjs(<<'JS', $options{ $opt });
+                this.settings.javascriptEnabled= arguments[0]
+JS
+        } else {
+            warn "->allow('$opt', ...) is currently a dummy.";
+        };
+    };
 }
+
+=head2 C<< $mech->js_errors() >>
+
+  print $_->{message}
+      for $mech->js_errors();
+
+An interface to the Javascript Error Console
+
+Returns the list of errors in the JEC
+
+Maybe this should be called C<js_messages> or
+C<js_console_messages> instead.
+
+=cut
+
+sub js_errors {
+    my ($self) = @_;
+    my $errors= $self->eval_in_phantomjs(<<'JS');
+        return this.errors
+JS
+    @$errors
+}
+
+=head2 C<< $mech->clear_js_errors() >>
+
+    $mech->clear_js_errors();
+
+Clears all Javascript messages from the console
+
+=cut
+
+sub clear_js_errors {
+    my ($self) = @_;
+    my $errors= $self->eval_in_phantomjs(<<'JS');
+        this.errors= [];
+JS
+
+};
 
 sub document {
     $_[0]->driver->find_element('html','tag_name');
