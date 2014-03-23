@@ -1,5 +1,5 @@
 use strict;
-use WWW::Mechanize::WebDriver;
+use WWW::Mechanize::PhantomJS;
 use Time::HiRes;
 use Test::More;
 use lib 'inc', '../inc';
@@ -8,14 +8,14 @@ use Test::HTTP::LocalServer;
 use t::helper;
 
 if (my $err = t::helper::default_unavailable) {
-    plan skip_all => "Couldn't connect to WebDriver: $@";
+    plan skip_all => "Couldn't connect to PhantomJS: $@";
     exit
 } else {
     plan tests => 11;
 };
 
 my $mech=
-    WWW::Mechanize::WebDriver->new(
+    WWW::Mechanize::PhantomJS->new(
         autodie => 0,
         launch_exe => 'phantomjs-versions\phantomjs-1.9.2-windows\phantomjs',
         launch_arg => ['ghostdriver\src\main.js' ],

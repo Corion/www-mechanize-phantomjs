@@ -2,13 +2,13 @@
 use strict;
 use Test::More;
 use File::Basename;
-use WWW::Mechanize::WebDriver;
+use WWW::Mechanize::PhantomJS;
 use lib 'inc', '../inc';
 use Test::HTTP::LocalServer;
 
-my $mech = eval { WWW::Mechanize::WebDriver->new( 
+my $mech = eval { WWW::Mechanize::PhantomJS->new( 
     autodie => 1,
-    launch_exe => 'phantomjs-versions\phantomjs-1.9.2-windows\phantomjs',
+    launch_exe => 'phantomjs-versions\phantomjs-1.9.7-windows\phantomjs',
     launch_arg => ['ghostdriver\src\main.js' ],
     port => 8910, # XXX
     #log => [qw[debug]],

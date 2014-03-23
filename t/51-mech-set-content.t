@@ -1,11 +1,11 @@
 #!perl -w
 use strict;
 use Test::More;
-use WWW::Mechanize::WebDriver;
+use WWW::Mechanize::PhantomJS;
 use lib 'inc', '../inc';
 use Test::HTTP::LocalServer;
 
-my $mech = eval { WWW::Mechanize::WebDriver->new( 
+my $mech = eval { WWW::Mechanize::PhantomJS->new( 
     autodie => 1,
     launch_exe => 'phantomjs-versions\phantomjs-1.9.7-windows\phantomjs',
     launch_arg => ['ghostdriver\src\main.js' ],
@@ -23,16 +23,16 @@ if (! $mech) {
     plan tests => 2;
 };
 
-isa_ok $mech, 'WWW::Mechanize::WebDriver';
+isa_ok $mech, 'WWW::Mechanize::PhantomJS';
 
 my $content = <<HTML;
 <html>
 <head>
-<title>Hello WebDriver!</title>
+<title>Hello PhantomJS!</title>
 </head>
 <body>
 <h1>Hello World!</h1>
-<p>Hello <b>WWW::Mechanize::WebDriver</b></p>
+<p>Hello <b>WWW::Mechanize::PhantomJS</b></p>
 </body>
 </html>
 HTML

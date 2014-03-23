@@ -1,6 +1,6 @@
-package WWW::Mechanize::WebDriver::DSL;
+package WWW::Mechanize::PhantomJS::DSL;
 use strict;
-use WWW::Mechanize::WebDriver;
+use WWW::Mechanize::PhantomJS;
 use Object::Import;
 use Carp qw(croak);
 
@@ -8,16 +8,16 @@ use vars qw($VERSION @CARP_NOT);
 $VERSION= '0.01';
 
 @CARP_NOT = (qw[
-    WWW::Mechanize::WebDriver
+    WWW::Mechanize::PhantomJS
 ]);
 
 =head1 NAME
 
-WWW::Mechanize::WebDriver::DSL - Domain Specific Language for short scripts
+WWW::Mechanize::PhantomJS::DSL - Domain Specific Language for short scripts
 
 =head1 SYNOPSIS
 
-    use WWW::Mechanize::WebDriver::DSL '$mech';
+    use WWW::Mechanize::PhantomJS::DSL '$mech';
 
     get 'http://google.de';
     
@@ -28,7 +28,7 @@ WWW::Mechanize::WebDriver::DSL - Domain Specific Language for short scripts
     
     print content;
 
-This module exports all methods of one WWW::Mechanize::WebDriver
+This module exports all methods of one WWW::Mechanize::PhantomJS
 object as subroutines. That way, you can write short scripts without
 cluttering every line with C<< $mech-> >>.
 
@@ -46,7 +46,7 @@ sub import {
     };
     my $target = delete $options{ target } || caller;
     my $name = delete $options{ name } || '$mech';
-    my $mech = WWW::Mechanize::WebDriver->new(%options);
+    my $mech = WWW::Mechanize::PhantomJS->new(%options);
     
     $name =~ s/^[\$]//
         or croak 'Variable name must start with $';

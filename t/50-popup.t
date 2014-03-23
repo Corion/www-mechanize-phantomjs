@@ -1,12 +1,12 @@
 #!perl -w
 use strict;
 use Test::More;
-use WWW::Mechanize::Firefox;
+use WWW::Mechanize::PhantomJS;
 
 plan skip_all => "Opening windows are not yet tracked";
 exit;
 
-my $mech = eval { WWW::Mechanize::Firefox->new( 
+my $mech = eval { WWW::Mechanize::PhantomJS->new( 
     autodie => 0,
     #events => [ 'DOMWindowOpened', 'DOMContentLoaded', 'load'], # domwindowclosed
     # then add a window.onload handler to check whether it's a new browser
@@ -20,7 +20,7 @@ if (! $mech) {
     plan tests => 16;
 };
 
-isa_ok $mech, 'WWW::Mechanize::Firefox';
+isa_ok $mech, 'WWW::Mechanize::PhantomJS';
 $mech->autodie(1);
 
 $mech->get_local('50-click.html');

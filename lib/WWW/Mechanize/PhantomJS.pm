@@ -1,4 +1,4 @@
-package WWW::Mechanize::WebDriver;
+package WWW::Mechanize::PhantomJS;
 use strict;
 use Selenium::Remote::Driver;
 use WWW::Mechanize::Plugin::Selector;
@@ -14,7 +14,7 @@ $VERSION= '0.01';
 
 =head1 NAME
 
-WWW::Mechanize::WebDriver - automate a Selenium webdriver capable browser
+WWW::Mechanize::PhantomJS - automate a Selenium PhantomJS capable browser
 
 =cut
 
@@ -60,7 +60,7 @@ sub new {
 
     # Launch PhantomJs
     $options{ launch_exe } ||= 'phantomjs';
-    $options{ launch_arg } ||= [ "--webdriver=$options{ port }",
+    $options{ launch_arg } ||= [ "--PhantomJS=$options{ port }",
                                ];
     my $cmd= "| $options{ launch_exe } @{ $options{ launch_arg } }";
     $options{ pid } ||= open my $fh, $cmd
@@ -166,7 +166,7 @@ Returns a pair of value and Javascript type.
 This allows access to variables and functions declared
 "globally" on the web page.
 
-This method is special to WWW::Mechanize::WebDriver.
+This method is special to WWW::Mechanize::PhantomJS.
 
 =cut
 
@@ -208,14 +208,14 @@ sub eval_in_phantomjs {
     $self->driver->_execute_command({ command => 'phantomExecute' }, $params);
 };
 
-=head2 C<< $mech->webdriver_elementToJS >>
+=head2 C<< $mech->PhantomJS_elementToJS >>
 
-Returns the Javascript fragment to turn a Selenium::Remote::WebDriver
+Returns the Javascript fragment to turn a Selenium::Remote::PhantomJS
 id back to a Javascript object.
 
 =cut
 
-sub webdriver_elementToJS {
+sub PhantomJS_elementToJS {
     <<'JS'
     function(id,doc_opt){
         var d = doc_opt || document;
@@ -328,7 +328,7 @@ paths will be interpreted as relative to C<$0>.
 
 This method accepts the same options as C<< ->get() >>.
 
-This method is special to WWW::Mechanize::WebDriver but could
+This method is special to WWW::Mechanize::PhantomJS but could
 also exist in WWW::Mechanize through a plugin.
 
 B<Warning>: PhantomJs does not handle local files well. Especially
@@ -1742,7 +1742,7 @@ This method is incompatible with L<WWW::Mechanize>.
 It returns the DOM C<< <form> >> object and not
 a L<HTML::Form> instance.
 
-The current form will be reset by WWW::Mechanize::WebDriver
+The current form will be reset by WWW::Mechanize::PhantomJS
 on calls to C<< ->get() >> and C<< ->get_local() >>,
 and on calls to C<< ->submit() >> and C<< ->submit_with_fields >>.
 
@@ -2030,7 +2030,7 @@ sub get_set_value {
             if ('select' eq $tag) {
                 $self->select($fields[0], $value);
             } else {
-                my $get= $self->webdriver_elementToJS();
+                my $get= $self->PhantomJS_elementToJS();
                 my $val= quotemeta($value);
                 my $js= <<JS;
                     var g=$get;
@@ -2216,7 +2216,7 @@ sub do_set_fields {
   my @frames = $mech->expand_frames();
 
 Expands the frame selectors (or C<1> to match all frames)
-into their respective WebDriver nodes according to the current
+into their respective PhantomJS nodes according to the current
 document. All frames will be visited in breadth first order.
 
 This is mostly an internal method.

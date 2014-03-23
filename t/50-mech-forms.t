@@ -1,12 +1,12 @@
 #!perl -w
 use strict;
 use Test::More;
-use WWW::Mechanize::WebDriver;
+use WWW::Mechanize::PhantomJS;
 use lib 'inc', '../inc';
 
-my $mech = eval { WWW::Mechanize::WebDriver->new( 
+my $mech = eval { WWW::Mechanize::PhantomJS->new( 
     autodie => 1,
-    launch_exe => 'phantomjs-versions\phantomjs-1.9.2-windows\phantomjs',
+    launch_exe => 'phantomjs-versions\phantomjs-1.9.7-windows\phantomjs',
     launch_arg => ['ghostdriver\src\main.js' ],
     port => 8910, # XXX
     #log => [qw[debug]],
@@ -20,7 +20,7 @@ if (! $mech) {
     plan tests => 14;
 };
 
-isa_ok $mech, 'WWW::Mechanize::WebDriver';
+isa_ok $mech, 'WWW::Mechanize::PhantomJS';
 
 $mech->get_local('50-click.html');
 

@@ -4,12 +4,12 @@
 use strict;
 
 
-use WWW::Mechanize::WebDriver;
+use WWW::Mechanize::PhantomJS;
 use lib 'inc', '../inc';
 use Test::HTTP::LocalServer;
 use Test::More;
 
-my $mech = eval { WWW::Mechanize::WebDriver->new( 
+my $mech = eval { WWW::Mechanize::PhantomJS->new( 
     autodie => 1,
     launch_exe => 'phantomjs-versions\phantomjs-1.9.7-windows\phantomjs',
     launch_arg => ['ghostdriver\src\main.js' ],

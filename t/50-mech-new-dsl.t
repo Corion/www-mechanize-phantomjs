@@ -6,11 +6,11 @@ use File::Basename;
 #use WWW::Mechanize::Firefox::DSL;
 BEGIN {
     my $err;
-    require WWW::Mechanize::WebDriver::DSL;
+    require WWW::Mechanize::PhantomJS::DSL;
     my $ok = eval { 
-        WWW::Mechanize::WebDriver::DSL->import(
+        WWW::Mechanize::PhantomJS::DSL->import(
             autodie => 1,
-            launch_exe => 'phantomjs-versions\phantomjs-1.9.2-windows\phantomjs',
+            launch_exe => 'phantomjs-versions\phantomjs-1.9.7-windows\phantomjs',
             launch_arg => ['ghostdriver\src\main.js' ],
             port => 8910, # XXX
         );
@@ -19,7 +19,7 @@ BEGIN {
     $err ||= $@;
     
     if (!$ok || $err) {
-        plan skip_all => "Couldn't connect to WebDriver: $@";
+        plan skip_all => "Couldn't connect to PhantomJS: $@";
         exit
     } else {
         plan tests => 2;

@@ -8,7 +8,7 @@ use Test::More tests => 1;
 my $module;
 
 BEGIN {
-   $module  = "WWW::Mechanize::WebDriver";
+   $module  = "WWW::Mechanize::PhantomJS";
    require_ok( $module );
 }
 
