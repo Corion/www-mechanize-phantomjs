@@ -2,11 +2,11 @@
 use strict;
 use lib 'lib';
 use Data::Dumper;
-use WWW::Mechanize::WebDriver;
+use WWW::Mechanize::PhantomJS;
 use Test::More tests => 6;
 
-my $mech= WWW::Mechanize::WebDriver->new(
-    launch_exe => 'phantomjs-versions\phantomjs-1.9.2-windows\phantomjs',
+my $mech= WWW::Mechanize::PhantomJS->new(
+    launch_exe => 'phantomjs-versions\phantomjs-1.9.7-windows\phantomjs',
     launch_arg => ['ghostdriver\src\main.js' ],
     port => 8910,
 );

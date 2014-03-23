@@ -1,4 +1,9 @@
 TO DO:
 
-0.01 to be released
+0.01 20140323
     . Released unto a propably suspecting audience
+    . Most likely, this fails its tests because the appropriate
+      phantomjs executable is not found and the proper
+      ghostdriver files are not found.
+
+      This will likely be fixed in a later release.

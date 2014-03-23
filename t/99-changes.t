@@ -12,7 +12,7 @@ release date is mentioned as well
 
 =cut
 
-my $module = 'WWW::Mechanize::Firefox';
+my $module = 'WWW::Mechanize::PhantomJS';
 
 (my $file = $module) =~ s!::!/!g;
 require "$file.pm";

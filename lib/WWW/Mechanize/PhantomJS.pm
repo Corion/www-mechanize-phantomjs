@@ -303,7 +303,7 @@ sub update_response {
     my @headers= map {;@{$_}{qw(name value)}} @{ $phantom_res->{headers} };
     my $res= HTTP::Response->new( $phantom_res->{status}, $phantom_res->{statusText}, \@headers );
 
-    # XXX should we fetch the response body?!
+    # Should we fetch the response body?!
 
     delete $self->{ current_form };
 
@@ -454,7 +454,7 @@ sub post {
             form.submit();
         }
 JS
-    # XXX Now, how to trick Selenium into fetching the response?
+    # Now, how to trick Selenium into fetching the response?
 }
 
 =head2 C<< $mech->add_header( $name => $value, ... ) >>
@@ -1362,7 +1362,6 @@ sub xpath {
     };
     #my $original_frame= $self->current_frame;
     
-    # XXX Here we should reset to the main frame?!
     DOCUMENTS: {
         my $doc= $options{ document } || $self->document;
         
@@ -1441,7 +1440,7 @@ sub xpath {
 
     #@res
 
-    # XXX Determine if we want only one element
+    # Determine if we want only one element
     #     or a list, like WWW::Mechanize::Firefox
 
     if (! $zero_allowed and @res == 0) {
@@ -1764,13 +1763,10 @@ sub active_form {
     my $focus= $self->driver->get_active_element;
 
     if( !$focus ) {
-        # XXX Signal the error
         warn "No active element, hence no active form";
         return
     };
 
-    #my $form= $self->xpath( './/ancestor-or-self::FORM', node => $focus, maybe => 1 );
-    #my $form= $self->xpath( './ancestor-or-self::FORM', node => $focus, maybe => 1 );
     my $form= $self->xpath( './ancestor-or-self::FORM', node => $focus, maybe => 1 );
 
 }
@@ -2268,11 +2264,11 @@ Returns the currently active frame as a WebElement.
 
 This is mostly an internal method.
 
-B<XXX> This should return the path to the current frame, not just the single frame.
-
 See also
 
 L<http://code.google.com/p/selenium/issues/detail?id=4305>
+
+Frames are currently not really supported./root/update-wan-ip --verbose --server ns.datenzoo.de -h mychat.dyn.datenzoo.de -f /root/Kdyn-datenzoo-de+157+57591.privatevers
 
 =cut
 

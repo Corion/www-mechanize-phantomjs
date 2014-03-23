@@ -5,6 +5,11 @@ use strict;
 use Test::More;
 use File::Find;
 
+if( ! -d 'examples' ) {
+    plan 'skip_all', "No examples directory found";
+    exit;
+};
+
 plan 'no_plan';
 
 sub check {

@@ -6,7 +6,7 @@ use ExtUtils::MakeMaker qw(WriteMakefile);
 # the contents of the Makefile that is written.
 
 # I should maybe use something like Shipwright...
-regen_README('lib/WWW/Mechanize/WebDriver.pm');
+regen_README('lib/WWW/Mechanize/PhantomJS.pm');
 regen_EXAMPLES();
 
 my @tests = map { glob $_ } 't/*.t', 't/*/*.t';
@@ -15,14 +15,14 @@ WriteMakefile1(
     MIN_PERL_VERSION => '5.006',
     META_MERGE => {
         resources => {
-            repository => 'http://github.com/Corion/www-mechanize-webdriver',
+            repository => 'http://github.com/Corion/www-mechanize-phantomjs',
         },
     },
     BUILD_REQUIRES => {
     },
-    'NAME'          => 'WWW::Mechanize::WebDriver',
+    'NAME'          => 'WWW::Mechanize::PhantomJS',
     'LICENSE'       => 'perl',
-    'VERSION_FROM'  => 'lib/WWW/Mechanize/WebDriver.pm', # finds $VERSION
+    'VERSION_FROM'  => 'lib/WWW/Mechanize/PhantomJS.pm', # finds $VERSION
     'PREREQ_PM'     => { 
                         'Carp' => 0,
                         'Scalar::Util' => 0, # for blessed()
@@ -33,7 +33,7 @@ WriteMakefile1(
                         'HTTP::Daemon' => 0, # just for testing
                         'LWP::Simple' => 0, # just for testing
                       }, # e.g., Module::Name => 1.1
-    ABSTRACT_FROM   => 'lib/WWW/Mechanize/WebDriver.pm', # retrieve abstract from module
+    ABSTRACT_FROM   => 'lib/WWW/Mechanize/PhantomJS.pm', # retrieve abstract from module
     AUTHOR          => 'Max Maischein <corion@cpan.org>',
     test            => { TESTS => join( ' ', @tests ) },
 );
@@ -88,14 +88,14 @@ sub regen_README {
 
 sub regen_EXAMPLES {
     my $perl = $^X;
-    warn "(Re)Creating lib/WWW/Mechanize/WebDriver/Examples.pm\n";
+    warn "(Re)Creating lib/WWW/Mechanize/PhantomJS/Examples.pm\n";
     if ($perl =~/\s/) {
         $perl = qq{"$perl"};
     };
     my $examples = `$perl -w examples/gen_examples_pod.pl`;
     if ($examples) {
         $examples =~ s/\r\n/\n/g;
-        if (open my $out, '>', 'lib/WWW/Mechanize/WebDriver/Examples.pm') {
+        if (open my $out, '>', 'lib/WWW/Mechanize/PhantomJS/Examples.pm') {
             binmode $out;
             print $out $examples;
         };
