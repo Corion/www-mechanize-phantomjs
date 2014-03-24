@@ -3,15 +3,23 @@ package # hide from CPAN indexer
 use strict;
 use Test::More;
 use File::Glob qw(bsd_glob);
+use Config '%Config';
+use File::Spec;
 
-sub webdriver_instances {
+sub browser_instances {
     my ($filter) = @_;
     $filter ||= qr/^/;
     my @instances;
-    push @instances, undef; # default Firefox instance
+    # default PhantomJS instance
+    my ($default)=
+        map { my $exe= File::Spec->catfile($_,"phantomjs$Config{_exe}");
+              -x $exe ? $exe : ()
+            } File::Spec->path();
+    push @instances, $default
+        if $default;
     
     # add author tests with local versions
-    my $spec = $ENV{TEST_WWW_MECHANIZE_FIREFOX_VERSIONS}
+    my $spec = $ENV{TEST_WWW_MECHANIZE_PHANTOMJS_VERSIONS}
              || 'phantomjs-versions/*/phantomjs*'; # sorry, likely a bad default
     push @instances, sort {$a cmp $b} grep { -x } bsd_glob $spec;
     
@@ -19,7 +27,31 @@ sub webdriver_instances {
 };
 
 sub default_unavailable {
-    !scalar webdriver_instances
+    !scalar browser_instances
+};
+
+sub run_across_instances {
+    my ($instances, $port, $new_mech, $code) = @_;
+    
+    for my $browser_instance (@$instances) {
+        if ($browser_instance) {
+            diag "Testing with $browser_instance";
+        };
+        my @launch = $browser_instance
+                   ? ( launch_exe => $browser_instance,
+                       port => $port )
+                   : ();
+        
+        my $mech = $new_mech->(@launch);
+
+        # Run the user-supplied tests
+        $code->($browser_instance, $mech);
+        
+        # Quit in 500ms, so we have time to shut our socket down
+        undef $mech;
+        sleep 2; # So the browser can shut down before we try to connect
+        # to the new instance
+    };
 };
 
 1;

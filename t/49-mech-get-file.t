@@ -7,30 +7,31 @@ use File::Basename;
 use File::Spec;
 
 use WWW::Mechanize::PhantomJS;
+use t::helper;
 use lib 'inc', '../inc';
 use Test::HTTP::LocalServer;
 
-my $mech = eval { WWW::Mechanize::PhantomJS->new( 
-    autodie => 1,
-    launch_exe => 'phantomjs-versions\phantomjs-1.9.7-windows\phantomjs',
-    launch_arg => ['ghostdriver\src\main.js' ],
-    port => 8910, # XXX
-    #log => [qw[debug]],
-    #on_event => 1,
-)};
+# What instances of PhantomJS will we try?
+my $instance_port = 8910;
+my @instances = t::helper::browser_instances();
 
-if (! $mech) {
-    my $err = $@;
+if (my $err = t::helper::default_unavailable) {
     plan skip_all => "Couldn't connect to PhantomJS: $@";
     exit
 } else {
-    plan tests => 12;
+    plan tests => 12*@instances;
 };
 
-isa_ok $mech, 'WWW::Mechanize::PhantomJS';
+sub new_mech {
+    WWW::Mechanize::PhantomJS->new(
+        autodie => 1,
+        launch_arg => ['ghostdriver\src\main.js' ],
+        @_,
+    );
+};
 
 sub load_file_ok {
-    my ($htmlfile,@options) = @_;
+    my ($mech, $htmlfile,@options) = @_;
     my $fn = File::Spec->rel2abs(
                  File::Spec->catfile(dirname($0),$htmlfile),
                  getcwd,
@@ -43,27 +44,31 @@ sub load_file_ok {
         or diag $mech->content;
 };
 
-load_file_ok('49-mech-get-file.html', javascript => 0);
-$mech->get('about:blank');
-load_file_ok('49-mech-get-file.html', javascript => 1);
-$mech->get('about:blank');
+t::helper::run_across_instances(\@instances, $instance_port, \&new_mech, sub {
+    my ($firefox_instance, $mech) = @_;
 
-$mech->get_local('49-mech-get-file.html');
-ok $mech->success, '49-mech-get-file.html';
-is $mech->title, '49-mech-get-file.html', "We loaded the right file";
-
-ok $mech->is_html, "The local file gets identified as HTML"
-    or diag $mech->content;
-
-$mech->get_local('49-mech-get-file-lc-ct.html');
-ok $mech->success, '49-mech-get-file-lc-ct.html';
-is $mech->title, '49-mech-get-file-lc-ct.html', "We loaded the right file";
-
-ok $mech->is_html, "The local file gets identified as HTML even with a weird-cased http-equiv attribute"
-    or diag $mech->content;
-
-$mech->get_local('file-does-not-exist.html');
-ok !$mech->success, 'We fail on non-existing file';
+    isa_ok $mech, 'WWW::Mechanize::PhantomJS';
 
 
-undef $mech;
+    load_file_ok($mech, '49-mech-get-file.html', javascript => 0);
+    $mech->get('about:blank');
+    load_file_ok($mech, '49-mech-get-file.html', javascript => 1);
+    $mech->get('about:blank');
+
+    $mech->get_local('49-mech-get-file.html');
+    ok $mech->success, '49-mech-get-file.html';
+    is $mech->title, '49-mech-get-file.html', "We loaded the right file";
+
+    ok $mech->is_html, "The local file gets identified as HTML"
+        or diag $mech->content;
+
+    $mech->get_local('49-mech-get-file-lc-ct.html');
+    ok $mech->success, '49-mech-get-file-lc-ct.html';
+    is $mech->title, '49-mech-get-file-lc-ct.html', "We loaded the right file";
+
+    ok $mech->is_html, "The local file gets identified as HTML even with a weird-cased http-equiv attribute"
+        or diag $mech->content;
+
+    $mech->get_local('file-does-not-exist.html');
+    ok !$mech->success, 'We fail on non-existing file';
+});
