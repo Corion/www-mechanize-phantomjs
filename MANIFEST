@@ -73,7 +73,6 @@ ghostdriver/src/webdriver_atoms.js
 ghostdriver/src/webelementlocator.js
 ghostdriver/VERSION
 ghostdriver/VERSION.README.md
-google-keep.pl
 inc/IO/Catch.pm
 inc/Test/HTTP/cookie-server
 inc/Test/HTTP/LocalServer.pm
@@ -83,9 +82,7 @@ lib/WWW/Mechanize/PhantomJS/DSL.pm
 lib/WWW/Mechanize/Plugin/Selector.pm
 Makefile.PL
 MANIFEST			This list of files
-MANIFEST.skip
-onResourceError.js
-progress.png
+MANIFEST.SKIP
 t/00-load.t
 t/49-mech-get-file-lc-ct.html
 t/49-mech-get-file.html
