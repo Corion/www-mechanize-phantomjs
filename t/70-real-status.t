@@ -7,8 +7,6 @@ use Test::HTTP::LocalServer;
 
 use t::helper;
 
-use t::helper;
-
 # What instances of PhantomJS will we try?
 my $instance_port = 8910;
 my @instances = t::helper::browser_instances();
