@@ -2336,7 +2336,7 @@ sub make_WebElement {
     $res
 }
 
-=head1 IMAGE METHODS
+=head1 CONTENT RENDERING METHODS
 
 =head2 C<< $mech->content_as_png( [$tab, \%coordinates, \%target_size ] ) >>
 
@@ -2379,12 +2379,10 @@ original height.
 
 =back
 
-This method is specific to WWW::Mechanize::Firefox.
+This method is specific to WWW::Mechanize::PhantomJS.
 
-Currently, the data transfer between Firefox and Perl
-is done Base64-encoded. It would be beneficial to find what's
-necessary to make JSON handle binary data more gracefully.
-
+Currently, the data transfer between PhantomJS and Perl
+is done Base64-encoded.
 =cut
 
 sub content_as_png {
@@ -2393,9 +2391,10 @@ sub content_as_png {
     $rect ||= {};
     $target_rect ||= {};
     
-    require MIME::Base64;
-    my $png_base64 = $self->driver->screenshot();
-    return MIME::Base64::decode_base64($png_base64);
+    #require MIME::Base64;
+    #my $png_base64 = $self->driver->screenshot();
+    #return MIME::Base64::decode_base64($png_base64);
+    return $self->render_content( format => 'png' );
 };
 
 =head2 C<< $mech->viewport_size >>
@@ -2440,9 +2439,44 @@ JS
 
     my $old= $self->eval_in_phantomjs( $code, $cliprect );
     my $png= $self->content_as_png();
-    warn Dumper $old;
+    #warn Dumper $old;
     $self->eval_in_phantomjs( $code, $old );
     $png
+};
+
+=head2 C<< $mech->render_element( %options ) >>
+
+    my $shiny = $mech->selector('#shiny', single => 1);
+    my $i_want_this= $mech->render_element(
+        element => $shiny,
+        format => 'pdf',
+    );
+
+Returns the data for a single element
+or writes it to a file. It accepts
+all options of C<< ->render_content >>.
+
+=cut
+
+sub render_element {
+    my ($self, %options) = @_;
+    my $element= delete $options{ element }
+        or croak "No element given to render.";
+
+    my $cliprect = $self->element_coordinates( $element );
+
+    my $code = <<'JS';
+       var old= this.clipRect;
+       this.clipRect= arguments[0];
+JS
+
+    my $old= $self->eval_in_phantomjs( $code, $cliprect );
+    my $res= $self->render_content(
+        %options
+    );
+    #warn Dumper $old;
+    $self->eval_in_phantomjs( $code, $old );
+    $res
 };
 
 =head2 C<< $mech->element_coordinates( $element ) >>
@@ -2462,6 +2496,94 @@ towards rendering HTML.
 sub element_coordinates {
     my ($self, $element) = @_;
     my $cliprect = $self->eval('arguments[0].getBoundingClientRect()', $element );
+};
+
+=head2 C<< $mech->render_content(%options) >>
+
+    my $pdf_data = $mech->render( format => 'pdf' );
+
+    $mech->render_content(
+        format => 'jpg',
+        filename => '/path/to/my.jpg',
+    );
+
+Returns the current page rendered in the specified format
+as a bytestring or stores the current page in the specified
+filename.
+
+The filename must be absolute. We are dealing with external processes here!
+
+This method is specific to WWW::Mechanize::PhantomJS.
+
+Currently, the data transfer between PhantomJS and Perl
+is done through a temporary file, so directly using
+the C<filename> option may be faster.
+
+=cut
+
+sub render_content {
+    my ($self, %options) = @_;
+    #$rect ||= {};
+    #$target_rect ||= {};
+    my $outname= $options{ filename };
+    my $format= $options{ format };
+    my $wantresult;
+    
+    my @delete;
+    if( ! $outname) {
+        require File::Temp;
+        (my $fh, $outname)= File::Temp::tempfile();
+        close $fh;
+        push @delete, $outname;
+        $wantresult= 1;
+    };
+    require File::Spec;
+    $outname= File::Spec->rel2abs($outname, '.');
+    
+    $self->eval_in_phantomjs(<<'JS', $outname, $format);
+        var outname= arguments[0];
+        var format= arguments[1];
+        this.render( outname, { "format": format });
+JS
+
+    my $result;
+    if( $wantresult ) {
+        open my $fh, '<', $outname
+            or die "Couldn't read tempfile '$outname': $!";
+        binmode $fh, ':raw';
+        local $/;
+        $result= <$fh>;
+    };
+    
+    for( @delete ) {
+        unlink $_
+            or warn "Couldn't clean up tempfile: $_': $!";
+    };
+    $result
+}
+
+=head2 C<< $mech->content_as_pdf(%options) >>
+
+    my $pdf_data = $mech->content_as_pdf();
+
+    $mech->content_as_pdf(
+        filename => '/path/to/my.pdf',
+    );
+
+Returns the current page rendered in PDF format as a bytestring.
+
+This method is specific to WWW::Mechanize::PhantomJS.
+
+Currently, the data transfer between PhantomJS and Perl
+is done through a temporary file, so directly using
+the C<filename> option may be faster.
+
+=cut
+
+sub content_as_pdf {
+    my ($self, %options) = @_;
+    
+    return $self->render_content( format => 'pdf', %options );
 };
 
 1;
