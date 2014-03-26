@@ -60,18 +60,22 @@ sub new {
 
     # Launch PhantomJs
     $options{ launch_exe } ||= 'phantomjs';
-    $options{ launch_arg } ||= [ "--PhantomJS=$options{ port }",
-                               ];
+    $options{ launch_arg } ||= [];
+    push @{ $options{ launch_arg }}, "--PhantomJS=$options{ port }";
     my $cmd= "| $options{ launch_exe } @{ $options{ launch_arg } }";
+    #warn $cmd;
     $options{ pid } ||= open my $fh, $cmd
         or die "Couldn't launch [$cmd]: $! / $?";
+    sleep 2; # Just to give PhantomJS time to start up
     $options{ fh } = $fh;
 
     # Connect to it
     $options{ driver } ||= Selenium::Remote::Driver->new(
         'port' => $options{ port },
-        auto_close => 1,
+        auto_close => 0,
      );
+     # Patch the driver :-(
+     #$options{ driver }->{ auto_close }= 0;
 
      my $self= bless \%options => $class;
      
@@ -259,7 +263,7 @@ sub events { [] };
 sub DESTROY {
     #warn "Destroying " . ref $_[0];
     my $pid= delete $_[0]->{pid};
-    #my $dr= delete $_[0]->{ driver };
+    eval { my $dr= delete $_[0]->{ driver }; $dr->quit; undef $dr };
     #if($dr) {
     #    $dr->quit;
     #};
