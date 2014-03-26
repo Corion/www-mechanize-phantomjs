@@ -1402,7 +1402,8 @@ sub xpath {
                 #warn "Collecting frames";
                 #my $tag= $doc->get_tag_name;
                 #warn "Searching $doc->{id} for @$query";
-                @found= map { $self->driver->find_elements( $_ => 'xpath' ) } @$query;
+                @found= map { defined $_ ? @$_ : () }
+                        map { scalar $self->driver->find_elements( $_ => 'xpath' ) } @$query;
                 if( ! @found ) {
                     #warn "Nothing found matching @$query in frame";
                     #warn $self->content;
