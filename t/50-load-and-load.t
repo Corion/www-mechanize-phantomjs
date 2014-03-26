@@ -5,28 +5,37 @@ use WWW::Mechanize::PhantomJS;
 use lib 'inc', '../inc';
 use Test::HTTP::LocalServer;
 
-my $mech = eval { WWW::Mechanize::PhantomJS->new( 
-    autodie => 1,
-    launch_exe => 'phantomjs-versions\phantomjs-1.9.7-windows\phantomjs',
-    launch_arg => ['ghostdriver\src\main.js' ],
-    port => 8910, # XXX
-    #log => [qw[debug]],
-    #on_event => 1,
-)};
+use t::helper;
 
-if (! $mech) {
+# What instances of PhantomJS will we try?
+my $instance_port = 8910;
+my @instances = t::helper::browser_instances();
+
+if (my $err = t::helper::default_unavailable) {
     plan skip_all => "Couldn't connect to PhantomJS: $@";
     exit
 } else {
-    plan tests => 2;
+    plan tests => 2*@instances;
 };
 
-$mech->get_local('50-form2.html');
-ok 1, "We loaded the page";
+sub new_mech {
+    WWW::Mechanize::PhantomJS->new(
+        autodie => 1,
+        launch_arg => ['ghostdriver/src/main.js' ],
+        @_,
+    );
+};
 
-#sleep 10;
+t::helper::run_across_instances(\@instances, $instance_port, \&new_mech, sub {
+    my ($browser_instance, $mech) = @_;
 
-$mech->get_local('50-form2.html');
-ok 1, "We loaded the page, again, and don't hang";
+    $mech->get_local('50-form2.html');
+    ok 1, "We loaded the page";
 
-#sleep 100;
+    #sleep 10;
+
+    $mech->get_local('50-form2.html');
+    ok 1, "We loaded the page, again, and don't hang";
+
+    #sleep 100;
+});
