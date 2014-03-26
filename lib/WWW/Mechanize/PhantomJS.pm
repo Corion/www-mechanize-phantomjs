@@ -47,10 +47,45 @@ sub element_query {
             . ']';
 };
 
+=head2 C<< ->new %options >>
+
+=over 4
+
+=item B<launch_exe>
+
+Specify the path to the PhantomJS executable.
+
+=item B<launch_arg>
+
+Specify additional parameters to the PhantomJS executable.
+
+  launch_arg => [ "--some-new-parameter=foo" ],
+
+=item B<port>
+
+Specify the port where PhantomJS should listen
+
+  port => 8910
+
+=item B<log>
+
+Specify the log level of PhantomJS
+
+  log => 'OFF'
+
+=item B<driver>
+
+A premade L<Selenium::Driver::Remote> object.
+
+=back
+
+=cut
+
 sub new {
     my ($class, %options) = @_;
 
     $options{ port } ||= 4446;
+    $options{ "log" } ||= 'OFF';
 
     if (! exists $options{ autodie }) { $options{ autodie } = 1 };
 
@@ -62,6 +97,7 @@ sub new {
     $options{ launch_exe } ||= 'phantomjs';
     $options{ launch_arg } ||= [];
     push @{ $options{ launch_arg }}, "--PhantomJS=$options{ port }";
+    push @{ $options{ launch_arg }}, "--logLevel=\U$options{ log }";
     my $cmd= "| $options{ launch_exe } @{ $options{ launch_arg } }";
     #warn $cmd;
     $options{ pid } ||= open my $fh, $cmd
