@@ -2153,7 +2153,6 @@ sub submit_form {
     if (! $form) {
         if ($fields = delete $options{ with_fields }) {
             my @names = keys %$fields;
-            warn Dumper \%options;
             $form = $self->form_with_fields( \%options, @names );
             if (! $form) {
                 $self->signal_condition("Couldn't find a matching form for @names.");
