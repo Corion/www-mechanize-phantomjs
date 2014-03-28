@@ -123,7 +123,6 @@ t/52-subframe.html
 t/53-mech-capture-js-error.html
 t/53-mech-capture-js-error.t
 t/53-mech-capture-js-noerror.html
-t/56-errorcodes-live.t
 t/56-render-content.t
 t/60-mech-custom-headers.t
 t/70-real-status.t
