@@ -304,6 +304,42 @@ sub DESTROY {
     %{ $_[0] }= (); # clean out all other held references
 }
 
+=head2 C<< $mech->highlight_node( @nodes ) >>
+
+    my @links = $mech->selector('a');
+    $mech->highlight_node(@links);
+    print $mech->content_as_png();
+
+Convenience method that marks all nodes in the arguments
+with
+
+  background: red;
+  border: solid black 1px;
+  display: block; /* if the element was display: none before */
+
+This is convenient if you need visual verification that you've
+got the right nodes.
+
+There currently is no way to restore the nodes to their original
+visual state except reloading the page.
+
+=cut
+
+sub highlight_node {
+    my ($self,@nodes) = @_;
+    for (@nodes) {
+        my $style= $self->eval_in_page(<<JS, $_);
+        (function(el) {
+            if( 'none' == el.style.display ) {
+                el.style.display= 'block';
+            };
+            el.style.background= 'red';
+            el.style.border= 'solid black 1px';
+        })(arguments[0]);
+JS
+    };
+};
+
 =head1 NAVIGATION METHODS
 
 =head2 C<< $mech->get( $url, %options ) >>
