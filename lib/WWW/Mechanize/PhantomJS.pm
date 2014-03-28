@@ -72,7 +72,7 @@ A premade L<Selenium::Driver::Remote> object.
 sub new {
     my ($class, %options) = @_;
 
-    $options{ port } ||= 4446;
+    $options{ port } ||= 8910;
     $options{ "log" } ||= 'OFF';
 
     if (! exists $options{ autodie }) { $options{ autodie } = 1 };
