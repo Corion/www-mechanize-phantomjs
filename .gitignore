@@ -1,6 +1,7 @@
 Makefile
 Makefile.old
 *.tar.gz
+*.tar
 *.bak
 pm_to_blib
 blib/
