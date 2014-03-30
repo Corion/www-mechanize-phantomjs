@@ -1,5 +1,9 @@
 .gitignore
 Changes
+examples/dump-links.pl
+examples/html-to-pdf.pl
+examples/javascript.pl
+examples/url-to-image.pl
 ghostdriver/.gitignore
 ghostdriver/CHANGELOG.md
 ghostdriver/LICENSE.BSD
