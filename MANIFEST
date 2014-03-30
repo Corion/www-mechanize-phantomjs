@@ -89,7 +89,9 @@ lib/WWW/Mechanize/PhantomJS/Examples.pm
 lib/WWW/Mechanize/Plugin/Selector.pm
 Makefile.PL
 MANIFEST			This list of files
-MANIFEST.skip
+MANIFEST.SKIP
+README
+README.mkdn
 t/00-load.t
 t/49-mech-get-file-lc-ct.html
 t/49-mech-get-file.html
