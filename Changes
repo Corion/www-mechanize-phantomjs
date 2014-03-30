@@ -1,5 +1,8 @@
 TO DO:
 
+    + Correct the documentation, which was mostly copied from the sister module,
+      WWW::Mechanize::Firefox.
+
 0.02 20140330
     + ->highlight_node()
     + PhantomJS log level is now customizable
