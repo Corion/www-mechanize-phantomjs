@@ -27,7 +27,7 @@ WriteMakefile1(
                         'Carp' => 0,
                         'Scalar::Util' => 0, # for blessed()
                         'HTTP::Response' => 0,
-                        'Selenium::Remote::Driver' => 0,
+                        'Selenium::Remote::Driver' => 0.18, # New structure, now uses Moo
                         'HTML::Selector::XPath' => 0,
                         'Object::Import' => 0,
                         'WWW::Mechanize::Link' => 0,
