@@ -1,5 +1,18 @@
 TO DO:
 
+0.02 20140330
+    + ->highlight_node()
+    + PhantomJS log level is now customizable
+    + Better shutdown behaviour
+    + More compatible tests
+    + PDF output
+    + Examples
+    + README
+    . Tested against PhantomJS versions
+      1.9.0, fails t/70-real-status.t
+      1.9.2
+      1.9.7
+
 0.01 20140323
     . Released unto a propably suspecting audience
     . Most likely, this fails its tests because the appropriate

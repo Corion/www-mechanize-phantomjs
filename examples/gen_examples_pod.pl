@@ -91,7 +91,7 @@ sub print_header {
 
     print "use strict;\n";
     print "use vars qw(\$VERSION);\n";
-    print "\$VERSION = '$version';\n\n";
+    print "\$VERSION= '$version';\n\n";
 
     print "1;\n";
     print "\n";
