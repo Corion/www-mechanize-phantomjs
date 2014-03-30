@@ -30,6 +30,7 @@ WriteMakefile1(
                         'Selenium::Remote::Driver' => 0,
                         'HTML::Selector::XPath' => 0,
                         'Object::Import' => 0,
+                        'WWW::Mechanize::Link' => 0,
 
                         'HTTP::Daemon' => 0, # just for testing
                         'LWP::Simple' => 0, # just for testing
