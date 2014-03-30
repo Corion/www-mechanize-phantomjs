@@ -5,8 +5,8 @@ Makefile.old
 *.bak
 pm_to_blib
 blib/
-WWW-Mechanize-WebDriver-*
-WWW-Mechanize-WebDriver-*/
+WWW-Mechanize-PhantomJS-*
+WWW-Mechanize-PhantomJS-*/
 phantomjs-versions/
 .releaserc
 cover_db
