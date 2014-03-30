@@ -149,7 +149,7 @@ Recognized options:
     $mech->get_local('test.html');
 
 Shorthand method to construct the appropriate
-`file://` URI and load it into Firefox. Relative
+`file://` URI and load it into PhantomJS. Relative
 paths will be interpreted as relative to `$0`.
 
 This method accepts the same options as `->get()`.
@@ -184,16 +184,12 @@ the content type will be generated automatically.
 ## `$mech->add_header( $name => $value, ... )`
 
     $mech->add_header(
-        'X-WWW-Mechanize-Firefox' => "I'm using it",
+        'X-WWW-Mechanize-PhantomJS' => "I'm using it",
         Encoding => 'text/klingon',
     );
 
 This method sets up custom headers that will be sent with __every__ HTTP(S)
-request that Firefox makes.
-
-Using multiple instances of WWW::Mechanize::Firefox objects with the same
-application together with changed request headers will most likely have weird
-effects. So don't do that.
+request that PhantomJS makes.
 
 Note that currently, we only support one value per header.
 
@@ -203,13 +199,13 @@ Note that currently, we only support one value per header.
     
 
 Removes HTTP headers from the agent's list of special headers. Note
-that Firefox may still send a header with its default value.
+that PhantomJS may still send a header with its default value.
 
 ## `$mech->reset_headers`
 
     $mech->reset_headers();
 
-Removes all custom headers and makes Firefox send its defaults again.
+Removes all custom headers and makes PhantomJS send its defaults again.
 
 ## `$mech->text()`
 
@@ -241,7 +237,7 @@ Returns the URL base for the current page.
 The base is either specified through a `base`
 tag or is the current URL.
 
-This method is specific to WWW::Mechanize::Firefox
+This method is specific to WWW::Mechanize::PhantomJS.
 
 ## `$mech->content_type()`
 
@@ -276,7 +272,7 @@ Returns all links in the document as [WWW::Mechanize::Link](https://metacpan.org
 Currently accepts no parameters. See `->xpath`
 or `->selector` when you want more control.
 
-## `$mech->back( [$synchronize] )`
+## `$mech->back()`
 
     $mech->back();
 
@@ -284,7 +280,7 @@ Goes one page back in the page history.
 
 Returns the (new) response.
 
-## `$mech->forward( [$synchronize] )`
+## `$mech->forward()`
 
     $mech->forward();
 
@@ -337,15 +333,13 @@ This method is implemented via [WWW::Mechanize::Plugin::Selector](https://metacp
 
 A method to find links, like [WWW::Mechanize](https://metacpan.org/pod/WWW::Mechanize)'s
 `->find_links` method. This method returns DOM objects from
-Firefox instead of WWW::Mechanize::Link objects.
+PhantomJS instead of WWW::Mechanize::Link objects.
 
-Note that Firefox
+Note that PhantomJS
 might have reordered the links or frame links in the document
 so the absolute numbers passed via `n`
 might not be the same between
-[WWW::Mechanize](https://metacpan.org/pod/WWW::Mechanize) and [WWW::Mechanize::Firefox](https://metacpan.org/pod/WWW::Mechanize::Firefox).
-
-Returns the DOM object as [MozRepl::RemoteObject](https://metacpan.org/pod/MozRepl::RemoteObject)::Instance.
+[WWW::Mechanize](https://metacpan.org/pod/WWW::Mechanize) and [WWW::Mechanize::PhantomJS](https://metacpan.org/pod/WWW::Mechanize::PhantomJS).
 
 The supported options are:
 
@@ -354,7 +348,7 @@ The supported options are:
     Match the text of the link as a complete string, substring or regular expression.
 
     Matching as a complete string or substring is a bit faster, as it is
-    done in the XPath engine of Firefox.
+    done in the XPath engine of PhantomJS.
 
 - `id` and `id_contains` and `id_regex`
 
@@ -423,8 +417,7 @@ This defaults to not look through child frames.
     $mech->follow_link( xpath => '//a[text() = "Click here!"]' );
 
 Follows the given link. Takes the same parameters that `find_link_dom`
-uses. In addition, `synchronize` can be passed to (not) force
-waiting for a new page to be loaded.
+uses.
 
 Note that `->follow_link` will only try to follow link-like
 things like `A` tags.
@@ -440,7 +433,7 @@ things like `A` tags.
     my @para_text = $mech->xpath('//p/text()', type => $mech->xpathResult('STRING_TYPE'));
     # Collects all paragraphs as text
 
-Runs an XPath query in Firefox against the current document.
+Runs an XPath query in PhantomJS against the current document.
 
 If you need more information about the returned results,
 use the `->xpathEx()` function.
@@ -451,7 +444,7 @@ The options allow the following keys:
 search a node within a specific subframe of `$mech->document`.
 - `frames` - if true, search all documents in all frames and iframes.
 This may or may not conflict with `node`. This will default to the
-`frames` setting of the WWW::Mechanize::Firefox object.
+`frames` setting of the WWW::Mechanize::PhantomJS object.
 - `node` - node relative to which the query is to be executed. Note
 that you will have to use a relative XPath expression as well. Use
 
@@ -476,7 +469,7 @@ for each usage in scalar context without any of the above restricting options.
 
         type => $mech->xpathResult('ORDERED_NODE_SNAPSHOT_TYPE'),
 
-    WWW::Mechanize::Firefox tries a best effort in giving you the appropriate
+    WWW::Mechanize::PhantomJS tries a best effort in giving you the appropriate
     result of your query, be it a DOM node or a string or a number. In the case
     you need to restrict the return type, you can pass this in.
 
@@ -540,22 +533,6 @@ the following keys are recognized:
     do look like CSS selectors. It is equivalent to
 
         xpath => qq{//*[\@id="$id"]}
-
-- `synchronize` - Synchronize the click (default is 1)
-
-    Synchronizing means that WWW::Mechanize::Firefox will wait until
-    one of the events listed in `events` is fired. You want to switch
-    it off when there will be no HTTP response or DOM event fired, for
-    example for clicks that only modify the DOM.
-
-    You can pass in a scalar that is a false value to not wait for
-    any kind of event.
-
-    Passing in an array reference will use the array elements as
-    Javascript events to wait for.
-
-    Passing in any other true value will use the value of `->events`
-    as the list of events to wait for.
 
 Returns a [HTTP::Response](https://metacpan.org/pod/HTTP::Response) object.
 
