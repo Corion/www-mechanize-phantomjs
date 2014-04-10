@@ -3,6 +3,7 @@ TO DO:
     + Correct the documentation, which was mostly copied from the sister module,
       WWW::Mechanize::Firefox.
     + Fix missing WWW::Mechanize::Link prerequisite
+    + Add ->phantomjs_version() to return the version of the PhantomJS executable
 
 0.02 20140330
     + ->highlight_node()

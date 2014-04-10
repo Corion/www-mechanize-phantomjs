@@ -35,7 +35,8 @@ sub run_across_instances {
     
     for my $browser_instance (@$instances) {
         if ($browser_instance) {
-            diag "Testing with $browser_instance";
+            diag sprintf "Testing with %s",
+                $browser_instance;
         };
         my @launch = $browser_instance
                    ? ( launch_exe => $browser_instance,
@@ -43,6 +44,8 @@ sub run_across_instances {
                    : ();
         
         my $mech = $new_mech->(@launch);
+        diag sprintf "PhantomJS version '%s'",
+            $mech->phantomjs_version;
 
         # Run the user-supplied tests
         $code->($browser_instance, $mech);

@@ -113,6 +113,21 @@ JS
      $self
 };
 
+=head2 C<< $mech->phantomjs_version >>
+
+Returns the version of the PhantomJS executable that is used.
+
+=cut
+
+sub phantomjs_version {
+    my( $self )= @_;
+    $self->{phantomjs_version} ||= do {
+        my $version= `$self->{ launch_exe } --version`;
+        $version=~ s!\s+!!g;
+        $version
+    };
+}
+
 sub driver {
     $_[0]->{driver}
 };
@@ -387,7 +402,6 @@ sub get {
     my ($self, $url, %options ) = @_;
     # We need to stringify $url so it can pass through JSON
     my $phantom_res= $self->driver->get( "$url" );
-
     $self->update_response( $phantom_res );
 };
 
