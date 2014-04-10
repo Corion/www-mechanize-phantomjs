@@ -18,8 +18,5 @@ CVS/
 ^ppd/
 t/70-real-status-timeout.t
 ^MYMETA.*
-^ghostdriver/binding/
-^ghostdriver/test/
-^ghostdriver/tools/
-^ghostdriver/src/
+^ghostdriver/
 ^phantomjs-versions/
