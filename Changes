@@ -1,9 +1,11 @@
 TO DO:
 
+0.03 20140410
     + Correct the documentation, which was mostly copied from the sister module,
       WWW::Mechanize::Firefox.
     + Fix missing WWW::Mechanize::Link prerequisite
     + Add ->phantomjs_version() to return the version of the PhantomJS executable
+    + Place the ghostdriver files along the Perl modules
 
 0.02 20140330
     + ->highlight_node()

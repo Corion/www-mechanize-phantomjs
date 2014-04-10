@@ -55,6 +55,13 @@ Specify the log level of PhantomJS
 
 Specify the path to the PhantomJS executable.
 
+=item B<launch_ghostdriver>
+
+Filename of the C<ghostdriver> Javascript code
+to launch. The default is the file distributed with this module.
+
+  launch_ghostdriver => "devel/my/ghostdriver/main.js",
+
 =item B<launch_arg>
 
 Specify additional parameters to the PhantomJS executable.
@@ -83,10 +90,13 @@ sub new {
 
     # Launch PhantomJs
     $options{ launch_exe } ||= 'phantomjs';
+    (my $ghostdir_default= __FILE__) =~ s!\.pm$!!;
+    $ghostdir_default= File::Spec->catfile( $ghostdir_default, 'ghostdriver', 'main.js' );
+    $options{ launch_ghostdir } ||= $ghostdir_default;
     $options{ launch_arg } ||= [];
     push @{ $options{ launch_arg }}, "--PhantomJS=$options{ port }";
     push @{ $options{ launch_arg }}, "--logLevel=\U$options{ log }";
-    my $cmd= "| $options{ launch_exe } @{ $options{ launch_arg } }";
+    my $cmd= "| $options{ launch_exe } $options{ launch_ghostdir } @{ $options{ launch_arg } }";
     #warn $cmd;
     $options{ pid } ||= open my $fh, $cmd
         or die "Couldn't launch [$cmd]: $! / $?";
@@ -115,6 +125,8 @@ JS
 
 =head2 C<< $mech->phantomjs_version >>
 
+  print $mech->phantomjs_version;
+
 Returns the version of the PhantomJS executable that is used.
 
 =cut
@@ -125,6 +137,21 @@ sub phantomjs_version {
         my $version= `$self->{ launch_exe } --version`;
         $version=~ s!\s+!!g;
         $version
+    };
+}
+
+=head2 C<< $mech->ghostdriver_version >>
+
+  print $mech->ghostdriver_version;
+
+Returns the version of the ghostdriver script that is used.
+
+=cut
+
+sub ghostdriver_version {
+    my( $self )= @_;
+    $self->{ghostdriver_version} ||= do {
+        $self->eval_in_phantomjs('return ghostdriver.version');
     };
 }
 
@@ -2701,18 +2728,6 @@ Implement download progress
 
 Install the C<PhantomJS> executable
 
-=item *
-
-Copy the C<ghostdriver> Javascript code from this distribution
-to a directory accessible to you.
-
-=item *
-
-In your program, create the L<WWW::Mechanize::PhantomJS>
-object with
-
-  launch_arg => ['/path/to/ghostdriver/src/main.js' ],
-
 =back
 
 =head1 SEE ALSO
@@ -2722,6 +2737,10 @@ object with
 =item *
 
 L<http://phantomjs.org> - the PhantomJS homepage
+
+=item *
+
+L<https://github.com/detro/ghostdriver> - the ghostdriver homepage
 
 =item *
 
@@ -2770,5 +2789,35 @@ Copyright 2014 by Max Maischein C<corion@cpan.org>.
 =head1 LICENSE
 
 This module is released under the same terms as Perl itself.
+
+This distribution includes a modified copy of the ghostdriver code,
+which is released under the same terms as the ghostdriver code itself.
+The terms of the ghostdriver code are the BSD license, as found at
+L<https://github.com/detro/ghostdriver/blob/master/LICENSE.BSD>:
+
+    Copyright (c) 2014, Ivan De Marino <http://ivandemarino.me>
+    All rights reserved.
+
+    Redistribution and use in source and binary forms, with or without modification,
+    are permitted provided that the following conditions are met:
+
+    * Redistributions of source code must retain the above copyright notice,
+    this list of conditions and the following disclaimer.
+    * Redistributions in binary form must reproduce the above copyright notice,
+    this list of conditions and the following disclaimer in the documentation
+    and/or other materials provided with the distribution.
+
+    THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+    ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+    WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+    DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
+    ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+    (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+    LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+    ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+    (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+    SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+The ghostdriver code includes the Selenium WebDriver fragments.
 
 =cut

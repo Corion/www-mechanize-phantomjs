@@ -1,6 +1,10 @@
 # -*- mode: perl; c-basic-offset: 4; indent-tabs-mode: nil; -*-
 
 use strict;
+use File::Copy 'cp';
+use File::Find;
+use File::Basename;
+use File::Path 'mkpath';
 use ExtUtils::MakeMaker qw(WriteMakefile);
 # See lib/ExtUtils/MakeMaker.pm for details of how to influence
 # the contents of the Makefile that is written.
@@ -8,6 +12,20 @@ use ExtUtils::MakeMaker qw(WriteMakefile);
 # I should maybe use something like Shipwright...
 regen_README('lib/WWW/Mechanize/PhantomJS.pm');
 regen_EXAMPLES();
+
+my $source_dir= 'ghostdriver/src';
+if( -d $source_dir ) {
+    # Copy the latest files for distribution
+    find({
+        no_chdir => 1,
+        wanted => sub {
+            (my $target= $File::Find::name) =~ s!.*\bsrc\b!lib/WWW/Mechanize/PhantomJS/ghostdriver!;
+            mkpath dirname $target;
+            cp( $File::Find::name => $target );
+        },
+    }, $source_dir );
+    
+};
 
 my @tests = map { glob $_ } 't/*.t', 't/*/*.t';
 
@@ -19,6 +37,11 @@ WriteMakefile1(
         },
     },
     BUILD_REQUIRES => {
+        # Fairly long in core
+        'File::Path' => 0,
+        'File::Copy' => 0,
+        'File::Find' => 0,
+        'File::Basename' => 0,
     },
     'NAME'          => 'WWW::Mechanize::PhantomJS',
     'LICENSE'       => 'perl',

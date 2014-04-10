@@ -44,8 +44,8 @@ sub run_across_instances {
                    : ();
         
         my $mech = $new_mech->(@launch);
-        diag sprintf "PhantomJS version '%s'",
-            $mech->phantomjs_version;
+        diag sprintf "PhantomJS version '%s', ghostdriver version '%s'",
+            $mech->phantomjs_version, $mech->ghostdriver_version;
 
         # Run the user-supplied tests
         $code->($browser_instance, $mech);

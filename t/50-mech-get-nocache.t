@@ -5,38 +5,47 @@ use WWW::Mechanize::PhantomJS;
 use lib 'inc', '../inc';
 use Test::HTTP::LocalServer;
 
-my $mech = eval { WWW::Mechanize::PhantomJS->new( 
-    autodie => 1,
-    launch_exe => 'phantomjs-versions\phantomjs-1.9.7-windows\phantomjs',
-    launch_arg => ['ghostdriver\src\main.js' ],
-    port => 8910, # XXX
-    #log => [qw[debug]],
-    #on_event => 1,
-)};
+use lib 'inc', '../inc';
+use Test::HTTP::LocalServer;
+use t::helper;
 
-if (! $mech) {
+# What instances of PhantomJS will we try?
+my $instance_port = 8910;
+my @instances = t::helper::browser_instances();
+
+if (my $err = t::helper::default_unavailable) {
     plan skip_all => "Couldn't connect to PhantomJS: $@";
     exit
 } else {
-    plan tests => 6;
+    plan tests => 6*@instances;
 };
 
-isa_ok $mech, 'WWW::Mechanize::PhantomJS';
+sub new_mech {
+    WWW::Mechanize::PhantomJS->new(
+        autodie => 1,
+        @_,
+    );
+};
 
-my $server = Test::HTTP::LocalServer->spawn(
-    #debug => 1
-);
+t::helper::run_across_instances(\@instances, $instance_port, \&new_mech, sub {
+    my ($browser_instance, $mech) = @_;
+    isa_ok $mech, 'WWW::Mechanize::PhantomJS';
 
-my ($site,$estatus) = ($server->url,200);
-my $res = $mech->get($site, no_cache => 1);
-isa_ok $res, 'HTTP::Response', "Response";
+    my $server = Test::HTTP::LocalServer->spawn(
+        #debug => 1
+    );
 
-is $mech->uri, $site, "Navigated to $site";
+    my ($site,$estatus) = ($server->url,200);
+    my $res = $mech->get($site, no_cache => 1);
+    isa_ok $res, 'HTTP::Response', "Response";
 
-is $res->code, $estatus, "GETting $site returns HTTP code $estatus from response"
-    or diag $mech->content;
+    is $mech->uri, $site, "Navigated to $site";
 
-is $mech->status, $estatus, "GETting $site returns HTTP status $estatus from mech"
-    or diag $mech->content;
+    is $res->code, $estatus, "GETting $site returns HTTP code $estatus from response"
+        or diag $mech->content;
 
-ok $mech->success, 'We consider this response successful';
+    is $mech->status, $estatus, "GETting $site returns HTTP status $estatus from mech"
+        or diag $mech->content;
+
+    ok $mech->success, 'We consider this response successful';
+});

@@ -39,6 +39,13 @@ WWW::Mechanize::PhantomJS - automate the PhantomJS browser
 
     Specify the path to the PhantomJS executable.
 
+- __launch\_ghostdriver__
+
+    Filename of the `ghostdriver` Javascript code
+    to launch. The default is the file distributed with this module.
+
+        launch_ghostdriver => "devel/my/ghostdriver/main.js",
+
 - __launch\_arg__
 
     Specify additional parameters to the PhantomJS executable.
@@ -48,6 +55,10 @@ WWW::Mechanize::PhantomJS - automate the PhantomJS browser
 - __driver__
 
     A premade [Selenium::Driver::Remote](https://metacpan.org/pod/Selenium::Driver::Remote) object.
+
+## `$mech->phantomjs_version`
+
+Returns the version of the PhantomJS executable that is used.
 
 ## `$mech->js_errors()`
 

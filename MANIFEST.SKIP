@@ -21,4 +21,5 @@ t/70-real-status-timeout.t
 ^ghostdriver/binding/
 ^ghostdriver/test/
 ^ghostdriver/tools/
+^ghostdriver/src/
 ^phantomjs-versions/

@@ -25,7 +25,6 @@ if (my $err = t::helper::default_unavailable) {
 sub new_mech {
     WWW::Mechanize::PhantomJS->new(
         autodie => 1,
-        launch_arg => ['ghostdriver\src\main.js' ],
         @_,
     );
 };

@@ -4,56 +4,65 @@ use Test::More;
 use WWW::Mechanize::PhantomJS;
 use lib 'inc', '../inc';
 
-my $mech = eval { WWW::Mechanize::PhantomJS->new( 
-    autodie => 1,
-    launch_exe => 'phantomjs-versions\phantomjs-1.9.7-windows\phantomjs',
-    launch_arg => ['ghostdriver\src\main.js' ],
-    port => 8910, # XXX
-    #log => [qw[debug]],
-    #on_event => 1,
-)};
+use lib 'inc', '../inc';
+use Test::HTTP::LocalServer;
+use t::helper;
 
-if (! $mech) {
+# What instances of PhantomJS will we try?
+my $instance_port = 8910;
+my @instances = t::helper::browser_instances();
+
+if (my $err = t::helper::default_unavailable) {
     plan skip_all => "Couldn't connect to PhantomJS: $@";
     exit
 } else {
-    plan tests => 14;
+    plan tests => 14*@instances;
 };
 
-isa_ok $mech, 'WWW::Mechanize::PhantomJS';
+sub new_mech {
+    WWW::Mechanize::PhantomJS->new(
+        autodie => 1,
+        @_,
+    );
+};
 
-$mech->get_local('50-click.html');
+t::helper::run_across_instances(\@instances, $instance_port, \&new_mech, sub {
+    my ($browser_instance, $mech) = @_;
+    isa_ok $mech, 'WWW::Mechanize::PhantomJS';
 
-my $f = $mech->forms;
-is ref $f, 'ARRAY', "We got an arrayref of forms";
+    $mech->get_local('50-click.html');
 
-is 0+@$f, 1, "We found one form";
+    my $f = $mech->forms;
+    is ref $f, 'ARRAY', "We got an arrayref of forms";
 
-is $f->[0]->get_attribute('id'), 'foo', "We found the one form";
+    is 0+@$f, 1, "We found one form";
 
-my @f = $mech->forms;
+    is $f->[0]->get_attribute('id'), 'foo', "We found the one form";
 
-is 0+@f, 1, "We found one form";
+    my @f = $mech->forms;
 
-is $f[0]->get_attribute('id'), 'foo', "We found the one form";
+    is 0+@f, 1, "We found one form";
 
-$mech->get_local('50-form2.html');
+    is $f[0]->get_attribute('id'), 'foo', "We found the one form";
 
-$f = $mech->forms;
-is ref $f, 'ARRAY', "We got an arrayref of forms";
+    $mech->get_local('50-form2.html');
 
-is 0+@$f, 5, "We found five forms";
+    $f = $mech->forms;
+    is ref $f, 'ARRAY', "We got an arrayref of forms";
 
-is $f->[0]->get_attribute('id'), 'snd0', "We found the first form";
-is $f->[1]->get_attribute('id'), 'snd', "We found the second form";
-is $f->[2]->get_attribute('id'), 'snd2', "We found the third form";
-is $f->[3]->get_attribute('id'), 'snd3', "We found the fourth form";
-is $f->[4]->get_attribute('id'), 'snd4', "We found the fifth form";
+    is 0+@$f, 5, "We found five forms";
 
-$mech->get_local('51-empty-page.html');
-@f = $mech->forms;
+    is $f->[0]->get_attribute('id'), 'snd0', "We found the first form";
+    is $f->[1]->get_attribute('id'), 'snd', "We found the second form";
+    is $f->[2]->get_attribute('id'), 'snd2', "We found the third form";
+    is $f->[3]->get_attribute('id'), 'snd3', "We found the fourth form";
+    is $f->[4]->get_attribute('id'), 'snd4', "We found the fifth form";
 
-is_deeply \@f, [], "We found no forms"
-    or diag $mech->content;
+    $mech->get_local('51-empty-page.html');
+    @f = $mech->forms;
 
-undef $mech;
+    is_deeply \@f, [], "We found no forms"
+        or diag $mech->content;
+
+    undef $mech;
+});

@@ -11,7 +11,6 @@ BEGIN {
         WWW::Mechanize::PhantomJS::DSL->import(
             autodie => 1,
             launch_exe => 'phantomjs-versions\phantomjs-1.9.7-windows\phantomjs',
-            launch_arg => ['ghostdriver\src\main.js' ],
             port => 8910, # XXX
         );
         1
