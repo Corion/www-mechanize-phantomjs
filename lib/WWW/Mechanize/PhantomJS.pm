@@ -155,6 +155,14 @@ sub ghostdriver_version {
     };
 }
 
+=head2 C<< $mech->driver >>
+
+    my $selenium= $mech->driver
+
+Access the L<Selenium::Driver::Remote> instance connecting to PhantomJS.
+    
+=cut
+
 sub driver {
     $_[0]->{driver}
 };
@@ -217,10 +225,6 @@ JS
 
 };
 
-sub document {
-    $_[0]->driver->find_element('html','tag_name');
-}
-
 =head2 C<< $mech->eval_in_page( $str, @args ) >>
 
 =head2 C<< $mech->eval( $str, @args ) >>
@@ -278,52 +282,6 @@ sub eval_in_phantomjs {
     $self->driver->_execute_command({ command => 'phantomExecute' }, $params);
 };
 
-=head2 C<< $api->element_query( \@elements, \%attributes ) >>
-
-    my $query = $element_query(['input', 'select', 'textarea'],
-                               { name => 'foo' });
-
-Returns the XPath query that searches for all elements with C<tagName>s
-in C<@elements> having the attributes C<%attributes>. The C<@elements>
-will form an C<or> condition, while the attributes will form an C<and>
-condition.
-
-=cut
-
-sub element_query {
-    my ($self, $elements, $attributes) = @_;
-        my $query =
-            './/*[(' .
-                join( ' or ',
-                    map {
-                        sprintf qq{local-name(.)="%s"}, lc $_
-                    } @$elements
-                )
-            . ') and '
-            . join( " and ",
-                map { sprintf q{@%s="%s"}, $_, $attributes->{$_} }
-                  sort keys(%$attributes)
-            )
-            . ']';
-};
-
-=head2 C<< $mech->PhantomJS_elementToJS >>
-
-Returns the Javascript fragment to turn a Selenium::Remote::PhantomJS
-id back to a Javascript object.
-
-=cut
-
-sub PhantomJS_elementToJS {
-    <<'JS'
-    function(id,doc_opt){
-        var d = doc_opt || document;
-        var c= d['$wdc_'];
-        return c[id]
-    };
-JS
-}
-
 sub agent {
     my($self, $ua) = @_;
     # page.settings.userAgent = 'Mozilla/5.0 (Windows NT 5.1; rv:8.0) Gecko/20100101 Firefox/7.0';
@@ -331,8 +289,6 @@ sub agent {
        this.settings.userAgent= arguments[0] 
 JS
 }
-
-sub events { [] };
 
 sub DESTROY {
     #warn "Destroying " . ref $_[0];
@@ -625,6 +581,131 @@ sub reset_headers {
     $self->eval_in_phantomjs('this.customHeaders= {}');
 };
 
+=head2 C<< $mech->res() >> / C<< $mech->response(%options) >>
+
+    my $response = $mech->response(headers => 0);
+
+Returns the current response as a L<HTTP::Response> object.
+
+=cut
+
+sub response { $_[0]->{response} };
+*res = \&response;
+
+# Call croak or carp, depending on the C< autodie > setting
+sub signal_condition {
+    my ($self,$msg) = @_;
+    if ($self->{autodie}) {
+        croak $msg
+    } else {
+        carp $msg
+    }
+};
+
+# Call croak on the C< autodie > setting if we have a non-200 status
+sub signal_http_status {
+    my ($self) = @_;
+    if ($self->{autodie}) {
+        if ($self->status and $self->status !~ /^2/ and $self->status != 0) {
+            # there was an error
+            croak ($self->response(headers => 0)->message || sprintf "Got status code %d", $self->status );
+        };
+    } else {
+        # silent
+    }
+};
+
+=head2 C<< $mech->success() >>
+
+    $mech->get('http://google.com');
+    print "Yay"
+        if $mech->success();
+
+Returns a boolean telling whether the last request was successful.
+If there hasn't been an operation yet, returns false.
+
+This is a convenience function that wraps C<< $mech->res->is_success >>.
+
+=cut
+
+sub success {
+    my $res = $_[0]->response( headers => 0 );
+    $res and $res->is_success
+}
+
+=head2 C<< $mech->status() >>
+
+    $mech->get('http://google.com');
+    print $mech->status();
+    # 200
+
+Returns the HTTP status code of the response.
+This is a 3-digit number like 200 for OK, 404 for not found, and so on.
+
+=cut
+
+sub status {
+    my ($self) = @_;
+    return $self->response( headers => 0 )->code
+};
+
+=head2 C<< $mech->back() >>
+
+    $mech->back();
+
+Goes one page back in the page history.
+
+Returns the (new) response.
+
+=cut
+
+sub back {
+    my ($self) = @_;
+
+    $self->driver->go_back;
+}
+
+=head2 C<< $mech->forward() >>
+
+    $mech->forward();
+
+Goes one page forward in the page history.
+
+Returns the (new) response.
+
+=cut
+
+sub forward {
+    my ($self) = @_;
+    $self->driver->go_forward;
+}
+
+=head2 C<< $mech->uri() >>
+
+    print "We are at " . $mech->uri;
+
+Returns the current document URI.
+
+=cut
+
+sub uri {
+    URI->new( $_[0]->driver->get_current_url )
+}
+
+=head1 CONTENT METHODS
+
+=head2 C<< $mech->document() >>
+
+Returns the document object as a WebElement.
+
+This is WWW::Mechanize::PhantomJS specific.
+
+=cut
+
+sub document {
+    $_[0]->driver->find_element('html','tag_name');
+}
+
 # If things get nasty, we could fall back to PhantomJS.webpage.plainText
 # var page = require('webpage').create();
 # page.open('http://somejsonpage.com', function () {
@@ -633,7 +714,30 @@ sub decoded_content {
     $_[0]->driver->get_page_source
 };
 
-# Also webPage.setContent() for ->update_html()
+=head2 C<< $mech->content( %options ) >>
+
+  print $mech->content;
+  print $mech->content( format => 'html' ); # default
+  print $mech->content( format => 'text' ); # identical to ->text
+
+This always returns the content as a Unicode string. It tries
+to decode the raw content according to its input encoding.
+This currently only works for HTML pages, not for images etc.
+
+Recognized options:
+
+=over 4
+
+=item *
+
+C<format> - the stuff to return
+
+The allowed values are C<html> and C<text>. The default is C<html>.
+
+=back
+
+=cut
+
 sub content {
     my ($self, %options) = @_;
     $options{ format } ||= 'html';
@@ -841,109 +945,6 @@ sub make_link {
         ()
     };
 }
-
-# Call croak or carp, depending on the C< autodie > setting
-sub signal_condition {
-    my ($self,$msg) = @_;
-    if ($self->{autodie}) {
-        croak $msg
-    } else {
-        carp $msg
-    }
-};
-
-# Call croak on the C< autodie > setting if we have a non-200 status
-sub signal_http_status {
-    my ($self) = @_;
-    if ($self->{autodie}) {
-        if ($self->status and $self->status !~ /^2/ and $self->status != 0) {
-            # there was an error
-            croak ($self->response(headers => 0)->message || sprintf "Got status code %d", $self->status );
-        };
-    } else {
-        # silent
-    }
-};
-
-sub response { $_[0]->{response} };
-*res = \&response;
-
-=head2 C<< $mech->back() >>
-
-    $mech->back();
-
-Goes one page back in the page history.
-
-Returns the (new) response.
-
-=cut
-
-sub back {
-    my ($self) = @_;
-
-    $self->driver->go_back;
-}
-
-=head2 C<< $mech->forward() >>
-
-    $mech->forward();
-
-Goes one page forward in the page history.
-
-Returns the (new) response.
-
-=cut
-
-sub forward {
-    my ($self) = @_;
-    $self->driver->go_forward;
-}
-
-=head2 C<< $mech->uri() >>
-
-    print "We are at " . $mech->uri;
-
-Returns the current document URI.
-
-=cut
-
-sub uri {
-    URI->new( $_[0]->driver->get_current_url )
-}
-
-=head2 C<< $mech->success() >>
-
-    $mech->get('http://google.com');
-    print "Yay"
-        if $mech->success();
-
-Returns a boolean telling whether the last request was successful.
-If there hasn't been an operation yet, returns false.
-
-This is a convenience function that wraps C<< $mech->res->is_success >>.
-
-=cut
-
-sub success {
-    my $res = $_[0]->response( headers => 0 );
-    $res and $res->is_success
-}
-
-=head2 C<< $mech->status() >>
-
-    $mech->get('http://google.com');
-    print $mech->status();
-    # 200
-
-Returns the HTTP status code of the response.
-This is a 3-digit number like 200 for OK, 404 for not found, and so on.
-
-=cut
-
-sub status {
-    my ($self) = @_;
-    return $self->response( headers => 0 )->code
-};
 
 =head2 C<< $mech->selector( $css_selector, %options ) >>
 
@@ -2620,6 +2621,58 @@ sub content_as_pdf {
     
     return $self->render_content( format => 'pdf', %options );
 };
+
+=head1 INTERNAL METHODS
+
+These are methods that are available but exist mostly as internal
+helper methods. Use of these is discouraged.
+
+=head2 C<< $mech->element_query( \@elements, \%attributes ) >>
+
+    my $query = $mech->element_query(['input', 'select', 'textarea'],
+                               { name => 'foo' });
+
+Returns the XPath query that searches for all elements with C<tagName>s
+in C<@elements> having the attributes C<%attributes>. The C<@elements>
+will form an C<or> condition, while the attributes will form an C<and>
+condition.
+
+=cut
+
+sub element_query {
+    my ($self, $elements, $attributes) = @_;
+        my $query =
+            './/*[(' .
+                join( ' or ',
+                    map {
+                        sprintf qq{local-name(.)="%s"}, lc $_
+                    } @$elements
+                )
+            . ') and '
+            . join( " and ",
+                map { sprintf q{@%s="%s"}, $_, $attributes->{$_} }
+                  sort keys(%$attributes)
+            )
+            . ']';
+};
+
+=head2 C<< $mech->PhantomJS_elementToJS >>
+
+Returns the Javascript fragment to turn a Selenium::Remote::PhantomJS
+id back to a Javascript object.
+
+=cut
+
+sub PhantomJS_elementToJS {
+    <<'JS'
+    function(id,doc_opt){
+        var d = doc_opt || document;
+        var c= d['$wdc_'];
+        return c[id]
+    };
+JS
+}
+
 
 1;
 
