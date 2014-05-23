@@ -49,7 +49,7 @@ Specify the port where PhantomJS should listen
 
 Specify the log level of PhantomJS
 
-  log => 'OFF'
+  log => 'OFF'   # Also INFO, WARN, DEBUG
 
 =item B<launch_exe>
 
@@ -64,9 +64,15 @@ to launch. The default is the file distributed with this module.
 
 =item B<launch_arg>
 
-Specify additional parameters to the PhantomJS executable.
+Specify additional parameters to the PhantomJS executable.  (phantomjs -h)
 
   launch_arg => [ "--some-new-parameter=foo" ],
+  "--webdriver=$port",
+  '--webdriver-logfile=/tmp/webdriver',
+  '--webdriver-loglevel=DEBUG',
+  '--debug=true',
+  
+  note: these set config.xxx values in ghostrdriver/config.js
 
 =item B<driver>
 
@@ -94,7 +100,12 @@ sub new {
     $ghostdir_default= File::Spec->catfile( $ghostdir_default, 'ghostdriver', 'main.js' );
     $options{ launch_ghostdir } ||= $ghostdir_default;
     $options{ launch_arg } ||= [];
+
     push @{ $options{ launch_arg }}, "--PhantomJS=$options{ port }";
+    # config.js defaults config.port to 8910 
+    # this is the proper way to overwrite it (not sure wtf the PhantomJS parameter does above)
+    if ($options{port}) {  push @{ $options{ launch_arg }}, "--port=$options{ port }";  }  # PhantomJS version 1.9.7
+
     push @{ $options{ launch_arg }}, "--logLevel=\U$options{ log }";
     my $cmd= "| $options{ launch_exe } $options{ launch_ghostdir } @{ $options{ launch_arg } }";
     #warn $cmd;
