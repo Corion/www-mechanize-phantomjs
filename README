@@ -347,7 +347,7 @@ EXTRACTION METHODS
 
   `$mech->find_link( %options )'
       print $_->text . "\n"
-          for $mech->find_link_dom( text_contains => 'CPAN' );
+          for $mech->find_link( text_contains => 'CPAN' );
 
     A method quite similar to WWW::Mechanize's method. The options are
     documented in `->find_link_dom'.
@@ -369,7 +369,7 @@ EXTRACTION METHODS
 
   `$mech->find_all_links_dom %options'
       print $_->{innerHTML} . "\n"
-          for $mech->find_link_dom( text_regex => qr/google/i );
+          for $mech->find_all_links_dom( text_regex => qr/google/i );
 
     Finds all matching linky DOM nodes in the document. The options are
     documented in `->find_link_dom'.
