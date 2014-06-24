@@ -2198,7 +2198,16 @@ sub submit_form {
         return
     };
     $self->do_set_fields( form => $form, fields => $fields );
-    return $self->submit($form);
+
+    my $response;
+    if ( $options{button} ) {
+        $response = $self->click( $options{button}, $options{x} || 0, $options{y} || 0 );
+    }
+    else {
+        $response = $self->submit();
+    }
+    return $response;
+    
 }
 
 =head2 C<< $mech->set_fields( $name => $value, ... ) >>
