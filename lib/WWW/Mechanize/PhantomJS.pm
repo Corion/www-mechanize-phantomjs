@@ -1789,6 +1789,7 @@ and on calls to C<< ->submit() >> and C<< ->submit_with_fields >>.
 sub current_form {
     my( $self, %options )= @_;
     # Find the first <FORM> element from the currently active element
+    $self->form_number(1) unless $self->{current_form};
     $self->{current_form};
 }
 
