@@ -2063,19 +2063,15 @@ sub get_set_value {
             #    $fields[0]->__event($ev);
             #};
 
-            if ('select' eq $tag) {
-                $self->select($fields[0], $value);
-            } else {
-                my $get= $self->PhantomJS_elementToJS();
-                my $val= quotemeta($value);
-                my $js= <<JS;
-                    var g=$get;
-                    var el=g("$fields[0]->{id}");
-                    el.value="$val";
+            my $get= $self->PhantomJS_elementToJS();
+            my $val= quotemeta($value);
+            my $js= <<JS;
+                var g=$get;
+                var el=g("$fields[0]->{id}");
+                el.value="$val";
 JS
-                $js= quotemeta($js);
-                $self->eval("eval('$js')"); # for some reason, Selenium/Ghostdriver don't like the JS as plain JS
-            };
+            $js= quotemeta($js);
+            $self->eval("eval('$js')"); # for some reason, Selenium/Ghostdriver don't like the JS as plain JS
 
             #for my $ev (@$post) {
             #    $fields[0]->__event($ev);
