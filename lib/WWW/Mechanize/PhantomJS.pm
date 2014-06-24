@@ -2129,6 +2129,7 @@ sub submit {
     } else {
         croak "I don't know which form to submit, sorry.";
     }
+    return $self->response;
 };
 
 =head2 C<< $mech->submit_form( %options ) >>
@@ -2201,7 +2202,7 @@ sub submit_form {
         return
     };
     $self->do_set_fields( form => $form, fields => $fields );
-    $self->submit($form);
+    return $self->submit($form);
 }
 
 =head2 C<< $mech->set_fields( $name => $value, ... ) >>
