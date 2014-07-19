@@ -108,6 +108,9 @@ sub new {
         'port' => $options{ port },
         auto_close => 0,
      );
+     # We patched Ghostdriver to return data, but we need to educate
+     # Selenium::Driver::Remote about it:
+     $options{ driver }->commands->get_cmds->{get}->{no_content_success}= 0;
 
      my $self= bless \%options => $class;
      
