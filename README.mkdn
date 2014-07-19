@@ -11,7 +11,7 @@ WWW::Mechanize::PhantomJS - automate the PhantomJS browser
     $mech->eval_in_page('alert("Hello PhantomJS")');
     my $png= $mech->content_as_png();
 
-## `->new %options`
+## `WWW::Mechanize::PhantomJS->new %options`
 
 - __autodie__
 
@@ -68,6 +68,12 @@ Returns the version of the PhantomJS executable that is used.
 
 Returns the version of the ghostdriver script that is used.
 
+## `$mech->driver`
+
+    my $selenium= $mech->driver
+
+Access the [Selenium::Driver::Remote](https://metacpan.org/pod/Selenium::Driver::Remote) instance connecting to PhantomJS.
+
 ## `$mech->js_errors()`
 
     print $_->{message}
@@ -110,21 +116,6 @@ This method is special to WWW::Mechanize::PhantomJS.
 Evaluates Javascript code in the context of PhantomJS.
 
 This allows you to modify properties of PhantomJS.
-
-## `$api->element_query( \@elements, \%attributes )`
-
-    my $query = $element_query(['input', 'select', 'textarea'],
-                               { name => 'foo' });
-
-Returns the XPath query that searches for all elements with `tagName`s
-in `@elements` having the attributes `%attributes`. The `@elements`
-will form an `or` condition, while the attributes will form an `and`
-condition.
-
-## `$mech->PhantomJS_elementToJS`
-
-Returns the Javascript fragment to turn a Selenium::Remote::PhantomJS
-id back to a Javascript object.
 
 ## `$mech->highlight_node( @nodes )`
 
@@ -226,6 +217,78 @@ that PhantomJS may still send a header with its default value.
 
 Removes all custom headers and makes PhantomJS send its defaults again.
 
+## `$mech->res()` / `$mech->response(%options)`
+
+    my $response = $mech->response(headers => 0);
+
+Returns the current response as a [HTTP::Response](https://metacpan.org/pod/HTTP::Response) object.
+
+## `$mech->success()`
+
+    $mech->get('http://google.com');
+    print "Yay"
+        if $mech->success();
+
+Returns a boolean telling whether the last request was successful.
+If there hasn't been an operation yet, returns false.
+
+This is a convenience function that wraps `$mech->res->is_success`.
+
+## `$mech->status()`
+
+    $mech->get('http://google.com');
+    print $mech->status();
+    # 200
+
+Returns the HTTP status code of the response.
+This is a 3-digit number like 200 for OK, 404 for not found, and so on.
+
+## `$mech->back()`
+
+    $mech->back();
+
+Goes one page back in the page history.
+
+Returns the (new) response.
+
+## `$mech->forward()`
+
+    $mech->forward();
+
+Goes one page forward in the page history.
+
+Returns the (new) response.
+
+## `$mech->uri()`
+
+    print "We are at " . $mech->uri;
+
+Returns the current document URI.
+
+# CONTENT METHODS
+
+## `$mech->document()`
+
+Returns the document object as a WebElement.
+
+This is WWW::Mechanize::PhantomJS specific.
+
+## `$mech->content( %options )`
+
+    print $mech->content;
+    print $mech->content( format => 'html' ); # default
+    print $mech->content( format => 'text' ); # identical to ->text
+
+This always returns the content as a Unicode string. It tries
+to decode the raw content according to its input encoding.
+This currently only works for HTML pages, not for images etc.
+
+Recognized options:
+
+- `format` - the stuff to return
+
+    The allowed values are `html` and `text`. The default is `html`.
+
 ## `$mech->text()`
 
     print $mech->text();
@@ -291,48 +354,6 @@ Returns all links in the document as [WWW::Mechanize::Link](https://metacpan.org
 Currently accepts no parameters. See `->xpath`
 or `->selector` when you want more control.
 
-## `$mech->back()`
-
-    $mech->back();
-
-Goes one page back in the page history.
-
-Returns the (new) response.
-
-## `$mech->forward()`
-
-    $mech->forward();
-
-Goes one page forward in the page history.
-
-Returns the (new) response.
-
-## `$mech->uri()`
-
-    print "We are at " . $mech->uri;
-
-Returns the current document URI.
-
-## `$mech->success()`
-
-    $mech->get('http://google.com');
-    print "Yay"
-        if $mech->success();
-
-Returns a boolean telling whether the last request was successful.
-If there hasn't been an operation yet, returns false.
-
-This is a convenience function that wraps `$mech->res->is_success`.
-
-## `$mech->status()`
-
-    $mech->get('http://google.com');
-    print $mech->status();
-    # 200
-
-Returns the HTTP status code of the response.
-This is a 3-digit number like 200 for OK, 404 for not found, and so on.
-
 ## `$mech->selector( $css_selector, %options )`
 
     my @text = $mech->selector('p.content');
@@ -394,7 +415,7 @@ or carp, depending on the `autodie` parameter.
 ## `$mech->find_link( %options )`
 
     print $_->text . "\n"
-        for $mech->find_link_dom( text_contains => 'CPAN' );
+        for $mech->find_link( text_contains => 'CPAN' );
 
 A method quite similar to [WWW::Mechanize](https://metacpan.org/pod/WWW::Mechanize)'s method.
 The options are documented in `->find_link_dom`.
@@ -406,7 +427,7 @@ This defaults to not look through child frames.
 ## `$mech->find_all_links( %options )`
 
     print $_->text . "\n"
-        for $mech->find_link_dom( text_regex => qr/google/i );
+        for $mech->find_all_links( text_regex => qr/google/i );
 
 Finds all links in the document.
 The options are documented in `->find_link_dom`.
@@ -898,6 +919,26 @@ Currently, the data transfer between PhantomJS and Perl
 is done through a temporary file, so directly using
 the `filename` option may be faster.
 
+# INTERNAL METHODS
+
+These are methods that are available but exist mostly as internal
+helper methods. Use of these is discouraged.
+
+## `$mech->element_query( \@elements, \%attributes )`
+
+    my $query = $mech->element_query(['input', 'select', 'textarea'],
+                               { name => 'foo' });
+
+Returns the XPath query that searches for all elements with `tagName`s
+in `@elements` having the attributes `%attributes`. The `@elements`
+will form an `or` condition, while the attributes will form an `and`
+condition.
+
+## `$mech->PhantomJS_elementToJS`
+
+Returns the Javascript fragment to turn a Selenium::Remote::PhantomJS
+id back to a Javascript object.
+
 # INCOMPATIBILITIES WITH WWW::Mechanize
 
 As this module is in a very early stage of development,
@@ -976,9 +1017,9 @@ The public support forum of this module is
 
 # TALKS
 
-I've given two talks about this module at Perl conferences:
+I've given a talk about this module at Perl conferences:
 
-[http://corion.net/talks/WWW-Mechanize-PhantomJS/www-mechanize-phantomjs.html](https://metacpan.org/pod/German&#x20;Perl&#x20;Workshop&#x20;2014,&#x20;German)
+[German Perl Workshop 2014, German](http://corion.net/talks/WWW-Mechanize-PhantomJS/www-mechanize-phantomjs.html)
 
 # BUG TRACKER
 

@@ -25,7 +25,7 @@ WWW::Mechanize::PhantomJS - automate the PhantomJS browser
   $mech->eval_in_page('alert("Hello PhantomJS")');
   my $png= $mech->content_as_png();
 
-=head2 C<< ->new %options >>
+=head2 C<< WWW::Mechanize::PhantomJS->new %options >>
 
 =over 4
 
@@ -2824,9 +2824,9 @@ L<http://perlmonks.org/>.
 
 =head1 TALKS
 
-I've given two talks about this module at Perl conferences:
+I've given a talk about this module at Perl conferences:
 
-L<http://corion.net/talks/WWW-Mechanize-PhantomJS/www-mechanize-phantomjs.html|German Perl Workshop 2014, German>
+L<German Perl Workshop 2014, German|http://corion.net/talks/WWW-Mechanize-PhantomJS/www-mechanize-phantomjs.html>
 
 =head1 BUG TRACKER
 

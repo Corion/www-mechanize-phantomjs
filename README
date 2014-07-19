@@ -9,7 +9,7 @@ SYNOPSIS
       $mech->eval_in_page('alert("Hello PhantomJS")');
       my $png= $mech->content_as_png();
 
-  `->new %options'
+  `WWW::Mechanize::PhantomJS->new %options'
     autodie
         Control whether HTTP errors are fatal.
 
@@ -55,6 +55,11 @@ SYNOPSIS
 
     Returns the version of the ghostdriver script that is used.
 
+  `$mech->driver'
+        my $selenium= $mech->driver
+
+    Access the Selenium::Driver::Remote instance connecting to PhantomJS.
+
   `$mech->js_errors()'
       print $_->{message}
           for $mech->js_errors();
@@ -91,19 +96,6 @@ SYNOPSIS
     Evaluates Javascript code in the context of PhantomJS.
 
     This allows you to modify properties of PhantomJS.
-
-  `$api->element_query( \@elements, \%attributes )'
-        my $query = $element_query(['input', 'select', 'textarea'],
-                                   { name => 'foo' });
-
-    Returns the XPath query that searches for all elements with `tagName's
-    in `@elements' having the attributes `%attributes'. The `@elements' will
-    form an `or' condition, while the attributes will form an `and'
-    condition.
-
-  `$mech->PhantomJS_elementToJS'
-    Returns the Javascript fragment to turn a Selenium::Remote::PhantomJS id
-    back to a Javascript object.
 
   `$mech->highlight_node( @nodes )'
         my @links = $mech->selector('a');
@@ -196,6 +188,69 @@ NAVIGATION METHODS
 
     Removes all custom headers and makes PhantomJS send its defaults again.
 
+  `$mech->res()' / `$mech->response(%options)'
+        my $response = $mech->response(headers => 0);
+
+    Returns the current response as a HTTP::Response object.
+
+  `$mech->success()'
+        $mech->get('http://google.com');
+        print "Yay"
+            if $mech->success();
+
+    Returns a boolean telling whether the last request was successful. If
+    there hasn't been an operation yet, returns false.
+
+    This is a convenience function that wraps `$mech->res->is_success'.
+
+  `$mech->status()'
+        $mech->get('http://google.com');
+        print $mech->status();
+        # 200
+
+    Returns the HTTP status code of the response. This is a 3-digit number
+    like 200 for OK, 404 for not found, and so on.
+
+  `$mech->back()'
+        $mech->back();
+
+    Goes one page back in the page history.
+
+    Returns the (new) response.
+
+  `$mech->forward()'
+        $mech->forward();
+
+    Goes one page forward in the page history.
+
+    Returns the (new) response.
+
+  `$mech->uri()'
+        print "We are at " . $mech->uri;
+
+    Returns the current document URI.
+
+CONTENT METHODS
+  `$mech->document()'
+    Returns the document object as a WebElement.
+
+    This is WWW::Mechanize::PhantomJS specific.
+
+  `$mech->content( %options )'
+      print $mech->content;
+      print $mech->content( format => 'html' ); # default
+      print $mech->content( format => 'text' ); # identical to ->text
+
+    This always returns the content as a Unicode string. It tries to decode
+    the raw content according to its input encoding. This currently only
+    works for HTML pages, not for images etc.
+
+    Recognized options:
+
+    *   `format' - the stuff to return
+
+        The allowed values are `html' and `text'. The default is `html'.
+
   `$mech->text()'
         print $mech->text();
 
@@ -249,43 +304,6 @@ EXTRACTION METHODS
 
     Currently accepts no parameters. See `->xpath' or `->selector' when you
     want more control.
-
-  `$mech->back()'
-        $mech->back();
-
-    Goes one page back in the page history.
-
-    Returns the (new) response.
-
-  `$mech->forward()'
-        $mech->forward();
-
-    Goes one page forward in the page history.
-
-    Returns the (new) response.
-
-  `$mech->uri()'
-        print "We are at " . $mech->uri;
-
-    Returns the current document URI.
-
-  `$mech->success()'
-        $mech->get('http://google.com');
-        print "Yay"
-            if $mech->success();
-
-    Returns a boolean telling whether the last request was successful. If
-    there hasn't been an operation yet, returns false.
-
-    This is a convenience function that wraps `$mech->res->is_success'.
-
-  `$mech->status()'
-        $mech->get('http://google.com');
-        print $mech->status();
-        # 200
-
-    Returns the HTTP status code of the response. This is a 3-digit number
-    like 200 for OK, 404 for not found, and so on.
 
   `$mech->selector( $css_selector, %options )'
       my @text = $mech->selector('p.content');
@@ -347,7 +365,7 @@ EXTRACTION METHODS
 
   `$mech->find_link( %options )'
       print $_->text . "\n"
-          for $mech->find_link_dom( text_contains => 'CPAN' );
+          for $mech->find_link( text_contains => 'CPAN' );
 
     A method quite similar to WWW::Mechanize's method. The options are
     documented in `->find_link_dom'.
@@ -358,7 +376,7 @@ EXTRACTION METHODS
 
   `$mech->find_all_links( %options )'
       print $_->text . "\n"
-          for $mech->find_link_dom( text_regex => qr/google/i );
+          for $mech->find_all_links( text_regex => qr/google/i );
 
     Finds all links in the document. The options are documented in
     `->find_link_dom'.
@@ -842,6 +860,23 @@ CONTENT RENDERING METHODS
     Currently, the data transfer between PhantomJS and Perl is done through
     a temporary file, so directly using the `filename' option may be faster.
 
+INTERNAL METHODS
+    These are methods that are available but exist mostly as internal helper
+    methods. Use of these is discouraged.
+
+  `$mech->element_query( \@elements, \%attributes )'
+        my $query = $mech->element_query(['input', 'select', 'textarea'],
+                                   { name => 'foo' });
+
+    Returns the XPath query that searches for all elements with `tagName's
+    in `@elements' having the attributes `%attributes'. The `@elements' will
+    form an `or' condition, while the attributes will form an `and'
+    condition.
+
+  `$mech->PhantomJS_elementToJS'
+    Returns the Javascript fragment to turn a Selenium::Remote::PhantomJS id
+    back to a Javascript object.
+
 INCOMPATIBILITIES WITH WWW::Mechanize
     As this module is in a very early stage of development, there are many
     incompatibilities. The main thing is that only the most needed
@@ -920,10 +955,9 @@ SUPPORT
     The public support forum of this module is http://perlmonks.org/.
 
 TALKS
-    I've given two talks about this module at Perl conferences:
+    I've given a talk about this module at Perl conferences:
 
-    http://corion.net/talks/WWW-Mechanize-PhantomJS/www-mechanize-phantomjs.
-    html
+    German Perl Workshop 2014, German
 
 BUG TRACKER
     Please report bugs in this module via the RT CPAN bug queue at
