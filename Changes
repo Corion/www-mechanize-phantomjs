@@ -1,6 +1,6 @@
 TO DO:
 
-0.04 2014719
+0.04 20140719
     . Documentation fixes by Martin McGrath
     . Documentation added for more methods, code shuffled around
     + Fix breakage introduced by Selenium::Driver::Remote API changes
