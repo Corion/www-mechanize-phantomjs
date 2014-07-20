@@ -437,6 +437,12 @@ sub get_local {
 
 =head2 C<< $mech->post( $url, %options ) >>
 
+B<not implemented>
+
+Selenium currently does not allow a raw POST message
+and the code for constructing a form on the fly is not working
+so this method is not implemented.
+
   $mech->post( 'http://example.com',
       params => { param => "Hello World" },
       headers => {
