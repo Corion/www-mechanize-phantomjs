@@ -1,5 +1,9 @@
 TO DO:
 
+0.05 20140720
+    . Document ->post() not being implemented
+    . Re-release 0.04 as it was released during perl.org NOC move
+
 0.04 20140719
     . Documentation fixes by Martin McGrath
     . Documentation added for more methods, code shuffled around
