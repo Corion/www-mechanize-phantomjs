@@ -1,5 +1,8 @@
 TO DO:
 
+0.06 20140721
+    . Re-release 0.04 as it was released during perl.org NOC move
+
 0.05 20140720
     . Document ->post() not being implemented
     . Re-release 0.04 as it was released during perl.org NOC move
