@@ -415,6 +415,13 @@ C<< no_cache >> - if true, bypass the browser cache
 sub update_response {
     my( $self, $phantom_res ) = @_;
 
+    # just 1 means success
+    $phantom_res = {
+    	status     => 200,
+	statusText => 'OK',
+	headers    => [],
+    } if ref($phantom_res) eq '' and $phantom_res eq '1';
+
     my @headers= map {;@{$_}{qw(name value)}} @{ $phantom_res->{headers} };
     my $res= HTTP::Response->new( $phantom_res->{status}, $phantom_res->{statusText}, \@headers );
 
