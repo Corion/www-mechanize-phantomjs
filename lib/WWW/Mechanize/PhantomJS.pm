@@ -98,16 +98,29 @@ sub new {
     push @{ $options{ launch_arg }}, "--logLevel=\U$options{ log }";
     my $cmd= "| $options{ launch_exe } $options{ launch_ghostdir } @{ $options{ launch_arg } }";
     #warn $cmd;
-    $options{ pid } ||= open my $fh, $cmd
-        or die "Couldn't launch [$cmd]: $! / $?";
-    sleep 2; # Just to give PhantomJS time to start up
-    $options{ fh } = $fh;
+    unless ($options{pid}) {
+    	$options{ kill_pid } = 1;
+    	$options{ pid } = open my $fh, $cmd
+    	    or die "Couldn't launch [$cmd]: $! / $?";
+    	sleep 2; # Just to give PhantomJS time to start up
+    	$options{ fh } = $fh;
+    }
 
     # Connect to it
-    $options{ driver } ||= Selenium::Remote::Driver->new(
-        'port' => $options{ port },
-        auto_close => 0,
-     );
+    eval {
+    	$options{ driver } ||= Selenium::Remote::Driver->new(
+    	    'port' => $options{ port },
+    	    auto_close => 0,
+    	);
+    };
+
+    # if PhantomJS started, but so slow or unresponsive that SRD cannot connect to it,
+    # kill it manually to avoid waiting for it indefinitely
+    if ( $@ ) {
+    	kill 9, $options{ pid } if $options{ kill_pid };
+	die $@;
+    }
+
 
      my $self= bless \%options => $class;
      
