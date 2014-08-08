@@ -102,7 +102,7 @@ sub new {
     	$options{ kill_pid } = 1;
     	$options{ pid } = open my $fh, $cmd
     	    or die "Couldn't launch [$cmd]: $! / $?";
-    	sleep 2; # Just to give PhantomJS time to start up
+    	sleep $options{ wait } || 2; # Just to give PhantomJS time to start up
     	$options{ fh } = $fh;
     }
 
