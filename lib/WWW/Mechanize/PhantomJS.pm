@@ -8,6 +8,7 @@ use Scalar::Util qw( blessed );
 use File::Basename;
 use Carp qw(croak carp);
 use WWW::Mechanize::Link;
+use IO::Socket::INET;
 
 use vars qw($VERSION %link_spec);
 $VERSION= '0.03';
@@ -102,8 +103,20 @@ sub new {
     	$options{ kill_pid } = 1;
     	$options{ pid } = open my $fh, $cmd
     	    or die "Couldn't launch [$cmd]: $! / $?";
-    	sleep $options{ wait } || 2; # Just to give PhantomJS time to start up
     	$options{ fh } = $fh;
+
+        # Just to give PhantomJS time to start up, make sure it accepts connections
+        my $wait = time + ($options{ wait } || 20);
+        while ( time < $wait ) {
+            my $t = time;
+            my $socket = IO::Socket::INET->new(
+                PeerHost => '127.0.0.1',
+                PeerPort => $options{ port },
+                Proto    => 'tcp',
+            );
+            last if $socket;
+            sleep 1 if time - $t < 1;
+        }
     }
 
     # Connect to it
@@ -118,7 +131,7 @@ sub new {
     # kill it manually to avoid waiting for it indefinitely
     if ( $@ ) {
     	kill 9, $options{ pid } if $options{ kill_pid };
-	die $@;
+        die $@;
     }
 
 
