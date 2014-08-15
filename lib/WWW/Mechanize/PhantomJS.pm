@@ -443,9 +443,13 @@ sub update_response {
 
     # just 1 means success
     $phantom_res = {
-    	status     => 200,
-	statusText => 'OK',
-	headers    => [],
+        status     => 200,
+        statusText => 'OK',
+        headers    => [],
+        headers    => [{
+            name  => 'success',
+            value => 1,
+        }],
     } if ref($phantom_res) eq '' and $phantom_res eq '1';
 
     my @headers= map {;@{$_}{qw(name value)}} @{ $phantom_res->{headers} };
