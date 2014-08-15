@@ -73,6 +73,11 @@ Specify additional parameters to the PhantomJS executable.
 
 A premade L<Selenium::Driver::Remote> object.
 
+=item B<report_js_errors>
+
+If set to 1, after each request tests for Javascript errors and warns. Useful
+for testing with C<use warnings qw(fatal)>.
+
 =back
 
 =cut
@@ -272,6 +277,8 @@ sub eval_in_page {
     local @Selenium::Remote::Driver::CARP_NOT
         = (@Selenium::Remote::Driver::CARP_NOT, (ref $self)); # we trust this
     my $eval_in_sandbox = $self->driver->execute_script("return $str", @args);
+    $self->post_process;
+    return $eval_in_sandbox;
 };
 *eval = \&eval_in_page;
 
@@ -445,7 +452,6 @@ sub update_response {
     $phantom_res = {
         status     => 200,
         statusText => 'OK',
-        headers    => [],
         headers    => [{
             name  => 'success',
             value => 1,
@@ -466,6 +472,7 @@ sub get {
     my ($self, $url, %options ) = @_;
     # We need to stringify $url so it can pass through JSON
     my $phantom_res= $self->driver->get( "$url" );
+    $self->post_process;
     $self->update_response( $phantom_res );
 };
 
@@ -501,7 +508,6 @@ sub get_local {
     my $url= "file://$fn";
 
     my $res= $self->get($url, %options);
-
     # PhantomJS is not helpful with its error messages for local URLs
     if( 0+$res->headers->header_field_names) {
         # We need to fake the content headers from <meta> tags too...
@@ -2664,6 +2670,23 @@ sub content_as_pdf {
     
     return $self->render_content( format => 'pdf', %options );
 };
+
+sub post_process
+{
+    my $self = shift;
+    if ( $self->{report_js_errors} ) {
+        if ( my @errors = $self->js_errors ) {
+            $self-> report_js_errors(@errors);
+            $self-> clear_js_errors;
+        }
+    }
+}
+
+sub report_js_errors
+{
+    my ( $self, @errors ) = @_;
+    Carp::carp("javascript error: @errors") ;
+}
 
 1;
 
