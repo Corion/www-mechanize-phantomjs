@@ -85,7 +85,20 @@ for testing with C<use warnings qw(fatal)>.
 sub new {
     my ($class, %options) = @_;
 
-    $options{ port } ||= 8910;
+    unless ( defined $options{ port } ) {
+        my $port = 8910;
+        while (1) {
+            $port++, next unless IO::Socket::INET->new(
+	        Listen    => 5,
+	        Proto     => 'tcp',
+	        Reuse     => 1,
+	        LocalPort => $port
+	    );
+	    last;
+        }
+    	$options{ port } = $port;
+    }
+
     $options{ "log" } ||= 'OFF';
 
     if (! exists $options{ autodie }) { $options{ autodie } = 1 };
@@ -100,10 +113,9 @@ sub new {
     $ghostdir_default= File::Spec->catfile( $ghostdir_default, 'ghostdriver', 'main.js' );
     $options{ launch_ghostdir } ||= $ghostdir_default;
     $options{ launch_arg } ||= [];
-    push @{ $options{ launch_arg }}, "--PhantomJS=$options{ port }";
+    push @{ $options{ launch_arg }}, "--port=$options{ port }";
     push @{ $options{ launch_arg }}, "--logLevel=\U$options{ log }";
     my $cmd= "| $options{ launch_exe } $options{ launch_ghostdir } @{ $options{ launch_arg } }";
-    #warn $cmd;
     unless ($options{pid}) {
     	$options{ kill_pid } = 1;
     	$options{ pid } = open my $fh, $cmd
@@ -138,7 +150,6 @@ sub new {
     	kill 9, $options{ pid } if $options{ kill_pid };
         die $@;
     }
-
 
      my $self= bless \%options => $class;
      
