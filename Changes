@@ -1,6 +1,8 @@
 TO DO:
 
 0.07 2014xxxx
+    . Use file:// as local URI on non-Windows systems
+      Windows will still use file:/ .
 
 0.06 20140721
     . Re-release 0.04 as it was released during perl.org NOC move

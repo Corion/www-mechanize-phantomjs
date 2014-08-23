@@ -420,7 +420,12 @@ sub get_local {
                  Cwd::getcwd(),
              );
     $fn =~ s!\\!/!g; # fakey "make file:// URL"
-    my $url= "file:/$fn";
+    my $url;
+    if( $^O =~ /mswin/i ) {
+        $url= "file:/$fn";
+    } else {
+        $url= "file://$fn";
+    };
 
     my $res= $self->get($url, %options);
 
