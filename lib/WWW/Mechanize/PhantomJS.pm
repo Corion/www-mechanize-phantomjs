@@ -152,6 +152,8 @@ sub new {
     	    'port' => $options{ port },
     	    auto_close => 0,
     	);
+        # (Monkey)patch Selenium::Remote::Driver
+        $options{ driver }->commands->get_cmds->{get}->{no_content_success}= 0;
     };
 
     # if PhantomJS started, but so slow or unresponsive that SRD cannot connect to it,
