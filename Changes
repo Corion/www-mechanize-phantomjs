@@ -8,6 +8,8 @@ TO DO:
     . Fix ->content_as_png parameters
       Submitted by dmuey
     . Documentation fixes by Martin McGrath
+    . ->current_form behaves just like WWW::Mechanize::current_form
+      We always choose the first form if none is yet selected.
 
 0.06 20140721
     . Re-release 0.04 as it was released during perl.org NOC move
