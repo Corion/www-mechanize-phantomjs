@@ -484,14 +484,14 @@ sub get_local {
     $fn =~ s!\\!/!g; # fakey "make file:// URL"
     my $url;
     if( $^O =~ /mswin/i ) {
-        $url= "file:/$fn";
+        $url= "file:///$fn";
     } else {
         $url= "file://$fn";
     };
-
+    $self->get('about:blank'); # So we can distinguish between "stayed at the old URL due to not found" and "got new URL"
     my $res= $self->get($url, %options);
     # PhantomJS is not helpful with its error messages for local URLs
-    if( 0+$res->headers->header_field_names) {
+    if( 0+$res->headers->header_field_names and $self->uri ne 'about:blank') {
         # We need to fake the content headers from <meta> tags too...
         # Maybe this even needs to go into ->get()
         $res->code( 200 );

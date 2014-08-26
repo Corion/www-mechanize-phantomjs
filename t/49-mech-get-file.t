@@ -69,5 +69,6 @@ t::helper::run_across_instances(\@instances, $instance_port, \&new_mech, sub {
         or diag $mech->content;
 
     $mech->get_local('file-does-not-exist.html');
-    ok !$mech->success, 'We fail on non-existing file';
+    ok !$mech->success, 'We fail on non-existing file'
+        or diag $mech->content;
 });
