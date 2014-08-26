@@ -7,6 +7,7 @@ TO DO:
       Submitted by brianhorakh
     . Fix ->content_as_png parameters
       Submitted by dmuey
+    . Documentation fixes by Martin McGrath
 
 0.06 20140721
     . Re-release 0.04 as it was released during perl.org NOC move
