@@ -55,7 +55,7 @@ WWW::Mechanize::PhantomJS - automate the PhantomJS browser
         '--webdriver-logfile=/tmp/webdriver',
         '--webdriver-loglevel=DEBUG',
         '--debug=true',
-        
+
         note: these set config.xxx values in ghostrdriver/config.js
 
 - __driver__
@@ -223,7 +223,6 @@ Note that currently, we only support one value per header.
 ## `$mech->delete_header( $name , $name2... )`
 
     $mech->delete_header( 'User-Agent' );
-    
 
 Removes HTTP headers from the agent's list of special headers. Note
 that PhantomJS may still send a header with its default value.
@@ -811,7 +810,7 @@ This is mostly an internal method.
 
     my $last_frame= $mech->current_frame;
     # Switch frame somewhere else
-    
+
     # Switch back
     $mech->activate_container( $last_frame );
 
@@ -836,7 +835,7 @@ Frames are currently not really supported./root/update-wan-ip --verbose --server
 
 Returns the given tab or the current page rendered as PNG image.
 
-All parameters are optional. 
+All parameters are optional.
 
 - ` \%coordinates `
 
@@ -1012,7 +1011,7 @@ when searching through frames.
 
 # REPOSITORY
 
-The public repository of this module is 
+The public repository of this module is
 [http://github.com/Corion/www-mechanize-phantomjs](http://github.com/Corion/www-mechanize-phantomjs).
 
 # SUPPORT
