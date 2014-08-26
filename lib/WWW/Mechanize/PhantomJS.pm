@@ -432,7 +432,7 @@ sub update_response {
         status     => 200,
         statusText => 'OK',
         headers    => [{
-            name  => 'success',
+            name  => 'x-www-mechanize-phantomjs-fake-success',
             value => 1,
         }],
     } if ref($phantom_res) eq '' and $phantom_res eq '1';
@@ -444,7 +444,8 @@ sub update_response {
 
     delete $self->{ current_form };
 
-    $self->{response} = $res
+    $self->{response} = $res;
+    return $res
 };
 
 sub get {
@@ -490,10 +491,9 @@ sub get_local {
     } else {
         $url= "file://$fn";
     };
-    $self->get('about:blank'); # So we can distinguish between "stayed at the old URL due to not found" and "got new URL"
     my $res= $self->get($url, %options);
     # PhantomJS is not helpful with its error messages for local URLs
-    if( 0+$res->headers->header_field_names and $self->uri ne 'about:blank') {
+    if( 0+$res->headers->header_field_names and ([$res->headers->header_field_names]->[0] ne 'x-www-mechanize-phantomjs-fake-success' or $self->uri ne 'about:blank')) {
         # We need to fake the content headers from <meta> tags too...
         # Maybe this even needs to go into ->get()
         $res->code( 200 );
