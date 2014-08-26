@@ -61,7 +61,7 @@ t::helper::run_across_instances(\@instances, $instance_port, \&new_mech, sub {
 
     isn't $response, undef, "We identified a response";
     ok !$mech->success, "The response is an error response";
-    is $response->code, 404, 'We got the correct error number (404)';
+    like $response->code, qr/^4..$/, "We got a 4xx error (Selenium doesn't do error codes)";
 
     # The browser has no chance to identify this one
     # as we don't send a content-length header here

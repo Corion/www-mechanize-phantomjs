@@ -437,6 +437,12 @@ sub update_response {
         }],
     } if ref($phantom_res) eq '' and $phantom_res eq '1';
 
+    # Now add a status code of 4xx if we don't have one.
+    if( ! $phantom_res->{status}) {
+        $phantom_res->{status}= 400;
+        $phantom_res->{statusText}= "Unknown error (added by " . __PACKAGE__ . ")";
+    };
+
     my @headers= map {;@{$_}{qw(name value)}} @{ $phantom_res->{headers} };
     my $res= HTTP::Response->new( $phantom_res->{status}, $phantom_res->{statusText}, \@headers );
 
