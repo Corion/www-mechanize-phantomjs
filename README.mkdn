@@ -33,7 +33,7 @@ WWW::Mechanize::PhantomJS - automate the PhantomJS browser
 
     Specify the log level of PhantomJS
 
-        log => 'OFF'
+        log => 'OFF'   # Also INFO, WARN, DEBUG
 
 - __launch\_exe__
 
@@ -48,13 +48,24 @@ WWW::Mechanize::PhantomJS - automate the PhantomJS browser
 
 - __launch\_arg__
 
-    Specify additional parameters to the PhantomJS executable.
+    Specify additional parameters to the PhantomJS executable.  (phantomjs -h)
 
         launch_arg => [ "--some-new-parameter=foo" ],
+        "--webdriver=$port",
+        '--webdriver-logfile=/tmp/webdriver',
+        '--webdriver-loglevel=DEBUG',
+        '--debug=true',
+
+        note: these set config.xxx values in ghostrdriver/config.js
 
 - __driver__
 
-    A premade [Selenium::Driver::Remote](https://metacpan.org/pod/Selenium::Driver::Remote) object.
+    A premade [Selenium::Remote::Driver](https://metacpan.org/pod/Selenium::Remote::Driver) object.
+
+- __report\_js\_errors__
+
+    If set to 1, after each request tests for Javascript errors and warns. Useful
+    for testing with `use warnings qw(fatal)`.
 
 ## `$mech->phantomjs_version`
 
@@ -212,7 +223,6 @@ Note that currently, we only support one value per header.
 ## `$mech->delete_header( $name , $name2... )`
 
     $mech->delete_header( 'User-Agent' );
-    
 
 Removes HTTP headers from the agent's list of special headers. Note
 that PhantomJS may still send a header with its default value.
@@ -800,7 +810,7 @@ This is mostly an internal method.
 
     my $last_frame= $mech->current_frame;
     # Switch frame somewhere else
-    
+
     # Switch back
     $mech->activate_container( $last_frame );
 
@@ -816,34 +826,22 @@ Frames are currently not really supported./root/update-wan-ip --verbose --server
 
 # CONTENT RENDERING METHODS
 
-## `$mech->content_as_png( [$tab, \%coordinates, \%target_size ] )`
+## `$mech->content_as_png( [\%coordinates ] )`
 
     my $png_data = $mech->content_as_png();
 
     # Create scaled-down 480px wide preview
-    my $png_data = $mech->content_as_png(undef, undef, { width => 480 });
+    my $png_data = $mech->content_as_png(undef, { width => 480 });
 
 Returns the given tab or the current page rendered as PNG image.
 
-All parameters are optional. 
+All parameters are optional.
 
-- `$tab` defaults to the current tab.
-- If the coordinates are given, that rectangle will be cut out.
-The coordinates should be a hash with the four usual entries,
-`left`,`top`,`width`,`height`.
-- The target size of the image can also be given. It defaults to
-the size of the image. The allowed parameters in the hash are
+- ` \%coordinates `
 
-    `scalex`, `scaley` - for specifying the scale, default is 1.0 in each direction.
-
-    `width`, `height` - for specifying the target size
-
-    If you want the resulting image to be 480 pixels wide, specify
-
-        { width => 480 }
-
-    The height will then be calculated from the ratio of original width to
-    original height.
+    If the coordinates are given, that rectangle will be cut out.
+    The coordinates should be a hash with the four usual entries,
+    `left`,`top`,`width`,`height`.
 
 This method is specific to WWW::Mechanize::PhantomJS.
 
@@ -1013,7 +1011,7 @@ when searching through frames.
 
 # REPOSITORY
 
-The public repository of this module is 
+The public repository of this module is
 [http://github.com/Corion/www-mechanize-phantomjs](http://github.com/Corion/www-mechanize-phantomjs).
 
 # SUPPORT

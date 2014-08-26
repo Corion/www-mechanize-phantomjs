@@ -14,14 +14,14 @@ use Test::HTTP::LocalServer;
 use t::helper;
 
 # What instances of PhantomJS will we try?
-my $instance_port = 8910;
+#my $instance_port = 8910;
 my @instances = t::helper::browser_instances();
 
 if (my $err = t::helper::default_unavailable) {
     plan skip_all => "Couldn't connect to PhantomJS: $@";
     exit
 } else {
-    plan tests => 19*@instances;
+    plan tests => 25*@instances;
 };
 
 sub new_mech {
@@ -40,7 +40,15 @@ sub load_file_ok {
     is $mech->title, $htmlfile, "We loaded the right file (@options)";
 };
 
-t::helper::run_across_instances(\@instances, $instance_port, \&new_mech, sub {
+# Filter out the stupid Firefox warning about document.inputEncoding being
+# deprecated. If you deprecate it, also mark it in your documentation as
+# deprecated, and also document what to use instead!
+sub filter {
+    #grep { $_->{message} !~ /inputEncoding/ }
+    @_
+};
+
+t::helper::run_across_instances(\@instances, undef, \&new_mech, sub {
     my ($browser_instance, $mech) = @_;
     isa_ok $mech, 'WWW::Mechanize::PhantomJS';
     can_ok $mech, 'js_errors','clear_js_errors';
@@ -58,26 +66,36 @@ t::helper::run_across_instances(\@instances, $instance_port, \&new_mech, sub {
         exit;
     };
 
-    # Filter out the stupid Firefox warning about document.inputEncoding being
-    # deprecated. If you deprecate it, also mark it in your documentation as
-    # deprecated, and also document what to use instead!
-    sub filter {
-        grep { $_->{message} !~ /inputEncoding/ }
-        @_
-    };
-
     my @res= filter( $mech->js_errors );
     is_deeply \@res, [], "No errors reported on page"
         or diag $res[0]->{message};
 
     load_file_ok($mech, '53-mech-capture-js-noerror.html', javascript => 1 );
     @res= filter( $mech->js_errors );
-    is_deeply \@res, [], "No errors reported on page";
+    is_deeply \@res, [], "No errors reported on page"
+        or diag Dumper \@res;
+
+    { 
+        my $errors;
+        local $mech->{report_js_errors} = 1;
+        local $SIG{__WARN__} = sub { $errors = shift };
+        load_file_ok($mech, '53-mech-capture-js-noerror.html', javascript => 1 );
+        ok( not(defined $errors), "No errors reported on page")
+            or diag Dumper $errors;
+    };
 
     load_file_ok($mech,'53-mech-capture-js-error.html', javascript => 0);
+    diag "File loaded";
     @res= filter( $mech->js_errors );
     is_deeply \@res, [], "Errors on page"
         or diag Dumper \@res;
+    { 
+        my $errors;
+        local $mech->{report_js_errors} = 1;
+        local $SIG{__WARN__} = sub { $errors = shift };
+        load_file_ok($mech, '53-mech-capture-js-error.html', javascript => 1 );
+        ok( defined $errors, "Errors on page");
+    };
 
     load_file_ok($mech,'53-mech-capture-js-error.html', javascript => 1);
     my @errors = filter( $mech->js_errors );

@@ -8,6 +8,7 @@ use Scalar::Util qw( blessed );
 use File::Basename;
 use Carp qw(croak carp);
 use WWW::Mechanize::Link;
+use IO::Socket::INET;
 
 use vars qw($VERSION %link_spec);
 $VERSION= '0.06';
@@ -71,12 +72,17 @@ Specify additional parameters to the PhantomJS executable.  (phantomjs -h)
   '--webdriver-logfile=/tmp/webdriver',
   '--webdriver-loglevel=DEBUG',
   '--debug=true',
-  
+
   note: these set config.xxx values in ghostrdriver/config.js
 
 =item B<driver>
 
 A premade L<Selenium::Remote::Driver> object.
+
+=item B<report_js_errors>
+
+If set to 1, after each request tests for Javascript errors and warns. Useful
+for testing with C<use warnings qw(fatal)>.
 
 =back
 
@@ -85,7 +91,20 @@ A premade L<Selenium::Remote::Driver> object.
 sub new {
     my ($class, %options) = @_;
 
-    $options{ port } ||= 8910;
+    unless ( defined $options{ port } ) {
+        my $port = 8910;
+        while (1) {
+            $port++, next unless IO::Socket::INET->new(
+	        Listen    => 5,
+	        Proto     => 'tcp',
+	        Reuse     => 1,
+	        LocalPort => $port
+	    );
+	    last;
+        }
+    	$options{ port } = $port;
+    }
+
     $options{ "log" } ||= 'OFF';
 
     if (! exists $options{ autodie }) { $options{ autodie } = 1 };
@@ -101,29 +120,51 @@ sub new {
     $options{ launch_ghostdir } ||= $ghostdir_default;
     $options{ launch_arg } ||= [];
 
-    # config.js defaults config.port to 8910 
+    # config.js defaults config.port to 8910
     # this is the proper way to overwrite it (not sure wtf the PhantomJS parameter does above)
     if ($options{port}) {  push @{ $options{ launch_arg }}, "--port=$options{ port }";  }  # PhantomJS version 1.9.7
 
     push @{ $options{ launch_arg }}, "--logLevel=\U$options{ log }";
     my $cmd= "| $options{ launch_exe } $options{ launch_ghostdir } @{ $options{ launch_arg } }";
-    #warn $cmd;
-    $options{ pid } ||= open my $fh, $cmd
-        or die "Couldn't launch [$cmd]: $! / $?";
-    sleep 2; # Just to give PhantomJS time to start up
-    $options{ fh } = $fh;
+    unless ($options{pid}) {
+    	$options{ kill_pid } = 1;
+    	$options{ pid } = open my $fh, $cmd
+    	    or die "Couldn't launch [$cmd]: $! / $?";
+    	$options{ fh } = $fh;
+
+        # Just to give PhantomJS time to start up, make sure it accepts connections
+        my $wait = time + ($options{ wait } || 20);
+        while ( time < $wait ) {
+            my $t = time;
+            my $socket = IO::Socket::INET->new(
+                PeerHost => '127.0.0.1',
+                PeerPort => $options{ port },
+                Proto    => 'tcp',
+            );
+            last if $socket;
+            sleep 1 if time - $t < 1;
+        }
+    }
 
     # Connect to it
-    $options{ driver } ||= Selenium::Remote::Driver->new(
-        'port' => $options{ port },
-        auto_close => 0,
-     );
-     # We patched Ghostdriver to return data, but we need to educate
-     # Selenium::Driver::Remote about it:
-     $options{ driver }->commands->get_cmds->{get}->{no_content_success}= 0;
+    eval {
+    	$options{ driver } ||= Selenium::Remote::Driver->new(
+    	    'port' => $options{ port },
+    	    auto_close => 0,
+    	);
+        # (Monkey)patch Selenium::Remote::Driver
+        $options{ driver }->commands->get_cmds->{get}->{no_content_success}= 0;
+    };
+
+    # if PhantomJS started, but so slow or unresponsive that SRD cannot connect to it,
+    # kill it manually to avoid waiting for it indefinitely
+    if ( $@ ) {
+    	kill 9, $options{ pid } if $options{ kill_pid };
+        die $@;
+    }
 
      my $self= bless \%options => $class;
-     
+
      $self->eval_in_phantomjs(<<'JS');
          var page= this;
          page.errors= [];
@@ -132,7 +173,7 @@ sub new {
              page.errors.push({ "message": msg, "trace": trace });
          };
 JS
-     
+
      $self
 };
 
@@ -173,7 +214,7 @@ sub ghostdriver_version {
     my $selenium= $mech->driver
 
 Access the L<Selenium::Driver::Remote> instance connecting to PhantomJS.
-    
+
 =cut
 
 sub driver {
@@ -263,6 +304,8 @@ sub eval_in_page {
     local @Selenium::Remote::Driver::CARP_NOT
         = (@Selenium::Remote::Driver::CARP_NOT, (ref $self)); # we trust this
     my $eval_in_sandbox = $self->driver->execute_script("return $str", @args);
+    $self->post_process;
+    return $eval_in_sandbox;
 };
 *eval = \&eval_in_page;
 
@@ -299,7 +342,7 @@ sub agent {
     my($self, $ua) = @_;
     # page.settings.userAgent = 'Mozilla/5.0 (Windows NT 5.1; rv:8.0) Gecko/20100101 Firefox/7.0';
     $self->eval_in_phantomjs(<<'JS', $ua);
-       this.settings.userAgent= arguments[0] 
+       this.settings.userAgent= arguments[0]
 JS
 }
 
@@ -384,6 +427,16 @@ C<< no_cache >> - if true, bypass the browser cache
 sub update_response {
     my( $self, $phantom_res ) = @_;
 
+    # just 1 means success
+    $phantom_res = {
+        status     => 200,
+        statusText => 'OK',
+        headers    => [{
+            name  => 'x-www-mechanize-phantomjs-fake-success',
+            value => 1,
+        }],
+    } if ref($phantom_res) eq '' and $phantom_res eq '1';
+
     my @headers= map {;@{$_}{qw(name value)}} @{ $phantom_res->{headers} };
     my $res= HTTP::Response->new( $phantom_res->{status}, $phantom_res->{statusText}, \@headers );
 
@@ -391,13 +444,15 @@ sub update_response {
 
     delete $self->{ current_form };
 
-    $self->{response} = $res
+    $self->{response} = $res;
+    return $res
 };
 
 sub get {
     my ($self, $url, %options ) = @_;
     # We need to stringify $url so it can pass through JSON
     my $phantom_res= $self->driver->get( "$url" );
+    $self->post_process;
     $self->update_response( $phantom_res );
 };
 
@@ -432,15 +487,13 @@ sub get_local {
     $fn =~ s!\\!/!g; # fakey "make file:// URL"
     my $url;
     if( $^O =~ /mswin/i ) {
-        $url= "file:/$fn";
+        $url= "file:///$fn";
     } else {
         $url= "file://$fn";
     };
-
     my $res= $self->get($url, %options);
-
     # PhantomJS is not helpful with its error messages for local URLs
-    if( 0+$res->headers->header_field_names) {
+    if( 0+$res->headers->header_field_names and ([$res->headers->header_field_names]->[0] ne 'x-www-mechanize-phantomjs-fake-success' or $self->uri ne 'about:blank')) {
         # We need to fake the content headers from <meta> tags too...
         # Maybe this even needs to go into ->get()
         $res->code( 200 );
@@ -561,7 +614,7 @@ sub add_header {
     my ($self, @headers) = @_;
     use Data::Dumper;
     #warn Dumper $headers;
-    
+
     while( my ($k,$v) = splice @headers, 0, 2 ) {
         $self->eval_in_phantomjs(<<'JS', , $k, $v);
             var h= this.customHeaders;
@@ -574,7 +627,7 @@ JS
 =head2 C<< $mech->delete_header( $name , $name2... ) >>
 
     $mech->delete_header( 'User-Agent' );
-    
+
 Removes HTTP headers from the agent's list of special headers. Note
 that PhantomJS may still send a header with its default value.
 
@@ -582,7 +635,7 @@ that PhantomJS may still send a header with its default value.
 
 sub delete_header {
     my ($self, @headers) = @_;
-    
+
     $self->eval_in_phantomjs(<<'JS', @headers);
         var headers= this.customHeaders;
         for( var i = 0; i < arguments.length; i++ ) {
@@ -788,7 +841,7 @@ HTML, $mech will die.
 
 sub text {
     my $self = shift;
-    
+
     # Waugh - this is highly inefficient but conveniently short to write
     # Maybe this should skip SCRIPT nodes...
     join '', map { $_->get_text() } $self->xpath('//*/text()');
@@ -1304,7 +1357,7 @@ sub activate_container {
         warn sprintf "Switching during path to %s %s", $el->get_tag_name, $el->get_attribute('src');
         $driver->switch_to_frame( $el );
     };
-    
+
     if( ! $just_parent ) {
         warn sprintf "Activating container %s too", $doc->{id};
         # Now, unless it's the root frame, activate the container. The root frame
@@ -1468,10 +1521,10 @@ sub xpath {
         warn sprintf "Document %s", $options{ document }->{id};
     };
     #my $original_frame= $self->current_frame;
-    
+
     DOCUMENTS: {
         my $doc= $options{ document } || $self->document;
-        
+
         # This stores the path to this document
         $doc->{__path}||= [];
 
@@ -1487,7 +1540,7 @@ sub xpath {
 
             my $q = join "|", @$query;
             #warn $q;
-            
+
             my @found;
             # Now find the elements
             if ($options{ node }) {
@@ -1513,15 +1566,15 @@ sub xpath {
                 #$self->driver->switch_to_frame();
                 #warn $doc->get_text;
             };
-            
+
             # Remember the path to each found element
             for( @found ) {
                 # We reuse the reference here instead of copying the list. So don't modify the list.
                 $_->{__path}= $doc->{__path};
             };
-            
+
             push @res, @found;
-            
+
             # A small optimization to return if we already have enough elements
             # We can't do this on $return_first as there might be more elements
             #if( @res and $options{ return_first } and grep { $_->{resultSize} } @res ) {
@@ -1814,6 +1867,7 @@ and on calls to C<< ->submit() >> and C<< ->submit_with_fields >>.
 sub current_form {
     my( $self, %options )= @_;
     # Find the first <FORM> element from the currently active element
+    $self->form_number(1) unless $self->{current_form};
     $self->{current_form};
 }
 
@@ -2087,19 +2141,15 @@ sub get_set_value {
             #    $fields[0]->__event($ev);
             #};
 
-            if ('select' eq $tag) {
-                $self->select($fields[0], $value);
-            } else {
-                my $get= $self->PhantomJS_elementToJS();
-                my $val= quotemeta($value);
-                my $js= <<JS;
-                    var g=$get;
-                    var el=g("$fields[0]->{id}");
-                    el.value="$val";
+            my $get= $self->PhantomJS_elementToJS();
+            my $val= quotemeta($value);
+            my $js= <<JS;
+                var g=$get;
+                var el=g("$fields[0]->{id}");
+                el.value="$val";
 JS
-                $js= quotemeta($js);
-                $self->eval("eval('$js')"); # for some reason, Selenium/Ghostdriver don't like the JS as plain JS
-            };
+            $js= quotemeta($js);
+            $self->eval("eval('$js')"); # for some reason, Selenium/Ghostdriver don't like the JS as plain JS
 
             #for my $ev (@$post) {
             #    $fields[0]->__event($ev);
@@ -2153,6 +2203,7 @@ sub submit {
     } else {
         croak "I don't know which form to submit, sorry.";
     }
+    return $self->response;
 };
 
 =head2 C<< $mech->submit_form( %options ) >>
@@ -2203,7 +2254,7 @@ will be ignored.
 
 sub submit_form {
     my ($self,%options) = @_;
-    
+
     my $form = delete $options{ form };
     my $fields;
     if (! $form) {
@@ -2219,13 +2270,22 @@ sub submit_form {
             $form = $self->current_form;
         };
     };
-    
+
     if (! $form) {
         $self->signal_condition("No form found to submit.");
         return
     };
     $self->do_set_fields( form => $form, fields => $fields );
-    $self->submit($form);
+
+    my $response;
+    if ( $options{button} ) {
+        $response = $self->click( $options{button}, $options{x} || 0, $options{y} || 0 );
+    }
+    else {
+        $response = $self->submit();
+    }
+    return $response;
+
 }
 
 =head2 C<< $mech->set_fields( $name => $value, ... ) >>
@@ -2256,14 +2316,14 @@ sub do_set_fields {
     my ($self, %options) = @_;
     my $form = delete $options{ form };
     my $fields = delete $options{ fields };
-    
+
     while (my($n,$v) = each %$fields) {
         if (ref $v) {
             ($v,my $num) = @$v;
             warn "Index larger than 1 not supported, ignoring"
                 unless $num == 1;
         };
-        
+
         $self->get_set_value( node => $form, name => $n, value => $v, %options );
     }
 };
@@ -2285,12 +2345,12 @@ sub expand_frames {
     $spec ||= $self->{frames};
     my @spec = ref $spec ? @$spec : $spec;
     $document ||= $self->document;
-    
+
     if (! ref $spec and $spec !~ /\D/ and $spec == 1) {
         # All frames
         @spec = qw( frame iframe );
     };
-    
+
     # Optimize the default case of only names in @spec
     my @res;
     if (! grep {ref} @spec) {
@@ -2300,7 +2360,7 @@ sub expand_frames {
                         frames => 0, # otherwise we'll recurse :)
                     );
     } else {
-        @res = 
+        @res =
             map { #warn "Expanding $_";
                     ref $_
                   ? $_
@@ -2308,7 +2368,7 @@ sub expand_frames {
                   : $self->expand_frames( $_, $document );
             } @spec;
     }
-    
+
     @res
 };
 
@@ -2317,7 +2377,7 @@ sub expand_frames {
 
     my $last_frame= $mech->current_frame;
     # Switch frame somewhere else
-    
+
     # Switch back
     $mech->activate_container( $last_frame );
 
@@ -2338,7 +2398,7 @@ sub current_frame {
     my @res;
     my $current= $self->make_WebElement( $self->eval('window'));
     warn sprintf "Current_frame: bottom: %s", $current->{id};
-    
+
     # Now climb up until the root window
     my $f= $current;
     my @chain;
@@ -2346,7 +2406,7 @@ sub current_frame {
     while( $f= $self->driver->execute_script('return arguments[0].frameElement', $f )) {
         $f= $self->make_WebElement( $f );
         unshift @res, $f;
-        warn sprintf "One more level up, now in %s", 
+        warn sprintf "One more level up, now in %s",
             $f->{id};
         warn $self->driver->execute_script('return arguments[0].title', $res[0]);
         unshift @chain,
@@ -2358,8 +2418,8 @@ sub current_frame {
     warn "Chain complete";
     warn $_
         for @chain;
-    
-    # Now fake the element into 
+
+    # Now fake the element into
     my $el= $self->make_WebElement( $current );
     for( @res ) {
         warn sprintf "Path has (web element) id %s", $_->{id};
@@ -2392,7 +2452,7 @@ sub make_WebElement {
     my $res= Selenium::Remote::WebElement->new( $e->{WINDOW} || $e->{ELEMENT}, $self->driver );
     croak "No id in " . Dumper $res
         unless $res->{id};
-    
+
     $res
 }
 
@@ -2407,7 +2467,7 @@ sub make_WebElement {
 
 Returns the given tab or the current page rendered as PNG image.
 
-All parameters are optional. 
+All parameters are optional.
 
 =over 4
 
@@ -2429,11 +2489,12 @@ is done Base64-encoded.
 sub content_as_png {
     my ($self, $rect) = @_;
     $rect ||= {};
-   
+
     if( scalar keys %$rect ) {
-        $self->viewport_size( $target_rect );
+
+        $self->viewport_size( $ rect );
     };
-    
+
     return $self->render_content( format => 'png' );
 };
 
@@ -2448,7 +2509,7 @@ Returns (or sets) the new size of the viewport (the "window").
 
 sub viewport_size {
     my( $self, $new )= @_;
-    
+
     $self->eval_in_phantomjs( <<'JS', $new );
         var viewportSize= this.clipRect;
         if( arguments[0]) {
@@ -2568,7 +2629,7 @@ sub render_content {
     my $outname= $options{ filename };
     my $format= $options{ format };
     my $wantresult;
-    
+
     my @delete;
     if( ! $outname) {
         require File::Temp;
@@ -2579,7 +2640,7 @@ sub render_content {
     };
     require File::Spec;
     $outname= File::Spec->rel2abs($outname, '.');
-    
+
     $self->eval_in_phantomjs(<<'JS', $outname, $format);
         var outname= arguments[0];
         var format= arguments[1];
@@ -2594,7 +2655,7 @@ JS
         local $/;
         $result= <$fh>;
     };
-    
+
     for( @delete ) {
         unlink $_
             or warn "Couldn't clean up tempfile: $_': $!";
@@ -2622,7 +2683,7 @@ the C<filename> option may be faster.
 
 sub content_as_pdf {
     my ($self, %options) = @_;
-    
+
     return $self->render_content( format => 'pdf', %options );
 };
 
@@ -2677,6 +2738,26 @@ sub PhantomJS_elementToJS {
 JS
 }
 
+sub post_process
+{
+    my $self = shift;
+    if ( $self->{report_js_errors} ) {
+        if ( my @errors = $self->js_errors ) {
+            $self->report_js_errors(@errors);
+            $self->clear_js_errors;
+        }
+    }
+}
+
+sub report_js_errors
+{
+    my ( $self, @errors ) = @_;
+    @errors = map {
+    	"$_->{message} at $_->{trace}->[-1]->{file} line $_->{trace}->[-1]->{line}" .
+	( $_->{trace}->[-1]->{function} ? " in function $_->{trace}->[-1]->{function}" : '')
+    } @errors;
+    Carp::carp("javascript error: @errors") ;
+}
 
 1;
 
@@ -2815,7 +2896,7 @@ L<WWW::Mechanize::Firefox> - a similar module with a visible application
 
 =head1 REPOSITORY
 
-The public repository of this module is 
+The public repository of this module is
 L<http://github.com/Corion/www-mechanize-phantomjs>.
 
 =head1 SUPPORT
