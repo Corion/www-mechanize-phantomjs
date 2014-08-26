@@ -2398,12 +2398,12 @@ sub make_WebElement {
 
 =head1 CONTENT RENDERING METHODS
 
-=head2 C<< $mech->content_as_png( [$tab, \%coordinates, \%target_size ] ) >>
+=head2 C<< $mech->content_as_png( [\%coordinates ] ) >>
 
     my $png_data = $mech->content_as_png();
 
     # Create scaled-down 480px wide preview
-    my $png_data = $mech->content_as_png(undef, undef, { width => 480 });
+    my $png_data = $mech->content_as_png(undef, { width => 480 });
 
 Returns the given tab or the current page rendered as PNG image.
 
@@ -2411,31 +2411,11 @@ All parameters are optional.
 
 =over 4
 
-=item *
-
-C<$tab> defaults to the current tab.
-
-=item *
+=item C< \%coordinates >
 
 If the coordinates are given, that rectangle will be cut out.
 The coordinates should be a hash with the four usual entries,
 C<left>,C<top>,C<width>,C<height>.
-
-=item *
-
-The target size of the image can also be given. It defaults to
-the size of the image. The allowed parameters in the hash are
-
-C<scalex>, C<scaley> - for specifying the scale, default is 1.0 in each direction.
-
-C<width>, C<height> - for specifying the target size
-
-If you want the resulting image to be 480 pixels wide, specify
-
-    { width => 480 }
-
-The height will then be calculated from the ratio of original width to
-original height.
 
 =back
 
@@ -2443,17 +2423,17 @@ This method is specific to WWW::Mechanize::PhantomJS.
 
 Currently, the data transfer between PhantomJS and Perl
 is done Base64-encoded.
+
 =cut
 
 sub content_as_png {
-    my ($self, $tab, $rect, $target_rect) = @_;
-    #$tab ||= $self->tab;
+    my ($self, $rect) = @_;
     $rect ||= {};
-    $target_rect ||= {};
+   
+    if( scalar keys %$rect ) {
+        $self->viewport_size( $target_rect );
+    };
     
-    #require MIME::Base64;
-    #my $png_base64 = $self->driver->screenshot();
-    #return MIME::Base64::decode_base64($png_base64);
     return $self->render_content( format => 'png' );
 };
 
