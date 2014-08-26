@@ -76,7 +76,7 @@ Specify additional parameters to the PhantomJS executable.  (phantomjs -h)
 
 =item B<driver>
 
-A premade L<Selenium::Driver::Remote> object.
+A premade L<Selenium::Remote::Driver> object.
 
 =back
 
