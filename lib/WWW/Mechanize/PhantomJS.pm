@@ -101,7 +101,6 @@ sub new {
     $options{ launch_ghostdir } ||= $ghostdir_default;
     $options{ launch_arg } ||= [];
 
-    push @{ $options{ launch_arg }}, "--PhantomJS=$options{ port }";
     # config.js defaults config.port to 8910 
     # this is the proper way to overwrite it (not sure wtf the PhantomJS parameter does above)
     if ($options{port}) {  push @{ $options{ launch_arg }}, "--port=$options{ port }";  }  # PhantomJS version 1.9.7
