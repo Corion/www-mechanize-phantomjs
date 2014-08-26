@@ -5,6 +5,8 @@ TO DO:
       Windows will still use file:/ .
     . Make 'port' option actually work, plus test
       Submitted by brianhorakh
+    . Fix ->content_as_png parameters
+      Submitted by dmuey
 
 0.06 20140721
     . Re-release 0.04 as it was released during perl.org NOC move
