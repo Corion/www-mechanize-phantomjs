@@ -15,7 +15,7 @@ if (my $err = t::helper::default_unavailable) {
     plan skip_all => "Couldn't connect to PhantomJS: $@";
     exit
 } else {
-    plan tests => 11*@instances;
+    plan tests => 15*@instances;
 };
 
 sub new_mech {
@@ -67,11 +67,20 @@ t::helper::run_across_instances(\@instances, $instance_port, \&new_mech, sub {
     ok $triggered, "We found 'myevents'";
 
     is $triggered->{action}, 1, 'Action   was triggered';
-    is $triggered->{submit}, 1, 'OnSubmit was not triggered';
+    is $triggered->{submit}, 1, 'OnSubmit was triggered';
     is $triggered->{click},  0, 'Click    was not triggered';
-
     my $r = $mech->xpath('//input[@name="r"]', single => 1 );
     is $r->get_value, 'Hello Firefox', "We set the new value";
+    
+    $mech->get_local('51-mech-submit.html');
+    $mech->allow('javascript' => 1);
+    $mech->submit_form(button => 's');
+    ($triggered) = $mech->eval_in_page('myevents');
+    ok $triggered, "We found 'myevents'";
+
+    is $triggered->{action}, 1, 'Action   was triggered';
+    is $triggered->{submit}, 1, 'OnSubmit was triggered';
+    is $triggered->{click},  1, 'Click    was triggered';
 
     $mech->get_local('51-mech-submit.html');
     $mech->allow('javascript' => 1);

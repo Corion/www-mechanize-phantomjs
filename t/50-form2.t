@@ -29,12 +29,12 @@ t::helper::run_across_instances(\@instances, $instance_port, \&new_mech, sub {
     my ($browser_instance, $mech) = @_;
 
     $mech->get_local('50-form2.html');
-    is $mech->current_form, undef, "At start, we have no current form";
+    ok $mech->current_form, "At start, we have a current form";
     $mech->form_number(2);
     my $button = $mech->selector('#btn_ok', single => 1);
     isa_ok $button, 'Selenium::Remote::WebElement', "The button image";
     ok $mech->submit, 'Sent the page';
-    is $mech->current_form, undef, "After a submit, we have no current form";
+    ok $mech->current_form, "After a submit, we have a current form";
 
     $mech->get_local('50-form2.html');
     $mech->form_id('snd2');
@@ -56,7 +56,7 @@ t::helper::run_across_instances(\@instances, $instance_port, \&new_mech, sub {
     is $mech->current_form->get_attribute('name'), 'snd', "We can find a form by its name";
 
     $mech->get_local('50-form2.html');
-    is $mech->current_form, undef, "On a new ->get, we have no current form";
+    ok $mech->current_form, "On a new ->get, we have a current form";
 
     $mech->get_local('50-form2.html');
     $mech->form_with_fields('comment');

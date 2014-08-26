@@ -21,7 +21,7 @@ if (my $err = t::helper::default_unavailable) {
     plan skip_all => "Couldn't connect to PhantomJS: $@";
     exit
 } else {
-    plan tests => 19*@instances;
+    plan tests => 25*@instances;
 };
 
 sub new_mech {
@@ -74,10 +74,26 @@ t::helper::run_across_instances(\@instances, $instance_port, \&new_mech, sub {
     @res= filter( $mech->js_errors );
     is_deeply \@res, [], "No errors reported on page";
 
+    { 
+        my $errors;
+        local $mech->{report_js_errors} = 1;
+        local $SIG{__WARN__} = sub { $errors = shift };
+        load_file_ok($mech, '53-mech-capture-js-noerror.html', javascript => 1 );
+        ok( not(defined $errors), "No errors reported on page");
+    };
+
     load_file_ok($mech,'53-mech-capture-js-error.html', javascript => 0);
     @res= filter( $mech->js_errors );
     is_deeply \@res, [], "Errors on page"
         or diag Dumper \@res;
+
+    { 
+        my $errors;
+        local $mech->{report_js_errors} = 1;
+        local $SIG{__WARN__} = sub { $errors = shift };
+        load_file_ok($mech, '53-mech-capture-js-error.html', javascript => 1 );
+        ok( defined $errors, "Errors on page");
+    };
 
     load_file_ok($mech,'53-mech-capture-js-error.html', javascript => 1);
     my @errors = filter( $mech->js_errors );
