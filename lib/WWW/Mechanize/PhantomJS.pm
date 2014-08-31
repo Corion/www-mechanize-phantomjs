@@ -168,10 +168,14 @@ sub new {
      $self->eval_in_phantomjs(<<'JS');
          var page= this;
          page.errors= [];
+	 page.alerts= [];
          page.onError= function(msg, trace) {
              //_log.warn("Caught JS error", msg);
              page.errors.push({ "message": msg, "trace": trace });
          };
+	 page.onAlert = function(msg) {
+	     page.alerts.push(msg);
+	 };
 JS
 
      $self
@@ -240,6 +244,28 @@ JS
         };
     };
 }
+
+=head2 C<< $mech->js_alerts() >>
+
+  print for $mech->js_alerts();
+
+An interface to the Javascript Alerts
+
+Returns the list of alerts
+
+=cut
+
+sub js_alerts { @{ shift->eval_in_phantomjs('return this.alerts') } }
+
+=head2 C<< $mech->clear_js_alerts() >>
+
+    $mech->clear_js_alerts();
+
+Clears all saved alerts
+
+=cut
+
+sub clear_js_alerts { shift->eval_in_phantomjs('this.alerts = [];') }
 
 =head2 C<< $mech->js_errors() >>
 
