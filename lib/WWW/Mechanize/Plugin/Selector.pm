@@ -1,7 +1,7 @@
 package WWW::Mechanize::Plugin::Selector;
 use strict;
 use vars qw($VERSION);
-$VERSION= '0.07';
+$VERSION= '0.08';
 use HTML::Selector::XPath 'selector_to_xpath';
 
 =head1 SYNOPSIS

@@ -1,5 +1,9 @@
 TO DO:
 
+0.08 20140831
+    . Add interface to retrieve alert() boxes
+      Contributed by Dimitry Karasik
+
 0.07 20140826
     . Use file:// as local URI on non-Windows systems
       Windows will still use file:/ .

@@ -71,6 +71,18 @@ SYNOPSIS
 
     Access the Selenium::Driver::Remote instance connecting to PhantomJS.
 
+  `$mech->js_alerts()'
+      print for $mech->js_alerts();
+
+    An interface to the Javascript Alerts
+
+    Returns the list of alerts
+
+  `$mech->clear_js_alerts()'
+        $mech->clear_js_alerts();
+
+    Clears all saved alerts
+
   `$mech->js_errors()'
       print $_->{message}
           for $mech->js_errors();
