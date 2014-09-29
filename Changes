@@ -1,5 +1,17 @@
 TO DO:
 
+0.09 20140929
+    + Add new switches to control PhantomJS behaviour (suggested by K. Klein)
+    + Split up command line arguments between PhantomJS and Ghostdriver
+      (suggested by K. Klein)
+    + The module now uses $ENV{PHANTOMJS_EXE} if it is set
+      for finding the executable to launch.     
+    + Add cookie_file constructor argument
+    + Add ignore_ssl_errors constructor argument
+    + Invoke phantomjs with list-pipe-open instead of going through
+      the shell, where possible
+    + ->dump_forms() implemented
+
 0.08 20140831
     . Add interface to retrieve alert() boxes
       Contributed by Dimitry Karasik
