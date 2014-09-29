@@ -39,6 +39,16 @@ WWW::Mechanize::PhantomJS - automate the PhantomJS browser
 
     Specify the path to the PhantomJS executable.
 
+    The default is `phantomjs` as found via `$ENV{PATH}`.
+    You can also provide this information from the outside
+    by setting `$ENV{PHANTOMJS_EXE}`.
+
+- __phantomjs\_arg__
+
+    Additional command line arguments to `phantomjs`.  (phantomjs -h)
+
+        phantomjs_arg => ['--frobnitz-the-foo=bar']
+
 - __launch\_ghostdriver__
 
     Filename of the `ghostdriver` Javascript code
@@ -48,7 +58,7 @@ WWW::Mechanize::PhantomJS - automate the PhantomJS browser
 
 - __launch\_arg__
 
-    Specify additional parameters to the PhantomJS executable.  (phantomjs -h)
+    Specify additional parameters to the Ghostdriver script.
 
         launch_arg => [ "--some-new-parameter=foo" ],
         "--webdriver=$port",
@@ -57,6 +67,15 @@ WWW::Mechanize::PhantomJS - automate the PhantomJS browser
         '--debug=true',
 
         note: these set config.xxx values in ghostrdriver/config.js
+
+- __cookie\_file__
+
+    Cookies are not directly persisted. If you pass in a path here,
+    that file will be used to store or retrieve cookies.
+
+- __ignore\_ssl\_errors__
+
+    If you want `phantomjs` to ignore SSL errors, pass a true value here.
 
 - __driver__
 
@@ -644,6 +663,10 @@ The current form will be reset by WWW::Mechanize::PhantomJS
 on calls to `->get()` and `->get_local()`,
 and on calls to `->submit()` and `->submit_with_fields`.
 
+## `$mech->dump_forms( [$fh] )`
+
+Prints a dump of the forms on the current page to $fh. If $fh is not specified or is undef, it dumps to STDOUT.
+
 ## `$mech->form_name( $name [, %options] )`
 
     $mech->form_name( 'search' );
@@ -836,7 +859,7 @@ See also
 
 [http://code.google.com/p/selenium/issues/detail?id=4305](http://code.google.com/p/selenium/issues/detail?id=4305)
 
-Frames are currently not really supported./root/update-wan-ip --verbose --server ns.datenzoo.de -h mychat.dyn.datenzoo.de -f /root/Kdyn-datenzoo-de+157+57591.privatevers
+Frames are currently not really supported.
 
 # CONTENT RENDERING METHODS
 

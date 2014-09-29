@@ -31,6 +31,15 @@ SYNOPSIS
     launch_exe
         Specify the path to the PhantomJS executable.
 
+        The default is `phantomjs' as found via `$ENV{PATH}'. You can also
+        provide this information from the outside by setting
+        `$ENV{PHANTOMJS_EXE}'.
+
+    phantomjs_arg
+        Additional command line arguments to `phantomjs'. (phantomjs -h)
+
+          phantomjs_arg => ['--frobnitz-the-foo=bar']
+
     launch_ghostdriver
         Filename of the `ghostdriver' Javascript code to launch. The default
         is the file distributed with this module.
@@ -38,8 +47,7 @@ SYNOPSIS
           launch_ghostdriver => "devel/my/ghostdriver/main.js",
 
     launch_arg
-        Specify additional parameters to the PhantomJS executable.
-        (phantomjs -h)
+        Specify additional parameters to the Ghostdriver script.
 
           launch_arg => [ "--some-new-parameter=foo" ],
           "--webdriver=$port",
@@ -48,6 +56,14 @@ SYNOPSIS
           '--debug=true',
 
           note: these set config.xxx values in ghostrdriver/config.js
+
+    cookie_file
+        Cookies are not directly persisted. If you pass in a path here, that
+        file will be used to store or retrieve cookies.
+
+    ignore_ssl_errors
+        If you want `phantomjs' to ignore SSL errors, pass a true value
+        here.
 
     driver
         A premade Selenium::Remote::Driver object.
@@ -595,6 +611,10 @@ FORM METHODS
     `->get()' and `->get_local()', and on calls to `->submit()' and
     `->submit_with_fields'.
 
+  `$mech->dump_forms( [$fh] )'
+    Prints a dump of the forms on the current page to $fh. If $fh is not
+    specified or is undef, it dumps to STDOUT.
+
   `$mech->form_name( $name [, %options] )'
       $mech->form_name( 'search' );
 
@@ -773,9 +793,7 @@ FORM METHODS
 
     http://code.google.com/p/selenium/issues/detail?id=4305
 
-    Frames are currently not really supported./root/update-wan-ip --verbose
-    --server ns.datenzoo.de -h mychat.dyn.datenzoo.de -f
-    /root/Kdyn-datenzoo-de+157+57591.privatevers
+    Frames are currently not really supported.
 
 CONTENT RENDERING METHODS
   `$mech->content_as_png( [\%coordinates ] )'
