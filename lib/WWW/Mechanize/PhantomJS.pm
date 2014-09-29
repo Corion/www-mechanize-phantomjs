@@ -56,6 +56,16 @@ Specify the log level of PhantomJS
 
 Specify the path to the PhantomJS executable.
 
+The default is C<phantomjs> as found via C<$ENV{PATH}>.
+You can also provide this information from the outside
+by setting C<$ENV{PHANTOMJS_EXE}>.
+
+=item B<phantomjs_arg>
+
+Additional command line arguments to C<phantomjs>.  (phantomjs -h)
+
+  phantomjs_arg => ['--frobnitz-the-foo=bar']
+
 =item B<launch_ghostdriver>
 
 Filename of the C<ghostdriver> Javascript code
@@ -65,7 +75,7 @@ to launch. The default is the file distributed with this module.
 
 =item B<launch_arg>
 
-Specify additional parameters to the PhantomJS executable.  (phantomjs -h)
+Specify additional parameters to the Ghostdriver script.
 
   launch_arg => [ "--some-new-parameter=foo" ],
   "--webdriver=$port",
@@ -74,6 +84,15 @@ Specify additional parameters to the PhantomJS executable.  (phantomjs -h)
   '--debug=true',
 
   note: these set config.xxx values in ghostrdriver/config.js
+
+=item B<cookie_file>
+
+Cookies are not directly persisted. If you pass in a path here,
+that file will be used to store or retrieve cookies.
+
+=item B<ignore_ssl_errors>
+
+If you want C<phantomjs> to ignore SSL errors, pass a true value here.
 
 =item B<driver>
 
@@ -87,6 +106,44 @@ for testing with C<use warnings qw(fatal)>.
 =back
 
 =cut
+
+sub build_command_line {
+    my( $class, $options )= @_;
+
+    $options->{ "log" } ||= 'OFF';
+
+    $options->{ launch_exe } ||= $ENV{PHANTOMJS_EXE} || 'phantomjs';
+    (my $ghostdir_default= __FILE__) =~ s!\.pm$!!;
+    $ghostdir_default= File::Spec->catfile( $ghostdir_default, 'ghostdriver', 'main.js' );
+    $options->{ launch_ghostdir } ||= $ghostdir_default;
+    $options->{ launch_arg } ||= [];
+    $options->{ phantomjs_arg } ||= [];
+    
+    # config.js defaults config.port to 8910
+    # this is the proper way to overwrite it (not sure wtf the PhantomJS parameter does above)
+    if ($options->{port}) { 
+        push @{ $options->{ launch_arg }}, "--port=$options->{ port }";
+    }  # PhantomJS version 1.9.7
+
+    push @{ $options->{ launch_arg }}, "--logLevel=\U$options->{ log }";
+
+    if( my $cookie_file= delete $options->{ cookie_file }) {
+        push @{ $options->{ phantomjs_arg }}, "--cookies-file=$cookie_file";
+    };
+
+    if( my $ignore_ssl_errors= delete $options->{ ignore_ssl_errors }) {
+        push @{ $options->{ phantomjs_arg }}, "--ignore-ssl-errors=yes";
+    };
+
+    my @cmd=( "|-", $options->{ launch_exe }, @{ $options->{phantomjs_arg}}, $options->{ launch_ghostdir }, @{ $options->{ launch_arg } } );
+    if( $^O =~ /mswin/i ) {
+        # Windows Perl doesn't support pipe-open with list
+        shift @cmd; # remove pipe-open
+        @cmd= "| " . join " ", @cmd;
+    };
+    
+    @cmd
+};
 
 sub new {
     my ($class, %options) = @_;
@@ -105,7 +162,6 @@ sub new {
     	$options{ port } = $port;
     }
 
-    $options{ "log" } ||= 'OFF';
 
     if (! exists $options{ autodie }) { $options{ autodie } = 1 };
 
@@ -113,19 +169,7 @@ sub new {
         $options{ frames }= 1;
     };
 
-    # Launch PhantomJs
-    $options{ launch_exe } ||= 'phantomjs';
-    (my $ghostdir_default= __FILE__) =~ s!\.pm$!!;
-    $ghostdir_default= File::Spec->catfile( $ghostdir_default, 'ghostdriver', 'main.js' );
-    $options{ launch_ghostdir } ||= $ghostdir_default;
-    $options{ launch_arg } ||= [];
-
-    # config.js defaults config.port to 8910
-    # this is the proper way to overwrite it (not sure wtf the PhantomJS parameter does above)
-    if ($options{port}) {  push @{ $options{ launch_arg }}, "--port=$options{ port }";  }  # PhantomJS version 1.9.7
-
-    push @{ $options{ launch_arg }}, "--logLevel=\U$options{ log }";
-    my $cmd= "| $options{ launch_exe } $options{ launch_ghostdir } @{ $options{ launch_arg } }";
+    my @cmd= $class->build_command_line( \%options );
     unless ($options{pid}) {
     	$options{ kill_pid } = 1;
     	$options{ pid } = open my $fh, $cmd
