@@ -2492,7 +2492,7 @@ See also
 
 L<http://code.google.com/p/selenium/issues/detail?id=4305>
 
-Frames are currently not really supported./root/update-wan-ip --verbose --server ns.datenzoo.de -h mychat.dyn.datenzoo.de -f /root/Kdyn-datenzoo-de+157+57591.privatevers
+Frames are currently not really supported.
 
 =cut
 
