@@ -1965,6 +1965,33 @@ sub active_form {
 
 }
 
+=head2 C<< $mech->dump_forms( [$fh] ) >>
+
+Prints a dump of the forms on the current page to $fh. If $fh is not specified or is undef, it dumps to STDOUT.
+
+=cut
+
+sub dump_forms {
+    my $self = shift;
+    my $fh = shift || \*STDOUT;
+
+    for my $form ( $self->forms ) {
+        print {$fh} "[FORM] ", $form->get_attribute('name') || '<no name>', ' ', $form->get_attribute('action'), "\n";
+        #for my $f ($self->xpath( './/*', node => $form )) {
+        #for my $f ($self->xpath( './/*[contains(" "+translate(local-name(.), "ABCDEFGHIJKLMNOPQRSTUVWXYZ", "abcdefghijklmnopqrstuvwxyz")+" "," input textarea button select "
+        #                                        )]', node => $form )) {
+        for my $f ($self->xpath( './/*[contains(" input textarea button select ",concat(" ",translate(local-name(.), "ABCDEFGHIJKLMNOPQRSTUVWXYZ", "abcdefghijklmnopqrstuvwxyz")," "))]', node => $form )) {
+            my $type;
+            if($type= $f->get_attribute('type') || '' ) {
+                $type= " ($type)";
+            };
+            
+            print {$fh} "    [", $f->get_attribute('tagName'), $type, "] ", $f->get_attribute('name') || '<no name>', "\n";
+        };
+    }
+    return;
+}
+
 =head2 C<< $mech->form_name( $name [, %options] ) >>
 
   $mech->form_name( 'search' );
