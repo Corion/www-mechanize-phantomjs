@@ -1690,7 +1690,7 @@ sub xpath {
     };
     if (! $two_allowed and @res > 1) {
         #$self->highlight_node(@res);
-        warn $_->get_text() for @res;
+        warn $_->get_text() || '<no text>' for @res;
         $self->signal_condition( (scalar @res) . " elements found for $options{ user_info }" );
     };
 
