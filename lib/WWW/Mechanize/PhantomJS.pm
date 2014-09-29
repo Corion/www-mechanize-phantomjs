@@ -162,7 +162,6 @@ sub new {
     	$options{ port } = $port;
     }
 
-
     if (! exists $options{ autodie }) { $options{ autodie } = 1 };
 
     if( ! exists $options{ frames }) {
@@ -172,9 +171,16 @@ sub new {
     my @cmd= $class->build_command_line( \%options );
     unless ($options{pid}) {
     	$options{ kill_pid } = 1;
-    	$options{ pid } = open my $fh, $cmd
-    	    or die "Couldn't launch [$cmd]: $! / $?";
-    	$options{ fh } = $fh;
+    	if( @cmd > 1 ) {
+    	    # We can do a proper pipe-open
+            $options{ pid } = open $options{fh}, @cmd
+                or die "Couldn't launch [@cmd]: $! / $?";
+        } else {
+    	    # We can't do a proper pipe-open, so do the single-arg open
+    	    # in the hope that everything has been set up properly
+            $options{ pid } = open $options{fh}, $cmd[0]
+                or die "Couldn't launch [$cmd[0]]: $! / $?";
+        };
 
         # Just to give PhantomJS time to start up, make sure it accepts connections
         my $wait = time + ($options{ wait } || 20);
