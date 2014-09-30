@@ -173,7 +173,8 @@ sub new {
     	$options{ kill_pid } = 1;
     	if( @cmd > 1 ) {
     	    # We can do a proper pipe-open
-            $options{ pid } = open $options{fh}, @cmd
+	    my $mode = shift @cmd;
+            $options{ pid } = open $options{fh}, $mode, @cmd
                 or die "Couldn't launch [@cmd]: $! / $?";
         } else {
     	    # We can't do a proper pipe-open, so do the single-arg open
@@ -2862,8 +2863,9 @@ sub report_js_errors
 {
     my ( $self, @errors ) = @_;
     @errors = map {
-    	"$_->{message} at $_->{trace}->[-1]->{file} line $_->{trace}->[-1]->{line}" .
-	( $_->{trace}->[-1]->{function} ? " in function $_->{trace}->[-1]->{function}" : '')
+    	$_->{message} . 
+	( @{$_->{trace}} ? " at $_->{trace}->[-1]->{file} line $_->{trace}->[-1]->{line}" : '') .
+	( @{$_->{trace}} && $_->{trace}->[-1]->{function} ? " in function $_->{trace}->[-1]->{function}" : '')
     } @errors;
     Carp::carp("javascript error: @errors") ;
 }
