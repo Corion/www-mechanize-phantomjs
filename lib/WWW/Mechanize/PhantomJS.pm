@@ -173,7 +173,8 @@ sub new {
     	$options{ kill_pid } = 1;
     	if( @cmd > 1 ) {
     	    # We can do a proper pipe-open
-            $options{ pid } = open $options{fh}, @cmd
+	    my $mode = shift @cmd;
+            $options{ pid } = open $options{fh}, $mode, @cmd
                 or die "Couldn't launch [@cmd]: $! / $?";
         } else {
     	    # We can't do a proper pipe-open, so do the single-arg open
