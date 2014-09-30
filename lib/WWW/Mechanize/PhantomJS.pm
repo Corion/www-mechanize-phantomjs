@@ -2863,8 +2863,9 @@ sub report_js_errors
 {
     my ( $self, @errors ) = @_;
     @errors = map {
-    	"$_->{message} at $_->{trace}->[-1]->{file} line $_->{trace}->[-1]->{line}" .
-	( $_->{trace}->[-1]->{function} ? " in function $_->{trace}->[-1]->{function}" : '')
+    	$_->{message} . 
+	( @{$_->{trace}} ? " at $_->{trace}->[-1]->{file} line $_->{trace}->[-1]->{line}" : '') .
+	( @{$_->{trace}} && $_->{trace}->[-1]->{function} ? " in function $_->{trace}->[-1]->{function}" : '')
     } @errors;
     Carp::carp("javascript error: @errors") ;
 }
