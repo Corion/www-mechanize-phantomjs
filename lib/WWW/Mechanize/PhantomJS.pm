@@ -2253,10 +2253,14 @@ sub get_set_value {
 
             my $get= $self->PhantomJS_elementToJS();
             my $val= quotemeta($value);
+            my $bool = $value ? 'true' : 'false';
             my $js= <<JS;
                 var g=$get;
                 var el=g("$fields[0]->{id}");
-                el.value="$val";
+                if (el.type=='checkbox')
+                   el.checked=$bool;
+                else
+                   el.value="$val";
 JS
             $js= quotemeta($js);
             $self->eval("eval('$js')"); # for some reason, Selenium/Ghostdriver don't like the JS as plain JS
