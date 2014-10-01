@@ -9,6 +9,7 @@ use File::Basename;
 use Carp qw(croak carp);
 use WWW::Mechanize::Link;
 use IO::Socket::INET;
+use Encode qw(encode FB_PERLQQ);
 
 use vars qw($VERSION %link_spec);
 $VERSION= '0.09';
@@ -229,7 +230,7 @@ sub new {
              page.alerts.push(msg);
          };
          page.onConfirm= function(msg) {
-			       return page.confirms[msg];
+             return page.confirms[msg];
          };
 JS
 
@@ -2249,6 +2250,15 @@ sub _field_by_name {
     @fields
 }
 
+sub escape
+{
+    my $s = shift;
+    $s =~ s/(["\\])/\\$1/g;
+    $s =~ s/\n/\\n/g;
+    $s =~ s/\r/\\r/g;
+    return $s;
+}
+
 sub get_set_value {
     my ($self,%options) = @_;
     my $set_value = exists $options{ value };
@@ -2273,7 +2283,7 @@ sub get_set_value {
             #};
 
             my $get= $self->PhantomJS_elementToJS();
-            my $val= quotemeta($value);
+            my $val= escape($value);
             my $bool = $value ? 'true' : 'false';
             my $js= <<JS;
                 var g=$get;
