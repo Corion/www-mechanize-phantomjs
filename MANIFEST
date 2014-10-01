@@ -129,6 +129,8 @@ t/56-render-content.t
 t/57-parallel.t
 t/58-alert.html
 t/58-alert.t
+t/59-confirm.html
+t/59-confirm.t
 t/60-mech-custom-headers.t
 t/70-real-status.t
 t/99-changes.t
