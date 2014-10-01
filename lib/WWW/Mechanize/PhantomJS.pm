@@ -3008,12 +3008,12 @@ L<WWW::Mechanize::Firefox> - a similar module with a visible application
 =head1 REPOSITORY
 
 The public repository of this module is
-L<http://github.com/Corion/www-mechanize-phantomjs>.
+L<https://github.com/Corion/www-mechanize-phantomjs>.
 
 =head1 SUPPORT
 
 The public support forum of this module is
-L<http://perlmonks.org/>.
+L<https://perlmonks.org/>.
 
 =head1 TALKS
 
