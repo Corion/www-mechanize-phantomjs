@@ -55,6 +55,6 @@ t::helper::run_across_instances(\@instances, undef, \&new_mech, sub {
     ok( 2 == @res, "got two alerts");
 
     $mech->clear_js_alerts;
-    my @res= $mech->js_alerts;
+    @res= $mech->js_alerts;
     ok( 0 == @res, "got zero alerts");
 });
