@@ -371,8 +371,8 @@ the answer is "cancel".
 sub confirm
 {
     my ( $self, $msg, $affirmative ) = @_;
-		$affirmative = 1 unless defined $affirmative;
-		$affirmative = $affirmative ? 'true' : 'false';
+    $affirmative = 1 unless defined $affirmative;
+    $affirmative = $affirmative ? 'true' : 'false';
     $self->eval_in_phantomjs("this.confirms['$msg']=$affirmative;");
 }
 
