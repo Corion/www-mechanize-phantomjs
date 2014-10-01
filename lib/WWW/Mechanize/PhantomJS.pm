@@ -9,7 +9,6 @@ use File::Basename;
 use Carp qw(croak carp);
 use WWW::Mechanize::Link;
 use IO::Socket::INET;
-use Encode qw(encode FB_PERLQQ);
 
 use vars qw($VERSION %link_spec);
 $VERSION= '0.09';
