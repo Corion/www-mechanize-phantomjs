@@ -1,5 +1,9 @@
 TO DO:
 
+0.10 20141001
+    + Fix broken pipe-open (Patch by dk)
+    . Move some URLs to https://
+
 0.09 20140929
     + Add new switches to control PhantomJS behaviour (suggested by K. Klein)
     + Split up command line arguments between PhantomJS and Ghostdriver

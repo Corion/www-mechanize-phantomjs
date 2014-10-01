@@ -1049,12 +1049,12 @@ when searching through frames.
 # REPOSITORY
 
 The public repository of this module is
-[http://github.com/Corion/www-mechanize-phantomjs](http://github.com/Corion/www-mechanize-phantomjs).
+[https://github.com/Corion/www-mechanize-phantomjs](https://github.com/Corion/www-mechanize-phantomjs).
 
 # SUPPORT
 
 The public support forum of this module is
-[http://perlmonks.org/](http://perlmonks.org/).
+[https://perlmonks.org/](https://perlmonks.org/).
 
 # TALKS
 

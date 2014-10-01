@@ -11,7 +11,7 @@ use WWW::Mechanize::Link;
 use IO::Socket::INET;
 
 use vars qw($VERSION %link_spec);
-$VERSION= '0.09';
+$VERSION= '0.10';
 
 =head1 NAME
 
