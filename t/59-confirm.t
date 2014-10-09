@@ -13,15 +13,13 @@ use Test::HTTP::LocalServer;
 
 use t::helper;
 
-# What instances of PhantomJS will we try?
-#my $instance_port = 8910;
 my @instances = t::helper::browser_instances();
 
 if (my $err = t::helper::default_unavailable) {
     plan skip_all => "Couldn't connect to PhantomJS: $@";
     exit
 } else {
-    plan tests => 7*@instances;
+    plan tests => 6*@instances;
 };
 
 sub new_mech {
@@ -43,18 +41,15 @@ sub load_file_ok {
 t::helper::run_across_instances(\@instances, undef, \&new_mech, sub {
     my ($browser_instance, $mech) = @_;
     isa_ok $mech, 'WWW::Mechanize::PhantomJS';
-    can_ok $mech, 'js_alerts','clear_js_alerts';
+    can_ok $mech, 'confirm';
 
-    $mech->clear_js_alerts;
-    is_deeply [$mech->js_alerts], [], "No alerts reported on page after clearing alerts"
-        or diag Dumper [$mech->js_alerts];
+    $mech->confirm( 'a'  );
+    $mech->confirm( b => 1 );
+    $mech->confirm( c => 0 );
 
-    load_file_ok($mech, '58-alert.html', javascript => 1);
+    load_file_ok($mech, '59-confirm.html', javascript => 1);
 
     my @res= $mech->js_alerts;
-    ok( 2 == @res, "got two alerts");
-
-    $mech->clear_js_alerts;
-    @res= $mech->js_alerts;
-    ok( 0 == @res, "got zero alerts");
+    ok( 4 == @res, "got four responses");
+    ok( join(' ', @res) eq 'true true false false', "confirms are ok");
 });

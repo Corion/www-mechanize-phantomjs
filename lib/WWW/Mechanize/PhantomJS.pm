@@ -219,14 +219,18 @@ sub new {
      $self->eval_in_phantomjs(<<'JS');
          var page= this;
          page.errors= [];
-	 page.alerts= [];
+         page.alerts= [];
+         page.confirms= {};
          page.onError= function(msg, trace) {
              //_log.warn("Caught JS error", msg);
              page.errors.push({ "message": msg, "trace": trace });
          };
-	 page.onAlert = function(msg) {
-	     page.alerts.push(msg);
-	 };
+         page.onAlert = function(msg) {
+             page.alerts.push(msg);
+         };
+         page.onConfirm= function(msg) {
+             return page.confirms[msg];
+         };
 JS
 
      $self
@@ -355,6 +359,22 @@ sub clear_js_errors {
 JS
 
 };
+
+=head2 C<< $mech->confirm( 'Really do this?' [ => 1 ]) >>
+
+Records a confirmation (which is "1" or "ok" by default), to be used
+whenever javascript fires a confirm dialog. If message is not found, 
+the answer is "cancel".
+
+=cut
+
+sub confirm
+{
+    my ( $self, $msg, $affirmative ) = @_;
+    $affirmative = 1 unless defined $affirmative;
+    $affirmative = $affirmative ? 'true' : 'false';
+    $self->eval_in_phantomjs("this.confirms['$msg']=$affirmative;");
+}
 
 =head2 C<< $mech->eval_in_page( $str, @args ) >>
 
@@ -1814,6 +1834,7 @@ sub click {
     };
 
     $buttons[0]->click();
+    $self->post_process;
 
     if (defined wantarray) {
         return $self->response
@@ -2228,6 +2249,15 @@ sub _field_by_name {
     @fields
 }
 
+sub escape
+{
+    my $s = shift;
+    $s =~ s/(["\\])/\\$1/g;
+    $s =~ s/\n/\\n/g;
+    $s =~ s/\r/\\r/g;
+    return $s;
+}
+
 sub get_set_value {
     my ($self,%options) = @_;
     my $set_value = exists $options{ value };
@@ -2252,11 +2282,15 @@ sub get_set_value {
             #};
 
             my $get= $self->PhantomJS_elementToJS();
-            my $val= quotemeta($value);
+            my $val= escape($value);
+            my $bool = $value ? 'true' : 'false';
             my $js= <<JS;
                 var g=$get;
                 var el=g("$fields[0]->{id}");
-                el.value="$val";
+                if (el.type=='checkbox')
+                   el.checked=$bool;
+                else
+                   el.value="$val";
 JS
             $js= quotemeta($js);
             $self->eval("eval('$js')"); # for some reason, Selenium/Ghostdriver don't like the JS as plain JS
@@ -2313,6 +2347,7 @@ sub submit {
     } else {
         croak "I don't know which form to submit, sorry.";
     }
+    $self->post_process;
     return $self->response;
 };
 
