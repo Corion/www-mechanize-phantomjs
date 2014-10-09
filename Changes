@@ -1,5 +1,10 @@
 TO DO:
 
+0.11 20141009
+    + Add confirm() handling (Patch by dk)
+    + Properly encode newlines in parameters (Patch by dk)
+    + Support checkboxes with submit_form (Patch by dk)
+
 0.10 20141001
     + Fix broken pipe-open (Patch by dk)
     . Move some URLs to https://

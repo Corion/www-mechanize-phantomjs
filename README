@@ -115,6 +115,11 @@ SYNOPSIS
 
     Clears all Javascript messages from the console
 
+  `$mech->confirm( 'Really do this?' [ => 1 ])'
+    Records a confirmation (which is "1" or "ok" by default), to be used
+    whenever javascript fires a confirm dialog. If message is not found, the
+    answer is "cancel".
+
   `$mech->eval_in_page( $str, @args )'
   `$mech->eval( $str, @args )'
       my ($value, $type) = $mech->eval( '2+2' );
