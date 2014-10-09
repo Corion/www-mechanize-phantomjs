@@ -168,12 +168,12 @@ sub new {
         $options{ frames }= 1;
     };
 
-    my @cmd= $class->build_command_line( \%options );
     unless ($options{pid}) {
+        my @cmd= $class->build_command_line( \%options );
     	$options{ kill_pid } = 1;
     	if( @cmd > 1 ) {
     	    # We can do a proper pipe-open
-	    my $mode = shift @cmd;
+            my $mode = shift @cmd;
             $options{ pid } = open $options{fh}, $mode, @cmd
                 or die "Couldn't launch [@cmd]: $! / $?";
         } else {
@@ -214,19 +214,19 @@ sub new {
         die $@;
     }
 
-     my $self= bless \%options => $class;
+    my $self= bless \%options => $class;
 
-     $self->eval_in_phantomjs(<<'JS');
-         var page= this;
-         page.errors= [];
-	 page.alerts= [];
-         page.onError= function(msg, trace) {
-             //_log.warn("Caught JS error", msg);
-             page.errors.push({ "message": msg, "trace": trace });
-         };
-	 page.onAlert = function(msg) {
-	     page.alerts.push(msg);
-	 };
+    $self->eval_in_phantomjs(<<'JS');
+        var page= this;
+        page.errors= [];
+	    page.alerts= [];
+        page.onError= function(msg, trace) {
+            //_log.warn("Caught JS error", msg);
+            page.errors.push({ "message": msg, "trace": trace });
+        };
+        page.onAlert = function(msg) {
+            page.alerts.push(msg);
+        };
 JS
 
      $self
