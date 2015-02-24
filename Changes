@@ -1,4 +1,9 @@
 TO DO:
+    + Tested with
+        . PhantomJS 1.9.0
+        . PhantomJS 1.9.2
+        . PhantomJS 1.9.7
+        . PhantomJS 2.0.0
 
 0.11 20141009
     + Add confirm() handling (Patch by dk)
