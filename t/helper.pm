@@ -6,6 +6,9 @@ use File::Glob qw(bsd_glob);
 use Config '%Config';
 use File::Spec;
 
+delete $ENV{HTTP_PROXY};
+delete $ENV{HTTPS_PROXY};
+
 sub browser_instances {
     my ($filter) = @_;
     $filter ||= qr/^/;
