@@ -135,7 +135,11 @@ sub build_command_line {
         push @{ $options->{ phantomjs_arg }}, "--ignore-ssl-errors=yes";
     };
 
-    my @cmd=( "|-", $options->{ launch_exe }, @{ $options->{phantomjs_arg}}, $options->{ launch_ghostdir }, @{ $options->{ launch_arg } } );
+    my $program = ($^O =~ /mswin/i and $options->{ launch_exe } =~ /\s/)
+                  ? qq("$options->{ launch_exe }")
+                  : $options->{ launch_exe };
+
+    my @cmd=( "|-", $program, @{ $options->{phantomjs_arg}}, $options->{ launch_ghostdir }, @{ $options->{ launch_arg } } );
     if( $^O =~ /mswin/i ) {
         # Windows Perl doesn't support pipe-open with list
         shift @cmd; # remove pipe-open
@@ -3068,7 +3072,7 @@ Max Maischein C<corion@cpan.org>
 
 =head1 COPYRIGHT (c)
 
-Copyright 2014 by Max Maischein C<corion@cpan.org>.
+Copyright 2014-2015 by Max Maischein C<corion@cpan.org>.
 
 =head1 LICENSE
 
