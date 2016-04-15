@@ -206,6 +206,7 @@ sub new {
     	$options{ driver } ||= Selenium::Remote::Driver->new(
     	    'port' => $options{ port },
     	    auto_close => 0,
+    	    #error_handler => sub { warn "[[$_[1]]]"; croak $_[1] },
     	);
         # (Monkey)patch Selenium::Remote::Driver
         $options{ driver }->commands->get_cmds->{get}->{no_content_success}= 0;
