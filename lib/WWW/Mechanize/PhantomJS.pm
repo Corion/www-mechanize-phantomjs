@@ -10,8 +10,9 @@ use Carp qw(croak carp);
 use WWW::Mechanize::Link;
 use IO::Socket::INET;
 
-use vars qw($VERSION %link_spec);
+use vars qw($VERSION %link_spec @CARP_NOT);
 $VERSION= '0.11';
+@CARP_NOT=qw(Selenium::Remote::Driver);
 
 =head1 NAME
 
@@ -206,7 +207,15 @@ sub new {
     	$options{ driver } ||= Selenium::Remote::Driver->new(
     	    'port' => $options{ port },
     	    auto_close => 0,
-    	    #error_handler => sub { warn "[[$_[1]]]"; croak $_[1] },
+    	    error_handler => sub {
+    	        #warn ref$_[0];
+    	        #warn "<<@CARP_NOT>>";
+    	        #warn ((caller($_))[0,1,2])
+    	        #    for 1..4;
+    	        local @CARP_NOT = (@CARP_NOT, ref $_[0],'Try::Tiny');
+    	        # Reraise the error
+    	        croak $_[1]
+    	    },
     	);
         # (Monkey)patch Selenium::Remote::Driver
         $options{ driver }->commands->get_cmds->{get}->{no_content_success}= 0;
@@ -405,6 +414,8 @@ sub eval_in_page {
     # This feels weirdly backwards here, but oh well:
     local @Selenium::Remote::Driver::CARP_NOT
         = (@Selenium::Remote::Driver::CARP_NOT, (ref $self)); # we trust this
+    local @CARP_NOT
+        = (@CARP_NOT, 'Selenium::Remote::Driver', (ref $self)); # we trust this
     my $eval_in_sandbox = $self->driver->execute_script("return $str", @args);
     $self->post_process;
     return $eval_in_sandbox;
