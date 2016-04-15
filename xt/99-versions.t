@@ -8,7 +8,7 @@ use strict;
 use File::Find;
 use Test::More;
 BEGIN {
-    eval 'use File::Slurp; 1';
+    eval { use File::Slurp; };
     if ($@) {
         plan skip_all => "File::Slurp needed for testing";
         exit 0;
@@ -32,6 +32,8 @@ sub check {
             fail($_);
       }
       for my $line (@version_lines) {
+            $line =~ s/^\s+//;
+            $line =~ s/\s+$//;
             if (!defined $last_version) {
                   $last_version = shift @version_lines;
                   diag "Checking for $last_version";
