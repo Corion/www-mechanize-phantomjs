@@ -409,7 +409,11 @@ sub eval_in_page {
     $self->post_process;
     return $eval_in_sandbox;
 };
-*eval = \&eval_in_page;
+
+{
+    no warnings 'once';
+    *eval = \&eval_in_page;
+}
 
 =head2 C<< $mech->eval_in_phantomjs $code, @args >>
 
@@ -774,7 +778,11 @@ Returns the current response as a L<HTTP::Response> object.
 =cut
 
 sub response { $_[0]->{response} };
-*res = \&response;
+
+{
+    no warnings 'once';
+    *res = \&response;
+}
 
 # Call croak or carp, depending on the C< autodie > setting
 sub signal_condition {
@@ -1036,7 +1044,10 @@ sub content_type {
     $ct
 };
 
-*ct = \&content_type;
+{
+    no warnings 'once';
+    *ct = \&content_type;
+}
 
 =head2 C<< $mech->is_html() >>
 
@@ -1143,8 +1154,10 @@ This takes the same options that C<< ->xpath >> does.
 This method is implemented via L<WWW::Mechanize::Plugin::Selector>.
 
 =cut
-
-*selector = \&WWW::Mechanize::Plugin::Selector::selector;
+{
+    no warnings 'once';
+    *selector = \&WWW::Mechanize::Plugin::Selector::selector;
+}
 
 =head2 C<< $mech->find_link_dom( %options ) >>
 
@@ -3018,9 +3031,52 @@ Implement download progress
 
 =over 4
 
+=back
+
+=head2 Install the C<PhantomJS> executable
+
+=over
+
 =item *
 
-Install the C<PhantomJS> executable
+Installing on Ubuntu
+
+Version: 1.9.8
+Platform: x86_64
+
+Install or update latest system software:
+
+C<< sudo apt-get update >>
+
+C<< sudo apt-get install build-essential chrpath libssl-dev libxft-dev >>
+
+Install the following packages needed by PhantomJS:
+
+C<< sudo apt-get install libfreetype6 libfreetype6-dev >>
+
+C<< sudo apt-get install libfontconfig1 libfontconfig1-dev >>
+
+Get PhantomJS from the L<website|http://phantomjs.org/>
+
+C<< cd ~ >>
+
+C<< export PHANTOM_JS="phantomjs-1.9.8-linux-x86_64" >>
+
+C<< wget https://bitbucket.org/ariya/phantomjs/downloads/$PHANTOM_JS.tar.bz2 >>
+
+C<< sudo tar xvjf $PHANTOM_JS.tar.bz2 >>
+
+Once downloaded move Phantomjs folder:
+
+C<< sudo mv $PHANTOM_JS /usr/local/share >>
+
+C<< sudo ln -sf /usr/local/share/$PHANTOM_JS/bin/phantomjs /usr/local/bin >>
+
+C<< sudo ln -sf /usr/local/share/$PHANTOM_JS/bin/phantomjs /usr/bin/phantomjs >>
+
+Test it has been installed on your system:
+
+C<< phantomjs --version >>
 
 =back
 

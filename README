@@ -1056,7 +1056,47 @@ TODO
 
 INSTALLING
 
-      * Install the PhantomJS executable
+ Install the PhantomJS executable
+
+      * Installing on Ubuntu
+
+      Version: 1.9.8 Platform: x86_64
+
+      Install or update latest system software:
+
+      sudo apt-get update
+
+      sudo apt-get install build-essential chrpath libssl-dev libxft-dev
+
+      Install the following packages needed by PhantomJS:
+
+      sudo apt-get install libfreetype6 libfreetype6-dev
+
+      sudo apt-get install libfontconfig1 libfontconfig1-dev
+
+      Get PhantomJS from the website <http://phantomjs.org/>
+
+      cd ~
+
+      export PHANTOM_JS="phantomjs-1.9.8-linux-x86_64"
+
+      wget
+      https://bitbucket.org/ariya/phantomjs/downloads/$PHANTOM_JS.tar.bz2
+
+      sudo tar xvjf $PHANTOM_JS.tar.bz2
+
+      Once downloaded move Phantomjs folder:
+
+      sudo mv $PHANTOM_JS /usr/local/share
+
+      sudo ln -sf /usr/local/share/$PHANTOM_JS/bin/phantomjs /usr/local/bin
+
+      sudo ln -sf /usr/local/share/$PHANTOM_JS/bin/phantomjs
+      /usr/bin/phantomjs
+
+      Test it has been installed on your system:
+
+      phantomjs --version
 
 SEE ALSO
 
