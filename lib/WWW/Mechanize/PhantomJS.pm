@@ -64,7 +64,7 @@ by setting C<$ENV{PHANTOMJS_EXE}>.
 
 Additional command line arguments to C<phantomjs>.  (phantomjs -h)
 
-  phantomjs_arg => ['--frobnitz-the-foo=bar']
+  phantomjs_arg => ["--proxy=$ENV{HTTP_PROXY}"]
 
 =item B<launch_ghostdriver>
 
