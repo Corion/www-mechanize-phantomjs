@@ -450,10 +450,9 @@ JS
 sub DESTROY {
     #warn "Destroying " . ref $_[0];
     my $pid= delete $_[0]->{pid};
-    eval { my $dr= delete $_[0]->{ driver }; $dr->quit; undef $dr };
-    #if($dr) {
-    #    $dr->quit;
-    #};
+    eval { 
+        my $dr= delete $_[0]->{ driver }; $dr->quit; undef $dr;
+    };
     #warn "Killing $pid";
     kill 9 => $pid
         if $pid;
