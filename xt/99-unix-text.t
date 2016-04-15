@@ -24,15 +24,15 @@ sub wanted {
 sub unix_file_ok {
   my ($filename) = @_;
   local $/;
-  open F, "< $filename"
+  open my $fh,'<',$filename
     or die "Couldn't open '$filename' : $!\n";
-  binmode F;
-  my $content = <F>;
+  binmode $fh;
+  my $content = <$fh>;
   
   my $i;
   my @lines = grep { /\x0D\x0A$/sm } map { sprintf "%s: %s\x0A", $i++, $_ } split /\x0A/, $content;
   unless (is(scalar @lines, 0,"'$filename' contains no windows newlines")) {
     diag $_ for @lines;
   };
-  close F;
+  close $fh;
 };

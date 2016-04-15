@@ -1,7 +1,6 @@
 #!perl -w
 use warnings;
 use strict;
-use File::Find;
 use Test::More tests => 2;
 
 =head1 PURPOSE
@@ -15,12 +14,13 @@ release date is mentioned as well
 my $module = 'WWW::Mechanize::PhantomJS';
 
 (my $file = $module) =~ s!::!/!g;
-require "$file.pm";
+$file .= '.pm';
+require $file;
 
 my $version = sprintf '%0.2f', $module->VERSION;
 diag "Checking for version " . $version;
 
-my $changes = do { local $/; open my $fh, 'Changes' or die $!; <$fh> };
+my $changes = do { local $/; open my $fh,'<','Changes' or die $!; <$fh> };
 
 ok $changes =~ /^(.*$version.*)$/m, "We find version $version";
 my $changes_line = $1;
