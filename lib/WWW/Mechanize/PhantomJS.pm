@@ -408,7 +408,11 @@ sub eval_in_page {
     $self->post_process;
     return $eval_in_sandbox;
 };
-*eval = \&eval_in_page;
+
+{
+    no warnings 'once';
+    *eval = \&eval_in_page;
+}
 
 =head2 C<< $mech->eval_in_phantomjs $code, @args >>
 
@@ -774,7 +778,11 @@ Returns the current response as a L<HTTP::Response> object.
 =cut
 
 sub response { $_[0]->{response} };
-*res = \&response;
+
+{
+    no warnings 'once';
+    *res = \&response;
+}
 
 # Call croak or carp, depending on the C< autodie > setting
 sub signal_condition {
@@ -1036,7 +1044,10 @@ sub content_type {
     $ct
 };
 
-*ct = \&content_type;
+{
+    no warnings 'once';
+    *ct = \&content_type;
+}
 
 =head2 C<< $mech->is_html() >>
 
@@ -1143,8 +1154,10 @@ This takes the same options that C<< ->xpath >> does.
 This method is implemented via L<WWW::Mechanize::Plugin::Selector>.
 
 =cut
-
-*selector = \&WWW::Mechanize::Plugin::Selector::selector;
+{
+    no warnings 'once';
+    *selector = \&WWW::Mechanize::Plugin::Selector::selector;
+}
 
 =head2 C<< $mech->find_link_dom( %options ) >>
 
