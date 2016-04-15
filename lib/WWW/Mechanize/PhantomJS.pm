@@ -3012,9 +3012,52 @@ Implement download progress
 
 =over 4
 
+=back
+
+=head2 Install the C<PhantomJS> executable
+
+=over
+
 =item *
 
-Install the C<PhantomJS> executable
+Installing on Ubuntu
+
+Version: 1.9.8
+Platform: x86_64
+
+Install or update latest system software:
+
+C<< sudo apt-get update >>
+
+C<< sudo apt-get install build-essential chrpath libssl-dev libxft-dev >>
+
+Install the following packages needed by PhantomJS:
+
+C<< sudo apt-get install libfreetype6 libfreetype6-dev >>
+
+C<< sudo apt-get install libfontconfig1 libfontconfig1-dev >>
+
+Get PhantomJS from the L<website|http://phantomjs.org/>
+
+C<< cd ~ >>
+
+C<< export PHANTOM_JS="phantomjs-1.9.8-linux-x86_64" >>
+
+C<< wget https://bitbucket.org/ariya/phantomjs/downloads/$PHANTOM_JS.tar.bz2 >>
+
+C<< sudo tar xvjf $PHANTOM_JS.tar.bz2 >>
+
+Once downloaded move Phantomjs folder:
+
+C<< sudo mv $PHANTOM_JS /usr/local/share >>
+
+C<< sudo ln -sf /usr/local/share/$PHANTOM_JS/bin/phantomjs /usr/local/bin >>
+
+C<< sudo ln -sf /usr/local/share/$PHANTOM_JS/bin/phantomjs /usr/bin/phantomjs >>
+
+Test it has been installed on your system:
+
+C<< phantomjs --version >>
 
 =back
 

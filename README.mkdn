@@ -13,7 +13,7 @@ WWW::Mechanize::PhantomJS - automate the PhantomJS browser
 
 ## `WWW::Mechanize::PhantomJS->new %options`
 
-- __autodie__
+- **autodie**
 
     Control whether HTTP errors are fatal.
 
@@ -23,19 +23,19 @@ WWW::Mechanize::PhantomJS - automate the PhantomJS browser
     as that makes debugging much easier than expecting
     you to actually check the results of every action.
 
-- __port__
+- **port**
 
     Specify the port where PhantomJS should listen
 
         port => 8910
 
-- __log__
+- **log**
 
     Specify the log level of PhantomJS
 
         log => 'OFF'   # Also INFO, WARN, DEBUG
 
-- __launch\_exe__
+- **launch\_exe**
 
     Specify the path to the PhantomJS executable.
 
@@ -43,20 +43,20 @@ WWW::Mechanize::PhantomJS - automate the PhantomJS browser
     You can also provide this information from the outside
     by setting `$ENV{PHANTOMJS_EXE}`.
 
-- __phantomjs\_arg__
+- **phantomjs\_arg**
 
     Additional command line arguments to `phantomjs`.  (phantomjs -h)
 
         phantomjs_arg => ['--frobnitz-the-foo=bar']
 
-- __launch\_ghostdriver__
+- **launch\_ghostdriver**
 
     Filename of the `ghostdriver` Javascript code
     to launch. The default is the file distributed with this module.
 
         launch_ghostdriver => "devel/my/ghostdriver/main.js",
 
-- __launch\_arg__
+- **launch\_arg**
 
     Specify additional parameters to the Ghostdriver script.
 
@@ -68,20 +68,20 @@ WWW::Mechanize::PhantomJS - automate the PhantomJS browser
 
         note: these set config.xxx values in ghostrdriver/config.js
 
-- __cookie\_file__
+- **cookie\_file**
 
     Cookies are not directly persisted. If you pass in a path here,
     that file will be used to store or retrieve cookies.
 
-- __ignore\_ssl\_errors__
+- **ignore\_ssl\_errors**
 
     If you want `phantomjs` to ignore SSL errors, pass a true value here.
 
-- __driver__
+- **driver**
 
     A premade [Selenium::Remote::Driver](https://metacpan.org/pod/Selenium::Remote::Driver) object.
 
-- __report\_js\_errors__
+- **report\_js\_errors**
 
     If set to 1, after each request tests for Javascript errors and warns. Useful
     for testing with `use warnings qw(fatal)`.
@@ -139,7 +139,7 @@ Clears all Javascript messages from the console
 ## `$mech->confirm( 'Really do this?' [ => 1 ])`
 
 Records a confirmation (which is "1" or "ok" by default), to be used
-whenever javascript fires a confirm dialog. If message is not found, 
+whenever javascript fires a confirm dialog. If message is not found,
 the answer is "cancel".
 
 ## `$mech->eval_in_page( $str, @args )`
@@ -217,12 +217,12 @@ This method accepts the same options as `->get()`.
 This method is special to WWW::Mechanize::PhantomJS but could
 also exist in WWW::Mechanize through a plugin.
 
-__Warning__: PhantomJs does not handle local files well. Especially
+**Warning**: PhantomJs does not handle local files well. Especially
 subframes do not get loaded properly.
 
 ## `$mech->post( $url, %options )`
 
-__not implemented__
+**not implemented**
 
 Selenium currently does not allow a raw POST message
 and the code for constructing a form on the fly is not working
@@ -254,7 +254,7 @@ the content type will be generated automatically.
         Encoding => 'text/klingon',
     );
 
-This method sets up custom headers that will be sent with __every__ HTTP(S)
+This method sets up custom headers that will be sent with **every** HTTP(S)
 request that PhantomJS makes.
 
 Note that currently, we only support one value per header.
@@ -785,7 +785,7 @@ in addition to all keys that `$mech->xpath` supports.
 
     $mech->submit;
 
-Submits the form. Note that this does __not__ fire the `onClick`
+Submits the form. Note that this does **not** fire the `onClick`
 event and thus also does not fire eventual Javascript handlers.
 Maybe you want to use `$mech->click` instead.
 
@@ -1042,7 +1042,46 @@ when searching through frames.
 
 # INSTALLING
 
-- Install the `PhantomJS` executable
+## Install the `PhantomJS` executable
+
+- Installing on Ubuntu
+
+    Version: 1.9.8
+    Platform: x86\_64
+
+    Install or update latest system software:
+
+    `sudo apt-get update`
+
+    `sudo apt-get install build-essential chrpath libssl-dev libxft-dev`
+
+    Install the following packages needed by PhantomJS:
+
+    `sudo apt-get install libfreetype6 libfreetype6-dev`
+
+    `sudo apt-get install libfontconfig1 libfontconfig1-dev`
+
+    Get PhantomJS from the [website](http://phantomjs.org/)
+
+    `cd ~`
+
+    `export PHANTOM_JS="phantomjs-1.9.8-linux-x86_64"`
+
+    `wget https://bitbucket.org/ariya/phantomjs/downloads/$PHANTOM_JS.tar.bz2`
+
+    `sudo tar xvjf $PHANTOM_JS.tar.bz2`
+
+    Once downloaded move Phantomjs folder:
+
+    `sudo mv $PHANTOM_JS /usr/local/share`
+
+    `sudo ln -sf /usr/local/share/$PHANTOM_JS/bin/phantomjs /usr/local/bin`
+
+    `sudo ln -sf /usr/local/share/$PHANTOM_JS/bin/phantomjs /usr/bin/phantomjs`
+
+    Test it has been installed on your system:
+
+    `phantomjs --version`
 
 # SEE ALSO
 
@@ -1080,7 +1119,7 @@ Max Maischein `corion@cpan.org`
 
 # COPYRIGHT (c)
 
-Copyright 2014 by Max Maischein `corion@cpan.org`.
+Copyright 2014-2015 by Max Maischein `corion@cpan.org`.
 
 # LICENSE
 
