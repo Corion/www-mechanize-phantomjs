@@ -5,6 +5,13 @@ TO DO:
         . PhantomJS 1.9.7
         . PhantomJS 2.0.0
 
+0.12 20160416
+    + Ubuntu installation instructions (by Lisa Hare)
+    + Report JS errors from perspective of user
+    . more author tests (by Lisa Hare)
+    . Windows test improvements
+
+
 0.11 20141009
     + Add confirm() handling (Patch by dk)
     + Properly encode newlines in parameters (Patch by dk)
