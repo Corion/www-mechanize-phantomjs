@@ -1,0 +1,37 @@
+---
+abstract: 'automate the PhantomJS browser'
+author:
+  - 'Max Maischein <corion@cpan.org>'
+build_requires:
+  File::Basename: '0'
+  File::Copy: '0'
+  File::Find: '0'
+  File::Path: '0'
+configure_requires:
+  ExtUtils::MakeMaker: '0'
+dynamic_config: 1
+generated_by: 'ExtUtils::MakeMaker version 6.98, CPAN::Meta::Converter version 2.142060'
+license: perl
+meta-spec:
+  url: http://module-build.sourceforge.net/META-spec-v1.4.html
+  version: '1.4'
+name: WWW-Mechanize-PhantomJS
+no_index:
+  directory:
+    - t
+    - inc
+requires:
+  Carp: '0'
+  HTML::Selector::XPath: '0'
+  HTTP::Daemon: '0'
+  HTTP::Response: '0'
+  IO::Socket::INET: '0'
+  LWP::Simple: '0'
+  Object::Import: '0'
+  Scalar::Util: '0'
+  Selenium::Remote::Driver: '0.18'
+  WWW::Mechanize::Link: '0'
+  perl: '5.006'
+resources:
+  repository: https://github.com/Corion/www-mechanize-phantomjs
+version: '0.12'
