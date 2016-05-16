@@ -515,7 +515,7 @@ JS
 
 =head2 C<< $mech->get( $url, %options ) >>
 
-  $mech->get( $url, ':content_file' => $tempfile );
+  $mech->get( $url  );
 
 Retrieves the URL C<URL>.
 
@@ -524,19 +524,7 @@ with L<WWW::Mechanize>. It seems that Selenium and thus L<Selenium::Remote::Driv
 have no concept of HTTP status code and thus no way of returning the
 HTTP status code.
 
-Recognized options:
-
-=over 4
-
-=item *
-
-C<< :content_file >> - filename to store the data in
-
-=item *
-
-C<< no_cache >> - if true, bypass the browser cache
-
-=back
+Note that PhantomJs does not support download of files.
 
 =cut
 
@@ -575,6 +563,7 @@ sub get {
     # We need to stringify $url so it can pass through JSON
     my $phantom_res= $self->driver->get( "$url" );
     $self->post_process;
+    
     $self->update_response( $phantom_res );
 };
 
