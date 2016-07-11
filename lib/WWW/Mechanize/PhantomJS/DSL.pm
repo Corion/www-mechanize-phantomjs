@@ -5,7 +5,7 @@ use Object::Import;
 use Carp qw(croak);
 
 use vars qw($VERSION @CARP_NOT);
-$VERSION= '0.09';
+$VERSION= '0.12';
 
 @CARP_NOT = (qw[
     WWW::Mechanize::PhantomJS
@@ -68,7 +68,7 @@ Max Maischein C<corion@cpan.org>
 
 =head1 COPYRIGHT (c)
 
-Copyright 2009-2013 by Max Maischein C<corion@cpan.org>.
+Copyright 2009-2015 by Max Maischein C<corion@cpan.org>.
 
 =head1 LICENSE
 

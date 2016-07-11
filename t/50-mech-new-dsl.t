@@ -10,8 +10,8 @@ BEGIN {
     my $ok = eval { 
         WWW::Mechanize::PhantomJS::DSL->import(
             autodie => 1,
-            launch_exe => 'phantomjs-versions\phantomjs-1.9.7-windows\phantomjs',
-            port => 8910, # XXX
+            #launch_exe => 'phantomjs-versions\phantomjs-1.9.7-windows\phantomjs',
+            #port => 8910, # XXX
         );
         1
     };

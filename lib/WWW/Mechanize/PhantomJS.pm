@@ -10,8 +10,9 @@ use Carp qw(croak carp);
 use WWW::Mechanize::Link;
 use IO::Socket::INET;
 
-use vars qw($VERSION %link_spec);
-$VERSION= '0.09';
+use vars qw($VERSION %link_spec @CARP_NOT);
+$VERSION= '0.12';
+@CARP_NOT=qw(Selenium::Remote::Driver);
 
 =head1 NAME
 
@@ -64,7 +65,7 @@ by setting C<$ENV{PHANTOMJS_EXE}>.
 
 Additional command line arguments to C<phantomjs>.  (phantomjs -h)
 
-  phantomjs_arg => ['--frobnitz-the-foo=bar']
+  phantomjs_arg => ["--proxy=$ENV{HTTP_PROXY}"]
 
 =item B<launch_ghostdriver>
 
@@ -135,7 +136,11 @@ sub build_command_line {
         push @{ $options->{ phantomjs_arg }}, "--ignore-ssl-errors=yes";
     };
 
-    my @cmd=( "|-", $options->{ launch_exe }, @{ $options->{phantomjs_arg}}, $options->{ launch_ghostdir }, @{ $options->{ launch_arg } } );
+    my $program = ($^O =~ /mswin/i and $options->{ launch_exe } =~ /\s/)
+                  ? qq("$options->{ launch_exe }")
+                  : $options->{ launch_exe };
+
+    my @cmd=( "|-", $program, @{ $options->{phantomjs_arg}}, $options->{ launch_ghostdir }, @{ $options->{ launch_arg } } );
     if( $^O =~ /mswin/i ) {
         # Windows Perl doesn't support pipe-open with list
         shift @cmd; # remove pipe-open
@@ -168,12 +173,12 @@ sub new {
         $options{ frames }= 1;
     };
 
-    my @cmd= $class->build_command_line( \%options );
     unless ($options{pid}) {
+        my @cmd= $class->build_command_line( \%options );
     	$options{ kill_pid } = 1;
     	if( @cmd > 1 ) {
     	    # We can do a proper pipe-open
-	    my $mode = shift @cmd;
+            my $mode = shift @cmd;
             $options{ pid } = open $options{fh}, $mode, @cmd
                 or die "Couldn't launch [@cmd]: $! / $?";
         } else {
@@ -202,6 +207,15 @@ sub new {
     	$options{ driver } ||= Selenium::Remote::Driver->new(
     	    'port' => $options{ port },
     	    auto_close => 0,
+    	    error_handler => sub {
+    	        #warn ref$_[0];
+    	        #warn "<<@CARP_NOT>>";
+    	        #warn ((caller($_))[0,1,2])
+    	        #    for 1..4;
+    	        local @CARP_NOT = (@CARP_NOT, ref $_[0],'Try::Tiny');
+    	        # Reraise the error
+    	        croak $_[1]
+    	    },
     	);
         # (Monkey)patch Selenium::Remote::Driver
         $options{ driver }->commands->get_cmds->{get}->{no_content_success}= 0;
@@ -400,11 +414,17 @@ sub eval_in_page {
     # This feels weirdly backwards here, but oh well:
     local @Selenium::Remote::Driver::CARP_NOT
         = (@Selenium::Remote::Driver::CARP_NOT, (ref $self)); # we trust this
+    local @CARP_NOT
+        = (@CARP_NOT, 'Selenium::Remote::Driver', (ref $self)); # we trust this
     my $eval_in_sandbox = $self->driver->execute_script("return $str", @args);
     $self->post_process;
     return $eval_in_sandbox;
 };
-*eval = \&eval_in_page;
+
+{
+    no warnings 'once';
+    *eval = \&eval_in_page;
+}
 
 =head2 C<< $mech->eval_in_phantomjs $code, @args >>
 
@@ -446,10 +466,9 @@ JS
 sub DESTROY {
     #warn "Destroying " . ref $_[0];
     my $pid= delete $_[0]->{pid};
-    eval { my $dr= delete $_[0]->{ driver }; $dr->quit; undef $dr };
-    #if($dr) {
-    #    $dr->quit;
-    #};
+    eval { 
+        my $dr= delete $_[0]->{ driver }; $dr->quit; undef $dr;
+    };
     #warn "Killing $pid";
     kill 9 => $pid
         if $pid && $_[0]->{kill_pid};
@@ -496,7 +515,7 @@ JS
 
 =head2 C<< $mech->get( $url, %options ) >>
 
-  $mech->get( $url, ':content_file' => $tempfile );
+  $mech->get( $url  );
 
 Retrieves the URL C<URL>.
 
@@ -505,19 +524,7 @@ with L<WWW::Mechanize>. It seems that Selenium and thus L<Selenium::Remote::Driv
 have no concept of HTTP status code and thus no way of returning the
 HTTP status code.
 
-Recognized options:
-
-=over 4
-
-=item *
-
-C<< :content_file >> - filename to store the data in
-
-=item *
-
-C<< no_cache >> - if true, bypass the browser cache
-
-=back
+Note that PhantomJs does not support download of files.
 
 =cut
 
@@ -556,6 +563,7 @@ sub get {
     # We need to stringify $url so it can pass through JSON
     my $phantom_res= $self->driver->get( "$url" );
     $self->post_process;
+    
     $self->update_response( $phantom_res );
 };
 
@@ -770,7 +778,11 @@ Returns the current response as a L<HTTP::Response> object.
 =cut
 
 sub response { $_[0]->{response} };
-*res = \&response;
+
+{
+    no warnings 'once';
+    *res = \&response;
+}
 
 # Call croak or carp, depending on the C< autodie > setting
 sub signal_condition {
@@ -1032,7 +1044,10 @@ sub content_type {
     $ct
 };
 
-*ct = \&content_type;
+{
+    no warnings 'once';
+    *ct = \&content_type;
+}
 
 =head2 C<< $mech->is_html() >>
 
@@ -1139,8 +1154,10 @@ This takes the same options that C<< ->xpath >> does.
 This method is implemented via L<WWW::Mechanize::Plugin::Selector>.
 
 =cut
-
-*selector = \&WWW::Mechanize::Plugin::Selector::selector;
+{
+    no warnings 'once';
+    *selector = \&WWW::Mechanize::Plugin::Selector::selector;
+}
 
 =head2 C<< $mech->find_link_dom( %options ) >>
 
@@ -3019,6 +3036,12 @@ when searching through frames.
 
 =item *
 
+Implement downloads via
+
+L<https://perlmonks.org/?node_id=1151151>
+
+=item *
+
 Implement download progress
 
 =back
@@ -3027,9 +3050,52 @@ Implement download progress
 
 =over 4
 
+=back
+
+=head2 Install the C<PhantomJS> executable
+
+=over
+
 =item *
 
-Install the C<PhantomJS> executable
+Installing on Ubuntu
+
+Version: 1.9.8
+Platform: x86_64
+
+Install or update latest system software:
+
+C<< sudo apt-get update >>
+
+C<< sudo apt-get install build-essential chrpath libssl-dev libxft-dev >>
+
+Install the following packages needed by PhantomJS:
+
+C<< sudo apt-get install libfreetype6 libfreetype6-dev >>
+
+C<< sudo apt-get install libfontconfig1 libfontconfig1-dev >>
+
+Get PhantomJS from the L<website|http://phantomjs.org/>
+
+C<< cd ~ >>
+
+C<< export PHANTOM_JS="phantomjs-1.9.8-linux-x86_64" >>
+
+C<< wget https://bitbucket.org/ariya/phantomjs/downloads/$PHANTOM_JS.tar.bz2 >>
+
+C<< sudo tar xvjf $PHANTOM_JS.tar.bz2 >>
+
+Once downloaded move Phantomjs folder:
+
+C<< sudo mv $PHANTOM_JS /usr/local/share >>
+
+C<< sudo ln -sf /usr/local/share/$PHANTOM_JS/bin/phantomjs /usr/local/bin >>
+
+C<< sudo ln -sf /usr/local/share/$PHANTOM_JS/bin/phantomjs /usr/bin/phantomjs >>
+
+Test it has been installed on your system:
+
+C<< phantomjs --version >>
 
 =back
 
@@ -3062,12 +3128,12 @@ L<WWW::Mechanize::Firefox> - a similar module with a visible application
 =head1 REPOSITORY
 
 The public repository of this module is
-L<http://github.com/Corion/www-mechanize-phantomjs>.
+L<https://github.com/Corion/www-mechanize-phantomjs>.
 
 =head1 SUPPORT
 
 The public support forum of this module is
-L<http://perlmonks.org/>.
+L<https://perlmonks.org/>.
 
 =head1 TALKS
 
@@ -3087,7 +3153,7 @@ Max Maischein C<corion@cpan.org>
 
 =head1 COPYRIGHT (c)
 
-Copyright 2014 by Max Maischein C<corion@cpan.org>.
+Copyright 2014-2015 by Max Maischein C<corion@cpan.org>.
 
 =head1 LICENSE
 

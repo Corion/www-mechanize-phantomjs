@@ -1,4 +1,25 @@
 TO DO:
+    + Tested with
+        . PhantomJS 1.9.0
+        . PhantomJS 1.9.2
+        . PhantomJS 1.9.7
+        . PhantomJS 2.0.0
+
+0.12 20160416
+    + Ubuntu installation instructions (by Lisa Hare)
+    + Report JS errors from perspective of user
+    . more author tests (by Lisa Hare)
+    . Windows test improvements
+
+
+0.11 20141009
+    + Add confirm() handling (Patch by dk)
+    + Properly encode newlines in parameters (Patch by dk)
+    + Support checkboxes with submit_form (Patch by dk)
+
+0.10 20141001
+    + Fix broken pipe-open (Patch by dk)
+    . Move some URLs to https://
 
 0.09 20140929
     + Add new switches to control PhantomJS behaviour (suggested by K. Klein)

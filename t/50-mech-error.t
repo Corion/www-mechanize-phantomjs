@@ -33,7 +33,6 @@ my $server = Test::HTTP::LocalServer->spawn();
 t::helper::run_across_instances(\@instances, $instance_port, \&new_mech, sub {
     my ($browser_instance, $mech) = @_;
 
-
 #line 2 "foo"
     is eval { $mech->eval_in_page('bar'); 1 }, undef, "Invalid JS gives an error";
     my $err = $@;

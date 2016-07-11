@@ -6,6 +6,9 @@ use File::Glob qw(bsd_glob);
 use Config '%Config';
 use File::Spec;
 
+delete $ENV{HTTP_PROXY};
+delete $ENV{HTTPS_PROXY};
+
 sub browser_instances {
     my ($filter) = @_;
     $filter ||= qr/^/;
@@ -20,7 +23,7 @@ sub browser_instances {
     
     # add author tests with local versions
     my $spec = $ENV{TEST_WWW_MECHANIZE_PHANTOMJS_VERSIONS}
-             || 'phantomjs-versions/*/phantomjs*'; # sorry, likely a bad default
+             || 'phantomjs-versions/*/{*/,}phantomjs*'; # sorry, likely a bad default
     push @instances, sort {$a cmp $b} grep { -x } bsd_glob $spec;
     
     grep { ($_ ||'') =~ /$filter/ } @instances;
