@@ -471,7 +471,7 @@ sub DESTROY {
     };
     #warn "Killing $pid";
     kill 9 => $pid
-        if $pid;
+        if $pid && $_[0]->{kill_pid};
     %{ $_[0] }= (); # clean out all other held references
 }
 
@@ -1040,7 +1040,7 @@ sub content_type {
         my $h= $r->headers;
         $ct= $h->header('Content-Type');
     };
-    $ct =~ s/;.*$//;
+    $ct =~ s/;.*$// if defined $ct;
     $ct
 };
 
