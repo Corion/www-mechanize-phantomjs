@@ -190,7 +190,7 @@ visual state except reloading the page.
 
 ## `$mech->get( $url, %options )`
 
-    $mech->get( $url, ':content_file' => $tempfile );
+    $mech->get( $url  );
 
 Retrieves the URL `URL`.
 
@@ -199,10 +199,7 @@ with [WWW::Mechanize](https://metacpan.org/pod/WWW::Mechanize). It seems that Se
 have no concept of HTTP status code and thus no way of returning the
 HTTP status code.
 
-Recognized options:
-
-- `:content_file` - filename to store the data in
-- `no_cache` - if true, bypass the browser cache
+Note that PhantomJs does not support download of files.
 
 ## `$mech->get_local( $filename , %options )`
 

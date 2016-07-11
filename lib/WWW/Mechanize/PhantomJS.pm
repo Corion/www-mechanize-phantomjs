@@ -2654,7 +2654,7 @@ sub content_as_png {
 
     if( scalar keys %$rect ) {
 
-        $self->viewport_size( $ rect );
+        $self->eval_in_phantomjs( 'this.clipRect= arguments[0]', $rect );
     };
 
     return $self->render_content( format => 'png' );
@@ -2673,11 +2673,10 @@ sub viewport_size {
     my( $self, $new )= @_;
 
     $self->eval_in_phantomjs( <<'JS', $new );
-        var viewportSize= this.clipRect;
         if( arguments[0]) {
-            this.clipRect= arguments[0];
+            this.viewportSize= arguments[0];
         };
-        viewportSize
+        return this.viewportSize;
 JS
 };
 

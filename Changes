@@ -5,6 +5,9 @@ TO DO:
         . PhantomJS 1.9.7
         . PhantomJS 2.0.0
 
+0.13 201606xx
+    + Fix setting the viewport size, RT #100191 , patch by Maxwell Carey
+
 0.12 20160416
     + Ubuntu installation instructions (by Lisa Hare)
     + Report JS errors from perspective of user
