@@ -1736,25 +1736,6 @@ sub xpath {
 
 }
 
-=head2 find_xpath, find_css
-
-Same as xpath/selector but with more perlish semantics: if called in scalar
-context, returns first found item or undef, otherwise list of found items.
-
-=cut
-
-sub find_xpath
-{
-   my @r = shift->xpath(@_, all => 1);
-   wantarray ? @r : $r[0];
-}
-
-sub find_css
-{
-   my @r = shift->selector(@_, all => 1);
-   wantarray ? @r : $r[0];
-}
-
 =head2 C<< $mech->by_id( $id, %options ) >>
 
   my @text = $mech->by_id('_foo:bar');
