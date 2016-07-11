@@ -1040,7 +1040,7 @@ sub content_type {
         my $h= $r->headers;
         $ct= $h->header('Content-Type');
     };
-    $ct =~ s/;.*$//;
+    $ct =~ s/;.*$// if defined $ct;
     $ct
 };
 
