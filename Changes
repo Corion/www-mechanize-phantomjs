@@ -6,6 +6,10 @@ TO DO:
         . PhantomJS 2.0.0
         . PhantomJS 2.1.1
 
+0.14 20160924
+    . Documentation updates, more links to references
+    . Now also tested against PhantomJS 2.1.1 and Selenium::Remote::Driver 1.0
+
 0.13 20160712
     + Fix setting the viewport size, RT #100191 , patch by Maxwell Carey
     + Silence warnings, thanks to Dmitry Karasik
