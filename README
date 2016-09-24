@@ -13,6 +13,8 @@ SYNOPSIS
 
  WWW::Mechanize::PhantomJS->new %options
 
+      my $mech = WWW::Mechanize::PhantomJS->new();
+
     autodie
 
       Control whether HTTP errors are fatal.
@@ -61,6 +63,9 @@ SYNOPSIS
       Specify additional parameters to the Ghostdriver script.
 
         launch_arg => [ "--some-new-parameter=foo" ],
+
+      Some interesting parameters are:
+
         "--webdriver=$port",
         '--webdriver-logfile=/tmp/webdriver',
         '--webdriver-loglevel=DEBUG',
@@ -138,8 +143,8 @@ SYNOPSIS
  $mech->confirm( 'Really do this?' [ => 1 ])
 
     Records a confirmation (which is "1" or "ok" by default), to be used
-    whenever javascript fires a confirm dialog. If message is not found,
-    the answer is "cancel".
+    whenever javascript fires a confirm dialog. If the message is not
+    found, the answer is "cancel".
 
  $mech->eval_in_page( $str, @args )
 
@@ -1037,7 +1042,7 @@ INCOMPATIBILITIES WITH WWW::Mechanize
 
       * ->post
 
-      I have no use for it
+      Selenium does not support POST requests
 
 TODO
 
@@ -1143,7 +1148,7 @@ AUTHOR
 
 COPYRIGHT (c)
 
-    Copyright 2014-2015 by Max Maischein corion@cpan.org.
+    Copyright 2014-2016 by Max Maischein corion@cpan.org.
 
 LICENSE
 

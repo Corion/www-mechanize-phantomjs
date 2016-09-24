@@ -29,6 +29,8 @@ WWW::Mechanize::PhantomJS - automate the PhantomJS browser
 
 =head2 C<< WWW::Mechanize::PhantomJS->new %options >>
 
+  my $mech = WWW::Mechanize::PhantomJS->new();
+
 =over 4
 
 =item B<autodie>
@@ -79,6 +81,9 @@ to launch. The default is the file distributed with this module.
 Specify additional parameters to the Ghostdriver script.
 
   launch_arg => [ "--some-new-parameter=foo" ],
+
+Some interesting parameters are:
+
   "--webdriver=$port",
   '--webdriver-logfile=/tmp/webdriver',
   '--webdriver-loglevel=DEBUG',
@@ -377,7 +382,7 @@ JS
 =head2 C<< $mech->confirm( 'Really do this?' [ => 1 ]) >>
 
 Records a confirmation (which is "1" or "ok" by default), to be used
-whenever javascript fires a confirm dialog. If message is not found, 
+whenever javascript fires a confirm dialog. If the message is not found, 
 the answer is "cancel".
 
 =cut
@@ -3001,7 +3006,7 @@ I have no use for it
 
 C<< ->post >>
 
-I have no use for it
+Selenium does not support POST requests
 
 =back
 
@@ -3142,7 +3147,7 @@ Max Maischein C<corion@cpan.org>
 
 =head1 COPYRIGHT (c)
 
-Copyright 2014-2015 by Max Maischein C<corion@cpan.org>.
+Copyright 2014-2016 by Max Maischein C<corion@cpan.org>.
 
 =head1 LICENSE
 

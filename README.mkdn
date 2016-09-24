@@ -13,6 +13,8 @@ WWW::Mechanize::PhantomJS - automate the PhantomJS browser
 
 ## `WWW::Mechanize::PhantomJS->new %options`
 
+    my $mech = WWW::Mechanize::PhantomJS->new();
+
 - **autodie**
 
     Control whether HTTP errors are fatal.
@@ -61,6 +63,9 @@ WWW::Mechanize::PhantomJS - automate the PhantomJS browser
     Specify additional parameters to the Ghostdriver script.
 
         launch_arg => [ "--some-new-parameter=foo" ],
+
+    Some interesting parameters are:
+
         "--webdriver=$port",
         '--webdriver-logfile=/tmp/webdriver',
         '--webdriver-loglevel=DEBUG',
@@ -139,7 +144,7 @@ Clears all Javascript messages from the console
 ## `$mech->confirm( 'Really do this?' [ => 1 ])`
 
 Records a confirmation (which is "1" or "ok" by default), to be used
-whenever javascript fires a confirm dialog. If message is not found, 
+whenever javascript fires a confirm dialog. If the message is not found, 
 the answer is "cancel".
 
 ## `$mech->eval_in_page( $str, @args )`
@@ -1029,7 +1034,7 @@ they make little sense in the context of PhantomJS.
 
 - `->post`
 
-    I have no use for it
+    Selenium does not support POST requests
 
 # TODO
 
@@ -1131,7 +1136,7 @@ Max Maischein `corion@cpan.org`
 
 # COPYRIGHT (c)
 
-Copyright 2014-2015 by Max Maischein `corion@cpan.org`.
+Copyright 2014-2016 by Max Maischein `corion@cpan.org`.
 
 # LICENSE
 
