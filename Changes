@@ -4,6 +4,7 @@ TO DO:
         . PhantomJS 1.9.2
         . PhantomJS 1.9.7
         . PhantomJS 2.0.0
+        . PhantomJS 2.1.1
 
 0.13 20160712
     + Fix setting the viewport size, RT #100191 , patch by Maxwell Carey
