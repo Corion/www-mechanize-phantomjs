@@ -33,5 +33,5 @@ requires:
   WWW::Mechanize::Link: '0'
   perl: '5.006'
 resources:
-  repository: https://github.com/Corion/www-mechanize-phantomjs
-version: '0.12'
+  repository: https://github.com/Corion/www-mechanize-phantomjs.git
+version: '0.14'

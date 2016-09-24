@@ -32,6 +32,7 @@ my @tests = map { glob $_ } 't/*.t', 't/*/*.t';
 WriteMakefile1(
     MIN_PERL_VERSION => '5.006',
     META_MERGE => {
+        "meta-spec" => { version => 2 },
         resources => {
             repository => {
                 type => "git",

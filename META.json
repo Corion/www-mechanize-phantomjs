@@ -52,8 +52,10 @@
    "release_status" : "stable",
    "resources" : {
       "repository" : {
-         "url" : "https://github.com/Corion/www-mechanize-phantomjs"
+         "type" : "git",
+         "url" : "https://github.com/Corion/www-mechanize-phantomjs.git",
+         "web" : "https://github.com/Corion/www-mechanize-phantomjs"
       }
    },
-   "version" : "0.12"
+   "version" : "0.14"
 }
