@@ -33,7 +33,11 @@ WriteMakefile1(
     MIN_PERL_VERSION => '5.006',
     META_MERGE => {
         resources => {
-            repository => 'https://github.com/Corion/www-mechanize-phantomjs',
+            repository => {
+                type => "git",
+                url  => 'https://github.com/Corion/www-mechanize-phantomjs.git',
+                web  => 'https://github.com/Corion/www-mechanize-phantomjs'
+            },
         },
     },
     BUILD_REQUIRES => {
