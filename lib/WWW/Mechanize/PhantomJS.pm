@@ -3119,7 +3119,16 @@ L<https://perlmonks.org/>.
 
 I've given a talk about this module at Perl conferences:
 
-L<German Perl Workshop 2014, German|http://corion.net/talks/WWW-Mechanize-PhantomJS/www-mechanize-phantomjs.html>
+L<German Perl Workshop 2014, German|http://corion.net/talks/WWW-Mechanize-PhantomJS/www-mechanize-phantomjs.de.html>
+
+L<YAPC::Europe 2014, English|http://corion.net/talks/WWW-Mechanize-PhantomJS/www-mechanize-phantomjs.en.html>
+
+L<Talk on Youtube|https://www.youtube.com/watch?v=lH3Fhw6b5BI>
+
+=for html
+<iframe id="ytplayer" type="text/html" width="640" height="390"
+  src="https://www.youtube.com/watch?v=lH3Fhw6b5BI"
+  frameborder="0"/>
 
 =head1 BUG TRACKER
 

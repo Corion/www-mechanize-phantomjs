@@ -1106,7 +1106,18 @@ The public support forum of this module is
 
 I've given a talk about this module at Perl conferences:
 
-[German Perl Workshop 2014, German](http://corion.net/talks/WWW-Mechanize-PhantomJS/www-mechanize-phantomjs.html)
+[German Perl Workshop 2014, German](http://corion.net/talks/WWW-Mechanize-PhantomJS/www-mechanize-phantomjs.de.html)
+
+[YAPC::Europe 2014, English](http://corion.net/talks/WWW-Mechanize-PhantomJS/www-mechanize-phantomjs.en.html)
+
+[Talk on Youtube](https://www.youtube.com/watch?v=lH3Fhw6b5BI)
+
+<div>
+
+    <iframe id="ytplayer" type="text/html" width="640" height="390"
+      src="https://www.youtube.com/watch?v=lH3Fhw6b5BI"
+      frameborder="0"/>
+</div>
 
 # BUG TRACKER
 
