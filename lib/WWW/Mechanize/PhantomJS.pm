@@ -2017,7 +2017,13 @@ sub active_form {
 
 =head2 C<< $mech->dump_forms( [$fh] ) >>
 
-Prints a dump of the forms on the current page to $fh. If $fh is not specified or is undef, it dumps to STDOUT.
+  open my $fh, '>', 'form-log.txt'
+      or die "Couldn't open logfile 'form-log.txt': $!";
+  $mech->dump_forms( $fh );
+
+Prints a dump of the forms on the current page to
+the filehandle C<$fh>. If C<$fh> is not specified or is undef, it dumps
+to C<STDOUT>.
 
 =cut
 
