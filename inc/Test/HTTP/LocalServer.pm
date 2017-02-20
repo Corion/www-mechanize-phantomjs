@@ -177,7 +177,7 @@ sub get_log {
 };
 
 sub DESTROY {
-  $_[0]->stop if $_[0]->{_server_url};
+  $_[0]->kill if $_[0]->{_server_url};
   for my $file (@{$_[0]->{delete}}) {
     unlink $file or warn "Couldn't remove tempfile $file : $!\n";
   };
