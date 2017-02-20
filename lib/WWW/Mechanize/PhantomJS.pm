@@ -124,10 +124,10 @@ sub build_command_line {
     $options->{ launch_ghostdir } ||= $ghostdir_default;
     $options->{ launch_arg } ||= [];
     $options->{ phantomjs_arg } ||= [];
-    
+
     # config.js defaults config.port to 8910
     # this is the proper way to overwrite it (not sure wtf the PhantomJS parameter does above)
-    if ($options->{port}) { 
+    if ($options->{port}) {
         push @{ $options->{ launch_arg }}, "--port=$options->{ port }";
     }  # PhantomJS version 1.9.7
 
@@ -151,7 +151,7 @@ sub build_command_line {
         shift @cmd; # remove pipe-open
         @cmd= "| " . join " ", @cmd;
     };
-    
+
     @cmd
 };
 
@@ -229,7 +229,7 @@ sub new {
     # if PhantomJS started, but so slow or unresponsive that SRD cannot connect to it,
     # kill it manually to avoid waiting for it indefinitely
     if ( $@ ) {
-    	kill 9, delete $options{ pid } if $options{ kill_pid };
+        kill 9, delete $options{ pid } if $options{ kill_pid };
         die $@;
     }
 
@@ -382,7 +382,7 @@ JS
 =head2 C<< $mech->confirm( 'Really do this?' [ => 1 ]) >>
 
 Records a confirmation (which is "1" or "ok" by default), to be used
-whenever javascript fires a confirm dialog. If the message is not found, 
+whenever javascript fires a confirm dialog. If the message is not found,
 the answer is "cancel".
 
 =cut
@@ -471,7 +471,7 @@ JS
 sub DESTROY {
     #warn "Destroying " . ref $_[0];
     my $pid= delete $_[0]->{pid};
-    eval { 
+    eval {
         my $dr= delete $_[0]->{ driver }; $dr->quit; undef $dr;
     };
     #warn "Killing $pid";
@@ -568,7 +568,7 @@ sub get {
     # We need to stringify $url so it can pass through JSON
     my $phantom_res= $self->driver->get( "$url" );
     $self->post_process;
-    
+
     $self->update_response( $phantom_res );
 };
 
@@ -2041,7 +2041,7 @@ sub dump_forms {
             if($type= $f->get_attribute('type') || '' ) {
                 $type= " ($type)";
             };
-            
+
             print {$fh} "    [", $f->get_attribute('tagName'), $type, "] ", $f->get_attribute('name') || '<no name>', "\n";
         };
     }
@@ -2925,9 +2925,9 @@ sub report_js_errors
 {
     my ( $self, @errors ) = @_;
     @errors = map {
-    	$_->{message} . 
-	( @{$_->{trace}} ? " at $_->{trace}->[-1]->{file} line $_->{trace}->[-1]->{line}" : '') .
-	( @{$_->{trace}} && $_->{trace}->[-1]->{function} ? " in function $_->{trace}->[-1]->{function}" : '')
+        $_->{message} .
+    ( @{$_->{trace}} ? " at $_->{trace}->[-1]->{file} line $_->{trace}->[-1]->{line}" : '') .
+    ( @{$_->{trace}} && $_->{trace}->[-1]->{function} ? " in function $_->{trace}->[-1]->{function}" : '')
     } @errors;
     Carp::carp("javascript error: @errors") ;
 }
