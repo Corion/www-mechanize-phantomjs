@@ -158,18 +158,19 @@ sub build_command_line {
 sub new {
     my ($class, %options) = @_;
 
+    my $localhost = '127.0.0.1';
     unless ( defined $options{ port } ) {
         my $port = 8910;
         while (1) {
             $port++, next unless IO::Socket::INET->new(
-	        Listen    => 5,
-	        Proto     => 'tcp',
-	        Reuse     => 1,
-	        LocalPort => $port
-	    );
-	    last;
+                Listen    => 5,
+                Proto     => 'tcp',
+                Reuse     => 1,
+                LocalPort => $port
+            );
+            last;
         }
-    	$options{ port } = $port;
+        $options{ port } = $port;
     }
 
     if (! exists $options{ autodie }) { $options{ autodie } = 1 };
@@ -180,15 +181,15 @@ sub new {
 
     unless ($options{pid}) {
         my @cmd= $class->build_command_line( \%options );
-    	$options{ kill_pid } = 1;
-    	if( @cmd > 1 ) {
-    	    # We can do a proper pipe-open
+        $options{ kill_pid } = 1;
+        if( @cmd > 1 ) {
+            # We can do a proper pipe-open
             my $mode = shift @cmd;
             $options{ pid } = open $options{fh}, $mode, @cmd
                 or die "Couldn't launch [@cmd]: $! / $?";
         } else {
-    	    # We can't do a proper pipe-open, so do the single-arg open
-    	    # in the hope that everything has been set up properly
+            # We can't do a proper pipe-open, so do the single-arg open
+            # in the hope that everything has been set up properly
             $options{ pid } = open $options{fh}, $cmd[0]
                 or die "Couldn't launch [$cmd[0]]: $! / $?";
         };
@@ -198,30 +199,35 @@ sub new {
         while ( time < $wait ) {
             my $t = time;
             my $socket = IO::Socket::INET->new(
-                PeerHost => '127.0.0.1',
+                PeerHost => $localhost,
                 PeerPort => $options{ port },
                 Proto    => 'tcp',
             );
-            last if $socket;
+            if( $socket ) {
+                close $socket;
+                sleep 1;
+                last;
+            };
             sleep 1 if time - $t < 1;
         }
     }
 
     # Connect to it
     eval {
-    	$options{ driver } ||= Selenium::Remote::Driver->new(
-    	    'port' => $options{ port },
-    	    auto_close => 0,
-    	    error_handler => sub {
-    	        #warn ref$_[0];
-    	        #warn "<<@CARP_NOT>>";
-    	        #warn ((caller($_))[0,1,2])
-    	        #    for 1..4;
-    	        local @CARP_NOT = (@CARP_NOT, ref $_[0],'Try::Tiny');
-    	        # Reraise the error
-    	        croak $_[1]
-    	    },
-    	);
+        $options{ driver } ||= Selenium::Remote::Driver->new(
+            'port' => $options{ port },
+            remote_server_addr => $localhost,
+            auto_close => 0,
+            error_handler => sub {
+                #warn ref$_[0];
+                #warn "<<@CARP_NOT>>";
+                #warn ((caller($_))[0,1,2])
+                #    for 1..4;
+                local @CARP_NOT = (@CARP_NOT, ref $_[0],'Try::Tiny');
+                # Reraise the error
+                croak $_[1]
+            },
+        );
         # (Monkey)patch Selenium::Remote::Driver
         $options{ driver }->commands->get_cmds->{get}->{no_content_success}= 0;
     };
