@@ -480,7 +480,6 @@ sub DESTROY {
     eval {
         my $dr= delete $_[0]->{ driver }; $dr->quit; undef $dr;
     };
-    #warn "Killing $pid";
     kill 9 => $pid
         if $pid;
     %{ $_[0] }= (); # clean out all other held references
