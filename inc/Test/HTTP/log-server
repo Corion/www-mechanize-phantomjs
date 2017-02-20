@@ -147,7 +147,7 @@ SERVERLOOP: {
       };
       last if $quitserver;
     }
-    sleep 1;
+    #sleep 1;
     undef($c);
     last SERVERLOOP
       if $quitserver;
