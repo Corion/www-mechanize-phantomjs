@@ -229,7 +229,7 @@ sub new {
     # if PhantomJS started, but so slow or unresponsive that SRD cannot connect to it,
     # kill it manually to avoid waiting for it indefinitely
     if ( $@ ) {
-    	kill 9, $options{ pid } if $options{ kill_pid };
+    	kill 9, delete $options{ pid } if $options{ kill_pid };
         die $@;
     }
 
