@@ -2,11 +2,9 @@
 use strict;
 use Test::More;
 use WWW::Mechanize::PhantomJS;
-use lib 'inc', '../inc';
+use lib 'inc', '../inc', '.';
 use Test::HTTP::LocalServer;
 
-use lib 'inc', '../inc';
-use Test::HTTP::LocalServer;
 use t::helper;
 
 # What instances of PhantomJS will we try?

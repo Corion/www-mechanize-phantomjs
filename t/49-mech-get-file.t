@@ -7,8 +7,8 @@ use File::Basename;
 use File::Spec;
 
 use WWW::Mechanize::PhantomJS;
+use lib 'inc', '../inc', '.';
 use t::helper;
-use lib 'inc', '../inc';
 use Test::HTTP::LocalServer;
 
 # What instances of PhantomJS will we try?

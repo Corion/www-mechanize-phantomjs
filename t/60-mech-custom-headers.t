@@ -7,7 +7,7 @@ use File::Basename;
 use File::Spec;
 
 use WWW::Mechanize::PhantomJS;
-use lib 'inc', '../inc';
+use lib 'inc', '../inc', '.';
 use Test::HTTP::LocalServer;
 
 use t::helper;

@@ -3,9 +3,8 @@
 # file 50-form3.t
 use strict;
 
-
 use WWW::Mechanize::PhantomJS;
-use lib 'inc', '../inc';
+use lib 'inc', '../inc', '.';
 use Test::HTTP::LocalServer;
 use Test::More;
 

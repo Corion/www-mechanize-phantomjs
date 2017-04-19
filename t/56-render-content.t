@@ -2,7 +2,7 @@
 use strict;
 use Test::More;
 use WWW::Mechanize::PhantomJS;
-use lib 'inc', '../inc';
+use lib 'inc', '../inc', '.';
 use File::Temp qw(tempfile);
 use Test::HTTP::LocalServer;
 

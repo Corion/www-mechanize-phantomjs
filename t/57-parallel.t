@@ -5,7 +5,7 @@ use Cwd;
 use URI::file;
 use File::Basename;
 use File::Spec;
-use lib 'inc', '../inc';
+use lib 'inc', '../inc', '.';
 use WWW::Mechanize::PhantomJS;
 
 use t::helper;

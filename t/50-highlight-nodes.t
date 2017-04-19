@@ -3,10 +3,7 @@ use strict;
 use Test::More;
 use WWW::Mechanize::PhantomJS;
 use File::Temp 'tempfile';
-use lib 'inc', '../inc';
-use Test::HTTP::LocalServer;
-
-use lib 'inc', '../inc';
+use lib 'inc', '../inc', '.';
 use Test::HTTP::LocalServer;
 use t::helper;
 
