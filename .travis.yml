@@ -22,19 +22,20 @@ matrix:
     - perl: blead
     - perl: 5.6.2
 
-sudo: false
+sudo: required
 
 before_install:
   - sudo apt-get -qq update
   - sudo apt-get -y install phantomjs
-
-install:
   - git clone git://github.com/travis-perl/helpers ~/travis-perl-helpers
+  - export SPLIT_BUILD=0
   - source ~/travis-perl-helpers/init
   - build-perl
   - perl -V
   - build-dist
   - cd $BUILD_DIR
+
+install:
   - cpan-install ExtUtils::MakeMaker~6.68
   - cpan-install --deps
 
