@@ -5,7 +5,7 @@ use strict;
 use File::Find;
 use Test::More;
 BEGIN {
-    eval { use Capture::Tiny ":all"; };
+    eval { require Capture::Tiny; Capture::Tiny->import(":all"); };
     if ($@) {
         plan skip_all => "Capture::Tiny needed for testing";
         exit 0;
