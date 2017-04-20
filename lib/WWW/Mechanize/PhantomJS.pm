@@ -476,13 +476,21 @@ JS
 
 sub DESTROY {
     my $pid= delete $_[0]->{pid};
+
+    # Purge the filehandle - we should've opened that to /dev/null anyway:
+    if( my $child_out = $options{ fh }) {
+        local $/;
+        1 while <$child_out>;
+    };
+
     eval {
         my $dr= delete $_[0]->{ driver };
         $dr->quit;
         undef $dr;
     };
     if( $pid ) {
-        kill 9 => $pid;
+        warn "Killing $pid with SIGKILL";
+        warn kill 9 => $pid;
         wait; # wait, reap zombies
     };
     %{ $_[0] }= (); # clean out all other held references
