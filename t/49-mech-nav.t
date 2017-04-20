@@ -29,7 +29,7 @@ sub new_mech {
 };
 
 my $server = Test::HTTP::LocalServer->spawn(
-    debug => 1, # Yay Travis CI
+    # debug => 1, # Yay Travis CI
 );
 
 t::helper::run_across_instances(\@instances, $instance_port, \&new_mech, sub {
@@ -49,3 +49,5 @@ t::helper::run_across_instances(\@instances, $instance_port, \&new_mech, sub {
     $mech->forward;
     is $mech->uri, $last, 'We went forward';
 });
+
+done_testing();
