@@ -1,16 +1,24 @@
 package Test::HTTP::LocalServer;
-
-# start a fake webserver, fork, and connect to ourselves
 use strict;
+# this has to happen here because LWP::Simple creates a $ua
+# on load so any time after this is too late.
+BEGIN {
+  delete @ENV{qw(
+    HTTP_PROXY http_proxy CGI_HTTP_PROXY
+    HTTPS_PROXY https_proxy HTTP_PROXY_ALL http_proxy_all
+  )};
+}
 use LWP::Simple;
 use FindBin;
 use File::Spec;
 use File::Temp;
 use URI::URL qw();
 use Carp qw(carp croak);
+use Cwd;
+use File::Basename;
 
 use vars qw($VERSION);
-$VERSION = '0.55';
+$VERSION = '0.57';
 
 =head1 SYNOPSIS
 
@@ -71,10 +79,9 @@ sub spawn {
   my $self = { %args };
   bless $self,$class;
 
-  local $ENV{TEST_HTTP_VERBOSE} = 1
+  local $ENV{TEST_HTTP_VERBOSE};
+  $ENV{TEST_HTTP_VERBOSE}= 1
     if (delete $args{debug});
-
-  delete @ENV{qw(HTTP_PROXY http_proxy CGI_HTTP_PROXY)};
 
   $self->{delete} = [];
   if (my $html = delete $args{html}) {
@@ -104,7 +111,7 @@ sub spawn {
     shift @cmd; # remove pipe-open
     @cmd= join " ", map {qq{"$_"}} @cmd;
   };
-  
+
   my ($pid,$server);
   if( @cmd > 1 ) {
     # We can do a proper pipe-open
@@ -117,7 +124,6 @@ sub spawn {
     $pid = open $server, "$cmd[0] |"
       or croak "Couldn't spawn local server $server_file : $!";
   };
-
   my $url = <$server>;
   chomp $url;
   die "Couldn't read back local server url"
@@ -164,6 +170,7 @@ url.
 
 sub stop {
   get( $_[0]->{_server_url} . "quit_server" );
+  close $_[0]->{_fh};
   undef $_[0]->{_server_url}
 };
 
@@ -198,15 +205,27 @@ sub get_log {
 };
 
 sub DESTROY {
-  $_[0]->kill if $_[0]->{_server_url};
+  $_[0]->stop if $_[0]->{_server_url};
   for my $file (@{$_[0]->{delete}}) {
     unlink $file or warn "Couldn't remove tempfile $file : $!\n";
   };
+  if( $_[0]->{_pid } and CORE::kill( 0 => $_[0]->{_pid })) {
+      $_[0]->kill; # boom
+  };
 };
 
-use File::Spec;
-use Cwd;
-use File::Basename;
+=head2 C<< $server->local >>
+
+  my $url = $server->local('foo.html');
+  # file:///.../foo.html
+
+Returns an URL for a local file which will be read and served
+by the webserver. The filename must
+be a relative filename relative to the location of the current
+program.
+
+=cut
+
 sub local {
     my ($self, $htmlfile) = @_;
     require Cwd;
