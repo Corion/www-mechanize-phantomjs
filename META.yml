@@ -10,7 +10,7 @@ build_requires:
   File::Path: '0'
 configure_requires:
   ExtUtils::MakeMaker: '0'
-dynamic_config: 1
+dynamic_config: 0
 generated_by: 'ExtUtils::MakeMaker version 7.24, CPAN::Meta::Converter version 2.143240'
 license: perl
 meta-spec:
@@ -36,3 +36,4 @@ requires:
 resources:
   repository: https://github.com/Corion/www-mechanize-phantomjs.git
 version: '0.14'
+x_static_install: 1
