@@ -28,7 +28,9 @@ sub new_mech {
     );
 };
 
-my $server = Test::HTTP::LocalServer->spawn();
+my $server = Test::HTTP::LocalServer->spawn(
+    debug => 1, # Yay Travis CI
+);
 
 t::helper::run_across_instances(\@instances, $instance_port, \&new_mech, sub {
     my ($browser_instance, $mech) = @_;
