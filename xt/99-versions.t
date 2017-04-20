@@ -7,17 +7,18 @@ use warnings;
 use strict;
 use File::Find;
 use Test::More;
-BEGIN {
-    eval { use File::Slurp; };
-    if ($@) {
-        plan skip_all => "File::Slurp needed for testing";
-        exit 0;
-    };
-};
 
 plan 'no_plan';
 
 my $last_version = undef;
+
+sub read_file {
+    open my $fh, '<', $_[0]
+        or die "Couldn't read '$_[0]': $!";
+    binmode $fh;
+    local $/;
+    <$fh>
+}
 
 sub check {
       return if (! m{blib/script/}xms && ! m{\.pm \z}xms);
