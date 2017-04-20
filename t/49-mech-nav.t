@@ -49,9 +49,6 @@ t::helper::run_across_instances(\@instances, $instance_port, \&new_mech, sub {
     $mech->forward;
     is $mech->uri, $last, 'We went forward';
 });
-diag "run_across_instances done";
 
-# See which children are still alive
-system('ps aux');
-
-END { diag "$0 done, exiting" };
+undef $server;
+wait; # gobble up our child process status

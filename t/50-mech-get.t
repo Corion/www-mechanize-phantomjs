@@ -47,3 +47,6 @@ t::helper::run_across_instances(\@instances, $instance_port, \&new_mech, sub {
 
     ok $mech->success, 'We consider this response successful';
 });
+
+undef $server;
+wait; # gobble up our child process status

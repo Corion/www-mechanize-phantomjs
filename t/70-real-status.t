@@ -73,6 +73,6 @@ t::helper::run_across_instances(\@instances, $instance_port, \&new_mech, sub {
     #is $response->code, 500, 'We got the correct error number (500)';
 
     undef $mech;
-
-    #$MozRepl::RemoteObject::WARN_ON_LEAKS = 1;
 });
+
+wait; # gobble up our child process status

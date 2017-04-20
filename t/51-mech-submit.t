@@ -89,3 +89,6 @@ t::helper::run_across_instances(\@instances, $instance_port, \&new_mech, sub {
     ($triggered) = $mech->eval_in_page('myevents');
     ok $triggered, "We can submit an empty form";
 });
+
+undef $server;
+wait; # gobble up our child process status

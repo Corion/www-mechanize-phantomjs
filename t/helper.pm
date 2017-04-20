@@ -57,10 +57,7 @@ sub run_across_instances {
         undef $mech;
         sleep 2; # So the browser can shut down before we try to connect
         # to the new instance
-        
-        print "# Running next instance\n";
     };
-    print "# All instances done\n";
 };
 
 1;

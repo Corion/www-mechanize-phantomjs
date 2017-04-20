@@ -55,3 +55,6 @@ t::helper::run_across_instances(\@instances, $instance_port, \&new_mech, sub {
     like $mech->content, qr/queryValue1/, "We find our parameter 'query'";
     like $mech->content, qr/queryValue2/, "We find our parameter 'query2'";
 });
+
+undef $server;
+wait; # gobble up our child process status

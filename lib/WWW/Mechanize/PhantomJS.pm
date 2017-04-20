@@ -489,9 +489,7 @@ sub DESTROY {
         undef $dr;
     };
     if( $pid ) {
-        warn "Killing $pid with SIGKILL";
-        warn kill 'SIGKILL' => $pid;
-        warn "Waited for child ($pid)";
+        kill 'SIGKILL' => $pid;
     };
     %{ $_[0] }= (); # clean out all other held references
 }

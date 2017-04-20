@@ -109,13 +109,11 @@ sub spawn {
   if( @cmd > 1 ) {
     # We can do a proper pipe-open
     my $mode = shift @cmd;
-  warn "[[@cmd]]";
     $pid = open $server, $mode, @cmd
       or croak "Couldn't spawn local server $server_file : $!";
   } else {
             # We can't do a proper pipe-open, so do the single-arg open
             # in the hope that everything has been set up properly
-  warn "[[@cmd]]";
     $pid = open $server, "$cmd[0] |"
       or croak "Couldn't spawn local server $server_file : $!";
   };
@@ -177,20 +175,12 @@ cannot be retrieved then.
 =cut
 
 sub kill {
-  print "Killing $_[0]->{ _pid }\n";
-  system('ps aux');
-  print "---\n";
-  print CORE::kill( 'SIGKILL' => $_[0]->{ _pid } ), "\n";
-  print "Waiting for pid / reaping\n";
+  CORE::kill( 'SIGKILL' => $_[0]->{ _pid } );
   #print wait;
-  print "Closing child fh\n";
   my $fh = delete $_[0]->{_fh};
-  print close $fh;
+  close $fh;
   undef $_[0]->{_server_url};
   undef $_[0]->{_pid};
-  print "Killed localserver\n";
-  system('ps aux');
-  print "---\n";
 };
 
 =head2 C<< $server->get_log >>

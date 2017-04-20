@@ -59,3 +59,6 @@ t::helper::run_across_instances(\@instances, $instance_port, \&new_mech, sub {
        ok $f, "We found the form in a frame";
    };
 });
+
+undef $server;
+wait; # gobble up our child process status

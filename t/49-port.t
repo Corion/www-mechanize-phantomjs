@@ -36,3 +36,6 @@ t::helper::run_across_instances(\@instances, $instance_port, \&new_mech, sub {
     $mech->get($server->url);
     pass "We can connect to port $instance_port";
 });
+
+undef $server;
+wait; # gobble up our child process status

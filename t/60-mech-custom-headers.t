@@ -106,3 +106,6 @@ t::helper::run_across_instances(\@instances, $instance_port, \&new_mech, sub {
     unlike $headers, qr!^X-Another-Header: !m, "We can remove other headers ";
     # diag $mech->content;
 });
+
+undef $server;
+wait; # gobble up our child process status

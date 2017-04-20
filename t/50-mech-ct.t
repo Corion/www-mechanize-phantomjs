@@ -36,3 +36,6 @@ t::helper::run_across_instances(\@instances, $instance_port, \&new_mech, sub {
 
     is $mech->ct, 'text/html', "Content-type of text/html";
 });
+
+undef $server;
+wait; # gobble up our child process status
