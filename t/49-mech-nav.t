@@ -49,5 +49,6 @@ t::helper::run_across_instances(\@instances, $instance_port, \&new_mech, sub {
     $mech->forward;
     is $mech->uri, $last, 'We went forward';
 });
+diag "run_across_instances done";
 
-done_testing();
+END { print "# $0 done, exiting\n" };

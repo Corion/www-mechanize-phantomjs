@@ -475,16 +475,13 @@ JS
 }
 
 sub DESTROY {
-    warn "Destroying " . ref $_[0];
     my $pid= delete $_[0]->{pid};
     eval {
         my $dr= delete $_[0]->{ driver };
         $dr->quit;
-        warn "->quitted";
         undef $dr;
     };
     if( $pid ) {
-        warn "killing $pid, hard" . ref $_[0];
         kill 9 => $pid;
         wait; # wait, reap zombies
     };
