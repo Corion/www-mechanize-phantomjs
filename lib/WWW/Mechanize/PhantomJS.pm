@@ -478,7 +478,7 @@ sub DESTROY {
     my $pid= delete $_[0]->{pid};
 
     # Purge the filehandle - we should've opened that to /dev/null anyway:
-    if( my $child_out = $options{ fh }) {
+    if( my $child_out = $_[0]->{ fh }) {
         local $/;
         1 while <$child_out>;
     };
@@ -490,8 +490,8 @@ sub DESTROY {
     };
     if( $pid ) {
         warn "Killing $pid with SIGKILL";
-        warn kill 9 => $pid;
-        wait; # wait, reap zombies
+        warn kill 'SIGKILL' => $pid;
+        warn "Waited for child ($pid)";
     };
     %{ $_[0] }= (); # clean out all other held references
 }
