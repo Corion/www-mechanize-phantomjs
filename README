@@ -683,8 +683,12 @@ FORM METHODS
 
  $mech->dump_forms( [$fh] )
 
-    Prints a dump of the forms on the current page to $fh. If $fh is not
-    specified or is undef, it dumps to STDOUT.
+      open my $fh, '>', 'form-log.txt'
+          or die "Couldn't open logfile 'form-log.txt': $!";
+      $mech->dump_forms( $fh );
+
+    Prints a dump of the forms on the current page to the filehandle $fh.
+    If $fh is not specified or is undef, it dumps to STDOUT.
 
  $mech->form_name( $name [, %options] )
 

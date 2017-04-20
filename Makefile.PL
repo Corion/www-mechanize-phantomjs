@@ -64,6 +64,9 @@ WriteMakefile1(
                         'HTTP::Daemon' => 0, # just for testing
                         'LWP::Simple' => 0, # just for testing
                       }, # e.g., Module::Name => 1.1
+    TEST_REQUIRES => {
+        CGI => 0,
+    },
     ABSTRACT_FROM   => 'lib/WWW/Mechanize/PhantomJS.pm', # retrieve abstract from module
     AUTHOR          => 'Max Maischein <corion@cpan.org>',
     test            => { TESTS => join( ' ', @tests ) },
@@ -81,6 +84,11 @@ sub WriteMakefile1 {  #Written by Alexandr Ciornii, version 0.21. Added by eumm-
         #EUMM 6.5502 has problems with BUILD_REQUIRES
         $params{PREREQ_PM}={ %{$params{PREREQ_PM} || {}} , %{$params{BUILD_REQUIRES}} };
         delete $params{BUILD_REQUIRES};
+    }
+    if ($params{TEST_REQUIRES} and $eumm_version < 6.64) {
+        #EUMM 6.5502 has problems with BUILD_REQUIRES
+        $params{PREREQ_PM}={ %{$params{PREREQ_PM} || {}} , %{$params{TEST_REQUIRES}} };
+        delete $params{TEST_REQUIRES};
     }
     delete $params{CONFIGURE_REQUIRES} if $eumm_version < 6.52;
     delete $params{MIN_PERL_VERSION} if $eumm_version < 6.48;

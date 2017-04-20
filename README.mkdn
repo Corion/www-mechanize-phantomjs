@@ -144,7 +144,7 @@ Clears all Javascript messages from the console
 ## `$mech->confirm( 'Really do this?' [ => 1 ])`
 
 Records a confirmation (which is "1" or "ok" by default), to be used
-whenever javascript fires a confirm dialog. If the message is not found, 
+whenever javascript fires a confirm dialog. If the message is not found,
 the answer is "cancel".
 
 ## `$mech->eval_in_page( $str, @args )`
@@ -673,7 +673,13 @@ and on calls to `->submit()` and `->submit_with_fields`.
 
 ## `$mech->dump_forms( [$fh] )`
 
-Prints a dump of the forms on the current page to $fh. If $fh is not specified or is undef, it dumps to STDOUT.
+    open my $fh, '>', 'form-log.txt'
+        or die "Couldn't open logfile 'form-log.txt': $!";
+    $mech->dump_forms( $fh );
+
+Prints a dump of the forms on the current page to
+the filehandle `$fh`. If `$fh` is not specified or is undef, it dumps
+to `STDOUT`.
 
 ## `$mech->form_name( $name [, %options] )`
 
