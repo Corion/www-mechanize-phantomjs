@@ -486,7 +486,7 @@ sub DESTROY {
     if( $pid ) {
         warn "killing $pid, hard" . ref $_[0];
         kill 9 => $pid;
-        waitchld; # wait, reap zombies
+        wait; # wait, reap zombies
     };
     %{ $_[0] }= (); # clean out all other held references
 }
