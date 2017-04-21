@@ -10,8 +10,7 @@ use ExtUtils::MakeMaker qw(WriteMakefile);
 # the contents of the Makefile that is written.
 
 # I should maybe use something like Shipwright...
-regen_README('lib/WWW/Mechanize/PhantomJS.pm');
-regen_EXAMPLES();
+my $main_file = 'lib/WWW/Mechanize/PhantomJS.pm';
 
 my $source_dir= 'ghostdriver/src';
 if( -d $source_dir ) {
@@ -29,7 +28,7 @@ if( -d $source_dir ) {
 
 my @tests = map { glob $_ } 't/*.t', 't/*/*.t';
 
-WriteMakefile1(
+my %module = (
     MIN_PERL_VERSION => '5.006',
     META_MERGE => {
         "meta-spec" => { version => 2 },
@@ -73,6 +72,19 @@ WriteMakefile1(
     AUTHOR          => 'Max Maischein <corion@cpan.org>',
     test            => { TESTS => join( ' ', @tests ) },
 );
+
+# This is so that we can do
+#     require 'Makefile.PL'
+# and then call get_module_info
+
+sub get_module_info { %module }
+
+if( ! caller ) {
+    # I should maybe use something like Shipwright...
+    regen_README($main_file);
+    regen_EXAMPLES();
+    WriteMakefile1(get_module_info);
+};
 
 1;
 
