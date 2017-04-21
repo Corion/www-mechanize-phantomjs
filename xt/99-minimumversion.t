@@ -7,8 +7,6 @@ eval {
   Test::MinimumVersion::Fast->import;
 };
 
-my @files;
-
 if ($@) {
   plan skip_all => "Test::MinimumVersion::Fast required for testing minimum Perl version";
 }
