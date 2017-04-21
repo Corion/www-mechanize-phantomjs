@@ -1,3 +1,6 @@
+
+[![Build Status](https://travis-ci.org/Corion/www-mechanize-phantomjs.svg?branch=master)](https://github.com/Corion/www-mechanize-phantomjs)
+
 # NAME
 
 WWW::Mechanize::PhantomJS - automate the PhantomJS browser
