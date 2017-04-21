@@ -2,6 +2,7 @@
 .git/
 ^.lwpcookies
 ^.releaserc
+^.travis.yml
 ^blib/
 ^WWW-Mechanize-PhantomJS-.*$
 CVS/
