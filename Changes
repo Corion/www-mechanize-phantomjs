@@ -6,6 +6,14 @@ TO DO:
         . PhantomJS 2.0.0
         . PhantomJS 2.1.1
 
+0.15 20170421
+    . Now tested on Linux thanks to Travis CI
+    + Use list-open where available to avoid the shell
+      This was required to make the module tests work on Travis CI at all
+    . Specify CGI.pm as test prerequisite
+      This is needed to make the tests work on Perl 5.22+
+    . Modify tests so they work with . not being in @INC anymore
+
 0.14 20160924
     . Documentation updates, more links to references
     . Now also tested against PhantomJS 2.1.1 and Selenium::Remote::Driver 1.0
