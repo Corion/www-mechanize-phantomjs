@@ -48,7 +48,7 @@ sub filter {
     @_
 };
 
-t::helper::run_across_instances(\@instances, undef, \&new_mech, sub {
+t::helper::run_across_instances(\@instances, undef, \&new_mech, 25, sub {
     my ($browser_instance, $mech) = @_;
     isa_ok $mech, 'WWW::Mechanize::PhantomJS';
     can_ok $mech, 'js_errors','clear_js_errors';

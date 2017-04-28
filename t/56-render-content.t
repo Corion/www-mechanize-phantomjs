@@ -17,11 +17,13 @@ my @tests= (
     { format => 'jpg', like => qr/^......JFIF/, },
 );
 
+my $testcount = (1+@tests*2);
+
 if (my $err = t::helper::default_unavailable) {
     plan skip_all => "Couldn't connect to PhantomJS: $@";
     exit
 } else {
-    plan tests => (1+@tests*2)*@instances;
+    plan tests => $testcount * @instances;
 };
 
 sub new_mech {
@@ -39,7 +41,7 @@ END {
     }
 };
 
-t::helper::run_across_instances(\@instances, $instance_port, \&new_mech, sub {
+t::helper::run_across_instances(\@instances, $instance_port, \&new_mech, $testcount, sub {
     my ($browser_instance, $mech) = @_;
 
     isa_ok $mech, 'WWW::Mechanize::PhantomJS';

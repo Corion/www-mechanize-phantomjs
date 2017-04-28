@@ -26,7 +26,7 @@ sub new_mech {
     );
 };
 
-t::helper::run_across_instances(\@instances, undef, \&new_mech, sub {
+t::helper::run_across_instances(\@instances, undef, \&new_mech, 3, sub {
     my ($browser_instance, $mech) = @_;
 
     my $other_instance= WWW::Mechanize::PhantomJS->new(

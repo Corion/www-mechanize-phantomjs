@@ -28,7 +28,7 @@ sub new_mech {
     );
 };
 
-t::helper::run_across_instances(\@instances, $instance_port, \&new_mech, sub {
+t::helper::run_across_instances(\@instances, $instance_port, \&new_mech, 8, sub {
     my ($browser_instance, $mech) = @_;
 
     $mech->get_local('50-form3.html');

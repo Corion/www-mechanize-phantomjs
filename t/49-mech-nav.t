@@ -32,7 +32,7 @@ my $server = Test::HTTP::LocalServer->spawn(
     # debug => 1, # Yay Travis CI
 );
 
-t::helper::run_across_instances(\@instances, $instance_port, \&new_mech, sub {
+t::helper::run_across_instances(\@instances, $instance_port, \&new_mech, 3, sub {
     my ($browser_instance, $mech) = @_;
 
     $mech->get($server->url);

@@ -16,11 +16,12 @@ use t::helper;
 my $instance_port = 8910;
 my @instances = t::helper::browser_instances();
 
+my $test_count = 2*@tests;
 if (my $err = t::helper::default_unavailable) {
     plan skip_all => "Couldn't connect to PhantomJS: $@";
     exit
 } else {
-    plan tests => 2*@tests*@instances;
+    plan tests => $test_count*@instances;
 };
 
 sub new_mech {
@@ -30,7 +31,7 @@ sub new_mech {
     );
 };
 
-t::helper::run_across_instances(\@instances, $instance_port, \&new_mech, sub {
+t::helper::run_across_instances(\@instances, $instance_port, \&new_mech, $test_count, sub {
     my ($browser_instance, $mech) = @_;
 
     for (@tests) {

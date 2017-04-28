@@ -40,7 +40,7 @@ sub load_file_ok {
     is $mech->title, $htmlfile, "We loaded the right file (@options)";
 };
 
-t::helper::run_across_instances(\@instances, undef, \&new_mech, sub {
+t::helper::run_across_instances(\@instances, undef, \&new_mech, 7, sub {
     my ($browser_instance, $mech) = @_;
     isa_ok $mech, 'WWW::Mechanize::PhantomJS';
     can_ok $mech, 'js_alerts','clear_js_alerts';
