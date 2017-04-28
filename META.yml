@@ -35,5 +35,5 @@ requires:
   perl: '5.006'
 resources:
   repository: https://github.com/Corion/www-mechanize-phantomjs.git
-version: '0.15'
+version: '0.16'
 x_static_install: 1

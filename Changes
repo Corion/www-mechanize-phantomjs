@@ -6,7 +6,7 @@ TO DO:
         . PhantomJS 2.0.0
         . PhantomJS 2.1.1
 
-0.151 20170428
+0.16 20170428
     . Modify tests so they work even when the phantomjs executable exists but
       behaves unexpectedly. This is mostly for remote-debugging a CPAN Testers
       failure.
