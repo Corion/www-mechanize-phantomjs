@@ -17,7 +17,7 @@ my $module = 'WWW::Mechanize::PhantomJS';
 $file .= '.pm';
 require $file;
 
-my $version = sprintf '%0.2f', $module->VERSION;
+my $version = sprintf '%0.3f', $module->VERSION;
 diag "Checking for version " . $version;
 
 my $changes = do { local $/; open my $fh,'<','Changes' or die $!; <$fh> };

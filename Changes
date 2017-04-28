@@ -6,6 +6,12 @@ TO DO:
         . PhantomJS 2.0.0
         . PhantomJS 2.1.1
 
+0.151 20170428
+    . Modify tests so they work even when the phantomjs executable exists but
+      behaves unexpectedly. This is mostly for remote-debugging a CPAN Testers
+      failure.
+    . No module code changes, no need to upgrade
+
 0.15 20170421
     . Now tested on Linux thanks to Travis CI
     + Use list-open where available to avoid the shell
@@ -27,7 +33,6 @@ TO DO:
     + Report JS errors from perspective of user
     . more author tests (by Lisa Hare)
     . Windows test improvements
-
 
 0.11 20141009
     + Add confirm() handling (Patch by dk)

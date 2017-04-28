@@ -11,7 +11,7 @@ use WWW::Mechanize::Link;
 use IO::Socket::INET;
 
 use vars qw($VERSION %link_spec @CARP_NOT);
-$VERSION= '0.15';
+$VERSION= '0.151';
 @CARP_NOT=qw(Selenium::Remote::Driver);
 
 =head1 NAME
