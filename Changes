@@ -6,6 +6,11 @@ TO DO:
         . PhantomJS 2.0.0
         . PhantomJS 2.1.1
 
+0.18 20171212
+    + Fix ->find_link(), thanks to Oana Rusu
+	  Previously, the method would never find anything because it misunderstood
+	  how link objects work
+
 0.17 20170821
     . Update META.json and META.yml to list the prerequisites.
       This closes RT #122804
