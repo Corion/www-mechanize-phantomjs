@@ -1129,7 +1129,7 @@ sub make_link {
             carp "Unknown link-spec tag '$tag'";
             $url= '';
         } else {
-            $url = $node->{ $link_spec{ $tag }->{url} };
+            $url = $node->get_attribute( $link_spec{ $tag }->{url} );
         };
     };
 
@@ -1147,10 +1147,10 @@ sub make_link {
     if (defined $url) {
         my $res = WWW::Mechanize::Link->new({
             tag   => $tag,
-            name  => $node->{name},
+            name  => $node->get_attribute('name'),
             base  => $base,
             url   => $url,
-            text  => $node->{innerHTML},
+            text  => $node->get_text(),
             attrs => {},
         });
 
