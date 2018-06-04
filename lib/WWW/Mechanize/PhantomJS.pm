@@ -178,7 +178,6 @@ sub new {
     if( ! exists $options{ frames }) {
         $options{ frames }= 1;
     };
-
     unless ($options{pid}) {
         my @cmd= $class->build_command_line( \%options );
         $options{ kill_pid } = 1;

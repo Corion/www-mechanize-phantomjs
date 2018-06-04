@@ -30,6 +30,7 @@ t::helper::run_across_instances(\@instances, undef, \&new_mech, 3, sub {
     my ($browser_instance, $mech) = @_;
 
     my $other_instance= WWW::Mechanize::PhantomJS->new(
+        autodie => 1,
         launch_exe => $browser_instance,
     );
 
