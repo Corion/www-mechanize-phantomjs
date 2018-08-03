@@ -21,3 +21,5 @@ t/70-real-status-timeout.t
 ^MYMETA.*
 ^ghostdriver/
 ^phantomjs-versions/
+^progress.png
+^onResourceError.js

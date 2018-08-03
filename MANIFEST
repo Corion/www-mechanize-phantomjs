@@ -81,6 +81,7 @@ lib/WWW/Mechanize/PhantomJS/ghostdriver/third_party/webdriver-atoms/type.js
 lib/WWW/Mechanize/PhantomJS/ghostdriver/webdriver_atoms.js
 lib/WWW/Mechanize/PhantomJS/ghostdriver/webelementlocator.js
 lib/WWW/Mechanize/Plugin/Selector.pm
+LICENSE
 Makefile.PL
 MANIFEST			This list of files
 MANIFEST.SKIP

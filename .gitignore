@@ -16,3 +16,5 @@ ghostdriver/test
 ghostdriver/tools
 screen.pdf
 README
+progress.png
+onResourceError.js
