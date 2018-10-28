@@ -6,6 +6,11 @@ TO DO:
         . PhantomJS 2.0.0
         . PhantomJS 2.1.1
 
+0.20 2018-10-28
+    * Tightened (test) prerequisites
+    * Removed Test::HTTP::LocalServer from inc/
+    * No upgrade necessary
+
 0.19 2018-10-26
     * Re-release to include static prerequisites in META.*
       Addresses RT #122804, reported by Dan Book

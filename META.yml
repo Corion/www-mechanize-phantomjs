@@ -39,6 +39,6 @@ requires:
   perl: '5.006'
 resources:
   repository: https://github.com/Corion/www-mechanize-phantomjs.git
-version: '0.19'
+version: '0.20'
 x_serialization_backend: 'CPAN::Meta::YAML version 0.018'
 x_static_install: 1
