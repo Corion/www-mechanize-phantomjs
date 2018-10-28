@@ -6,10 +6,6 @@ examples/html-to-pdf.pl
 examples/javascript.pl
 examples/README
 examples/url-to-image.pl
-inc/IO/Catch.pm
-inc/Test/HTTP/cookie-server
-inc/Test/HTTP/LocalServer.pm
-inc/Test/HTTP/log-server
 lib/WWW/Mechanize/PhantomJS.pm
 lib/WWW/Mechanize/PhantomJS/DSL.pm
 lib/WWW/Mechanize/PhantomJS/Examples.pm
@@ -146,6 +142,7 @@ xt/99-examples.t
 xt/99-manifest.t
 xt/99-minimumversion.t
 xt/99-pod.t
+xt/99-test-prerequisites.t
 xt/99-todo.t
 xt/99-unix-text.t
 xt/99-versions.t

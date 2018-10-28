@@ -50,7 +50,11 @@
       },
       "test" : {
          "requires" : {
-            "CGI" : "0"
+            "File::Temp" : "0",
+            "Test::HTTP::LocalServer" : "0",
+            "Test::More" : "0",
+            "Time::HiRes" : "0",
+            "URI::file" : "0"
          }
       }
    },
