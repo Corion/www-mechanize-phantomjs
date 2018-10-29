@@ -11,7 +11,7 @@ use WWW::Mechanize::Link;
 use IO::Socket::INET;
 
 use vars qw($VERSION %link_spec @CARP_NOT);
-$VERSION= '0.20';
+$VERSION= '0.21';
 @CARP_NOT=qw(Selenium::Remote::Driver);
 
 =head1 NAME
@@ -246,6 +246,10 @@ sub new {
          page.alerts= [];
          page.confirms= {};
          page.onError= function(msg, trace) {
+             //_log.warn("Caught JS error", msg);
+             page.errors.push({ "message": msg, "trace": trace });
+         };
+         page.onConsoleMessage= function(msg, trace) {
              //_log.warn("Caught JS error", msg);
              page.errors.push({ "message": msg, "trace": trace });
          };
