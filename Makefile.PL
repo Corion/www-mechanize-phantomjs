@@ -40,7 +40,8 @@ my %module = (
             },
         },
         dynamic_config   => 0, # we promise to keep META.* up-to-date
-        x_static_install => 1, # we are pure Perl and don't do anything fancy
+        #x_static_install => 1, # we are pure Perl and don't do anything fancy
+        # This doesn't work, as we have non-.pm files to copy+install
     },
     BUILD_REQUIRES => {
         # Fairly long in core
