@@ -1,7 +1,7 @@
 /*
 This file is part of the GhostDriver by Ivan De Marino <http://ivandemarino.me>.
 
-Copyright (c) 2014, Ivan De Marino <http://ivandemarino.me>
+Copyright (c) 2012-2014, Ivan De Marino <http://ivandemarino.me>
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without modification,
@@ -40,6 +40,10 @@ ghostdriver.Session = function(desiredCapabilities) {
         LOG_TYPES           : {
             HAR                 : "har",
             BROWSER             : "browser"
+        },
+        PROXY_TYPES         : {
+            MANUAL              : "manual",
+            DIRECT              : "direct"
         }
     };
 
@@ -62,9 +66,11 @@ ghostdriver.Session = function(desiredCapabilities) {
         "rotatable" : false,                //< TODO Target is 1.1
         "acceptSslCerts" : false,           //< TODO
         "nativeEvents" : true,              //< TODO Only some commands are Native Events currently
+        "unhandledPromptBehavior" : null,
         "proxy" : {                         //< TODO Support more proxy options - PhantomJS does allow setting from command line
-            "proxyType" : "direct"
-        }
+            "proxyType" : _const.PROXY_TYPES.DIRECT
+        },
+        "webSecurityEnabled" : true
     },
     _negotiatedCapabilities = {
         "browserName"               : _defaultCapabilities.browserName,
@@ -86,33 +92,79 @@ ghostdriver.Session = function(desiredCapabilities) {
         "rotatable"                 : _defaultCapabilities.rotatable,
         "acceptSslCerts"            : _defaultCapabilities.acceptSslCerts,
         "nativeEvents"              : _defaultCapabilities.nativeEvents,
+        "unhandledPromptBehavior"   : typeof(desiredCapabilities.unhandledPromptBehavior) === "undefined" ?
+            _defaultCapabilities.unhandledPromptBehavior :
+            desiredCapabilities.unhandledPromptBehavior,
         "proxy"                     : typeof(desiredCapabilities.proxy) === "undefined" ?
             _defaultCapabilities.proxy :
-            desiredCapabilities.proxy
+            desiredCapabilities.proxy,
+        "webSecurityEnabled"        : typeof(desiredCapabilities.webSecurityEnabled) === "undefined" ?
+            _defaultCapabilities.webSecurityEnabled :
+            desiredCapabilities.webSecurityEnabled
     },
     // NOTE: This value is needed for Timeouts Upper-bound limit.
     // "setTimeout/setInterval" accept only 32 bit integers, even though Number are all Doubles (go figure!)
     // Interesting details here: {@link http://stackoverflow.com/a/4995054}.
     _max32bitInt = Math.pow(2, 31) -1,      //< Max 32bit Int
     _timeouts = {
-        "script"            : _max32bitInt,
-        "implicit"          : 200,          //< 200ms
-        "page load"         : _max32bitInt,
+        "script"            : 30000,
+        "implicit"          : 0,
+        "page load"         : 300000,
     },
     _windows = {},  //< NOTE: windows are "webpage" in Phantom-dialect
     _currentWindowHandle = null,
+    _cookieJar = require('cookiejar').create(),
     _id = require("./third_party/uuid.js").v1(),
     _inputs = ghostdriver.Inputs(),
     _capsPageSettingsPref = "phantomjs.page.settings.",
     _capsPageCustomHeadersPref = "phantomjs.page.customHeaders.",
+    _capsPageZoomFactor = "phantomjs.page.zoomFactor",
+    _capsPageBlacklistPref = "phantomjs.page.blacklist",
+    _capsPageWhitelistPref = "phantomjs.page.whitelist",
+    _capsUnhandledPromptBehavior = "unhandledPromptBehavior",
+    _capsLoggingPref = "loggingPrefs",
+    _capsBrowserLoggerPref = "OFF",
+    _capsHarLoggerPref = "OFF",
+    _pageBlacklistFilter,
+    _pageWhitelistFilter,
+    _capsPageSettingsProxyPref = "proxy",
     _pageSettings = {},
+    _pageZoomFactor = 1,
+    _additionalPageSettings = {
+        resourceTimeout: null,
+        userName: null,
+        password: null
+    },
     _pageCustomHeaders = {},
     _log = ghostdriver.logger.create("Session [" + _id + "]"),
-    k, settingKey, headerKey;
+    k, settingKey, headerKey, proxySettings;
 
-    // Searching for `phantomjs.settings.* and phantomjs.customHeaders.*` in the Desired Capabilities and merging with the Negotiated Capabilities
-    // Possible values for settings: @see https://github.com/ariya/phantomjs/wiki/API-Reference#wiki-webpage-settings.
-    // Possible values for customHeaders: @see https://github.com/ariya/phantomjs/wiki/API-Reference-WebPage#wiki-webpage-customHeaders.
+    var
+    /**
+     * Parses proxy JSON object and return proxy settings for phantom
+     *
+     * @param proxyCapability proxy JSON Object: @see https://code.google.com/p/selenium/wiki/DesiredCapabilities
+     */
+    _getProxySettingsFromCapabilities = function(proxyCapability) {
+        var proxySettings = {};
+        if (proxyCapability["proxyType"].toLowerCase() == _const.PROXY_TYPES.MANUAL) {      //< TODO: support other options
+            if (proxyCapability["httpProxy"] !== "null") {                                  //< TODO: support other proxy types
+                var urlParts = proxyCapability["httpProxy"].split(':');
+                proxySettings["ip"] = urlParts[0];
+                proxySettings["port"] = urlParts[1];
+                proxySettings["proxyType"] = "http";
+                proxySettings["user"] = "";
+                proxySettings["password"] = "";
+
+                return proxySettings;
+            }
+        }
+        return proxySettings;
+    };
+
+    // Searching for `phantomjs.settings.* and phantomjs.customHeaders.* phantomjs.page.zoomFactor` in the Desired Capabilities and merging with the Negotiated Capabilities
+    // Possible values for settings: @see http://phantomjs.org/api/webpage/property/settings.html.
+    // Possible values for customHeaders: @see http://phantomjs.org/api/webpage/property/custom-headers.html.
     for (k in desiredCapabilities) {
         if (k.indexOf(_capsPageSettingsPref) === 0) {
             settingKey = k.substring(_capsPageSettingsPref.length);
@@ -126,6 +178,53 @@ ghostdriver.Session = function(desiredCapabilities) {
             if (headerKey.length > 0) {
                 _negotiatedCapabilities[k] = desiredCapabilities[k];
                 _pageCustomHeaders[headerKey] = desiredCapabilities[k];
+            }
+        }
+        if (k.indexOf(_capsPageZoomFactor) === 0){
+            _negotiatedCapabilities[k] = desiredCapabilities[k];
+            _pageZoomFactor = desiredCapabilities[k];
+        }
+        if (k.indexOf(_capsPageBlacklistPref) === 0) {
+            const pageBlacklist = [];
+            const pageBlacklistLength = desiredCapabilities[k].length;
+            for(var i = 0; i < pageBlacklistLength; i++) {
+                pageBlacklist.push(new RegExp(desiredCapabilities[k][i]));
+            }
+            _pageBlacklistFilter = function(url, net) {
+                for(var i = 0; i < pageBlacklistLength; i++) {
+                    if(url.search(pageBlacklist[i]) !== -1) {
+                        net.abort();
+                        _log.debug("blacklist abort " + url);
+                    }
+                }
+            }
+        }
+        if (k.indexOf(_capsPageWhitelistPref) === 0) {
+            const pageWhitelist = [];
+            const pageWhitelistLength = desiredCapabilities[k].length;
+            for(var i = 0; i < pageWhitelistLength; i++) {
+                pageWhitelist.push(new RegExp(desiredCapabilities[k][i]));
+            }
+            _pageWhitelistFilter = function(url, net) {
+                for(var i = 0; i < pageWhitelistLength; i++) {
+                    if(url.search(pageWhitelist[i]) !== -1) {
+                        return;
+                    }
+                }
+                net.abort();
+                _log.debug("whitelist abort " + url);
+            }
+        }
+        if (k.indexOf(_capsPageSettingsProxyPref) === 0) {
+            proxySettings = _getProxySettingsFromCapabilities(desiredCapabilities[k]);
+            phantom.setProxy(proxySettings["ip"], proxySettings["port"], proxySettings["proxyType"], proxySettings["user"], proxySettings["password"]);
+        }
+        if (k.indexOf(_capsLoggingPref) === 0) {
+            if (desiredCapabilities[k][_const.LOG_TYPES.BROWSER]) {
+                _capsBrowserLoggerPref = desiredCapabilities[k][_const.LOG_TYPES.BROWSER] || _capsBrowserLoggerPref;
+            }
+            if (desiredCapabilities[k][_const.LOG_TYPES.HAR]) {
+                _capsHarLoggerPref = desiredCapabilities[k][_const.LOG_TYPES.HAR] || _capsHarLoggerPref;
             }
         }
     }
@@ -154,13 +253,7 @@ ghostdriver.Session = function(desiredCapabilities) {
             execTypeOpt = "apply";
         }
 
-        // Register Callbacks to grab any async event we are interested in
-        this.setOneShotCallback("onLoadFinished", function (status) {
-            _log.debug("_execFuncAndWaitForLoadDecorator", "onLoadFinished: " + status);
-
-            onLoadFinishedArgs = Array.prototype.slice.call(arguments);
-        });
-
+        thisPage._onLoadFinishedLatch = false;
         // Execute "code"
         if (execTypeOpt === "eval") {
             // Remove arguments used by this function before providing them to the target code.
@@ -185,10 +278,12 @@ ghostdriver.Session = function(desiredCapabilities) {
                 if (!_isLoading()) {               //< page finished loading
                     _log.debug("_execFuncAndWaitForLoadDecorator", "Page Loading in Session: false");
 
-                    if (onLoadFinishedArgs !== null) {
+                    if (!thisPage && thisPage._onLoadFinishedLatch) {
+                        _log.debug("_execFuncAndWaitForLoadDecorator", "Handle Load Finish Event");
                         // Report the result of the "Load Finished" event
-                        onLoadFunc.apply(thisPage, onLoadFinishedArgs);
+                        onLoadFunc.apply(thisPage, Array.prototype.slice.call(arguments));
                     } else {
+                        _log.debug("_execFuncAndWaitForLoadDecorator", "No Load Finish Event Detected");
                         // No page load was caused: just report "success"
                         onLoadFunc.call(thisPage, "success");
                     }
@@ -280,12 +375,47 @@ ghostdriver.Session = function(desiredCapabilities) {
         this[oneShotCallbackName].push(handlerFunc);
     },
 
+    _decoratePromptBehavior = function(newPage) {
+        var _unhandledPromptBehavior = _negotiatedCapabilities["unhandledPromptBehavior"],
+            confirmValue;
+
+        if (_unhandledPromptBehavior !== "accept" && _unhandledPromptBehavior !== "dismiss") {
+            return;
+        }
+
+        _log.info("_decoratePromptBehavior");
+
+        newPage.onAlert = function(msg) {
+            _log.debug("ALERT: " + msg);
+        }
+
+        newPage.onPrompt = function(msg, val) {
+            _log.debug("PROMPT: " + msg);
+            return val;
+        }
+
+        if (_unhandledPromptBehavior === "accept") {
+            confirmValue = true;
+        } else {
+            confirmValue = false;
+        }
+
+        newPage.onConfirm = function(msg) {
+            _log.debug("CONFIRM: " + msg);
+            return confirmValue;
+        }
+    },
+
     // Add any new page to the "_windows" container of this session
     _addNewPage = function(newPage) {
         _log.debug("_addNewPage");
 
-        _decorateNewWindow(newPage);                //< decorate the new page
-        _windows[newPage.windowHandle] = newPage;   //< store the page/window
+        // decorate the new Window/Page
+        newPage = _decorateNewWindow(newPage);
+        // set session-specific CookieJar
+        newPage.cookieJar = _cookieJar;
+        // store the Window/Page by WindowHandle
+        _windows[newPage.windowHandle] = newPage;
     },
 
     // Delete any closing page from the "_windows" container of this session
@@ -309,8 +439,6 @@ ghostdriver.Session = function(desiredCapabilities) {
         page.windowHandle = require("./third_party/uuid.js").v1();
 
         // 2. Initialize the One-Shot Callbacks
-        page["onLoadStarted"] = _oneShotCallbackFactory(page, "onLoadStarted");
-        page["onLoadFinished"] = _oneShotCallbackFactory(page, "onLoadFinished");
         page["onUrlChanged"] = _oneShotCallbackFactory(page, "onUrlChanged");
         page["onFilePicker"] = _oneShotCallbackFactory(page, "onFilePicker");
         page["onCallback"] = _oneShotCallbackFactory(page, "onCallback");
@@ -329,15 +457,24 @@ ghostdriver.Session = function(desiredCapabilities) {
         // 6. Applying Page settings received via capabilities
         for (k in _pageSettings) {
             // Apply setting only if really supported by PhantomJS
-            if (page.settings.hasOwnProperty(k)) {
+            if (page.settings.hasOwnProperty(k) || _additionalPageSettings.hasOwnProperty(k)) {
                 page.settings[k] = _pageSettings[k];
             }
         }
 
         // 7. Applying Page custom headers received via capabilities
+        // fix custom headers per ariya/phantomjs#13621 and detro/ghostdriver#489
+        if ("Accept-Encoding" in _pageCustomHeaders) {
+            _log.warn("Custom header \"Accept-Encoding\" is not supported.  see ariya/phantomjs#13621");
+            delete _pageCustomHeaders["Accept-Encoding"]
+        }
         page.customHeaders = _pageCustomHeaders;
 
-        // 8. Log Page internal errors
+        // 8. Applying Page zoomFactor
+        page.zoomFactor = _pageZoomFactor;
+
+        // 9. Log Page internal errors
+        page.browserLog = ghostdriver.webdriver_logger.create(_capsBrowserLoggerPref);
         page.onError = function(errorMsg, errorStack) {
             var stack = '';
 
@@ -357,61 +494,78 @@ ghostdriver.Session = function(desiredCapabilities) {
             page.browserLog.push(_createLogEntry("WARNING", errorMsg + "\n" + stack));
         };
 
-        // 9. Log Page console messages
-        page.browserLog = [];
+        // 10. Log Page console messages
         page.onConsoleMessage = function(msg, lineNum, sourceId) {
             // Log as debug
-            _log.debug("page.onConsoleMessage", msg);
-
             // Register as part of the "browser" log
             page.browserLog.push(_createLogEntry("INFO", msg + " (" + sourceId + ":" + lineNum + ")"));
         };
 
-        // 10. Log Page network activity
-        page.resources = [];
+        // 11. Log Page network activity
+        page.resources = ghostdriver.webdriver_logger.create(_capsHarLoggerPref);
         page.startTime = null;
         page.endTime = null;
-        page.setOneShotCallback("onLoadStarted", function() {
+
+        // register onLoad callbacks to detect page load
+        page._onLoadLatch = false;
+        page._onLoadFinishedLatch = false;
+        page.onLoadStarted = function() {
+            page._onLoadLatch = true;
             page.startTime = new Date();
-        });
-        page.setOneShotCallback("onLoadFinished", function() {
+            _log.debug("page.onLoadStarted");
+        };
+        page.onLoadFinished = function() {
+            page._onLoadLatch = false;
+            page._onLoadFinishedLatch = true;
             page.endTime = new Date();
-        });
-        page.onResourceRequested = function (req) {
+            _log.debug("page.onLoadFinished");
+        };
+
+        page.onResourceRequested = function (req, net) {
+            if(_pageWhitelistFilter) { _pageWhitelistFilter(req.url, net); }
+            if(_pageBlacklistFilter) { _pageBlacklistFilter(req.url, net); }
+
             _log.debug("page.onResourceRequested", JSON.stringify(req));
 
             // Register HTTP Request
-            page.resources[req.id] = {
-                request: req,
-                startReply: null,
-                endReply: null,
-                error: null
-            };
+            page.resources.push({
+                id: req.id,
+                request: req
+            });
         };
         page.onResourceReceived = function (res) {
             _log.debug("page.onResourceReceived", JSON.stringify(res));
 
             // Register HTTP Response
-            page.resources[res.id] || (page.resources[res.id] = {});
             if (res.stage === 'start') {
-                page.resources[res.id].startReply = res;
+                page.resources.push({
+                    id: res.id,
+                    startReply: res
+                });
             } else if (res.stage === 'end') {
-                page.resources[res.id].endReply = res;
+                page.resources.push({
+                    id: res.id,
+                    endReply: res
+                });
             }
         };
         page.onResourceError = function(resError) {
             _log.debug("page.onResourceError", JSON.stringify(resError));
 
             // Register HTTP Error
-            page.resources[resError.id] || (page.resources[resError.id] = {});
-            page.resources[resError.id].error = resError;
+            page.resources.push({
+                id: resError.id,
+                error: resError
+            });
         };
         page.onResourceTimeout = function(req) {
             _log.debug("page.onResourceTimeout", JSON.stringify(req));
 
             // Register HTTP Timeout
-            page.resources[req.id] || (page.resources[req.id] = {});
-            page.resources[req.id].error = req;
+            page.resources.push({
+                id: req.id,
+                error: req
+            });
         };
         page.onNavigationRequested = function(url, type, willNavigate, main) {
             // Clear page log before page loading
@@ -420,8 +574,19 @@ ghostdriver.Session = function(desiredCapabilities) {
             }
         };
 
+        _decoratePromptBehavior(page);
+
+        // NOTE: The most common desktop screen resolution used online is currently: 1366x768
+        // See http://gs.statcounter.com/#resolution-ww-monthly-201307-201312.
+        // Jan 2017
+        page.viewportSize = {
+            width   : 1366,
+            height  : 768
+        };
+
         _log.info("page.settings", JSON.stringify(page.settings));
         _log.info("page.customHeaders: ", JSON.stringify(page.customHeaders));
+        _log.info("page.zoomFactor: ", JSON.stringify(page.zoomFactor));
 
         return page;
     },
@@ -439,15 +604,15 @@ ghostdriver.Session = function(desiredCapabilities) {
      * @returns "true" if at least 1 window is loading.
      */
     _isLoading = function() {
-        var wHandle;
+        var wHandle, _window;
 
         for (wHandle in _windows) {
-            if (_windows[wHandle].loading) {
+            _window = _windows[wHandle];
+            if (_window._onLoadLatch || (_window.loadingProgress > 0 && _window.loadingProgress < 100)) {
                 return true;
             }
         }
 
-        // If we arrived here, means that no window is loading
         return false;
     },
 
@@ -458,8 +623,8 @@ ghostdriver.Session = function(desiredCapabilities) {
      * @private
      */
     _clearPageLog = function (page) {
-        page.resources = [];
-        page.browserLog = [];
+        page.resources.log = [];
+        page.browserLog.log = [];
     },
 
     _getWindow = function(handleOrName) {
@@ -487,9 +652,15 @@ ghostdriver.Session = function(desiredCapabilities) {
 
         // Ensure a Current Window is available, if it's found to be `null`
         if (_currentWindowHandle === null) {
-            // First call to get the current window: need to create one
-            page = _decorateNewWindow(require("webpage").create());
+            // Create the first Window/Page
+            page = require("webpage").create();
+            // Decorate it with listeners and helpers
+            page = _decorateNewWindow(page);
+            // set session-specific CookieJar
+            page.cookieJar = _cookieJar;
+            // Make the new Window, the Current Window
             _currentWindowHandle = page.windowHandle;
+            // Store by WindowHandle
             _windows[_currentWindowHandle] = page;
         }
     },
@@ -616,25 +787,56 @@ ghostdriver.Session = function(desiredCapabilities) {
         for (k in _windows) {
             _closeWindow(k);
         }
+
+        // Release CookieJar resources
+        _cookieJar.close();
     },
 
     _getLog = function (type) {
-        var har = require('./third_party/har.js'),
-            page, tmp;
+        var har, i, entry, attrName,
+            page, tmp, tmpResMap;
 
         // Return "HAR" as Log Type "har"
         if (type === _const.LOG_TYPES.HAR) {
+            har = require('./third_party/har.js');
             page = _getCurrentWindow();
+
+            tmpResMap = {};
+            for (i = 0; i < page.resources.log.length; i++) {
+                entry = page.resources.log[i];
+                if (!tmpResMap[entry.id]) {
+                    tmpResMap[entry.id] = {
+                        id: entry.id,
+                        request: null,
+                        startReply: null,
+                        endReply: null,
+                        error: null
+                    }
+                }
+                for (attrName in entry) {
+                    tmpResMap[entry.id][attrName] = entry[attrName];
+                }
+            }
+            page.resources.log = [];
+            tmp = Object.keys(tmpResMap).sort();
+            for (i in tmp) {
+                page.resources.push(tmpResMap[tmp[i]]);
+            }
+
             tmp = [];
             tmp.push(_createLogEntry(
                 "INFO",
-                JSON.stringify(har.createHar(page, page.resources))));
+                JSON.stringify(har.createHar(page, page.resources.log))));
+            page.resources.log = [];
             return tmp;
         }
 
         // Return Browser Console Log
         if (type === _const.LOG_TYPES.BROWSER) {
-            return _getCurrentWindow().browserLog;
+            page = _getCurrentWindow();
+            tmp = page.browserLog.log;
+            page.browserLog.log = [];
+            return tmp;
         }
 
         // Return empty Log
@@ -649,6 +851,26 @@ ghostdriver.Session = function(desiredCapabilities) {
         }
 
         return logTypes;
+    },
+
+    _getFrameOffset = function(page) {
+        return page.evaluate(function() {
+            var win = window,
+                offset = {top: 0, left: 0},
+                style,
+                rect;
+
+            while(win.frameElement) {
+                rect = win.frameElement.getClientRects()[0];
+                style = win.getComputedStyle(win.frameElement);
+                win = win.parent;
+
+                offset.top += rect.top + parseInt(style.getPropertyValue('padding-top'), 10);
+                offset.left += rect.left + parseInt(style.getPropertyValue('padding-left'), 10);
+            }
+
+            return offset;
+        });
     };
 
     // Initialize the Session.
@@ -683,7 +905,7 @@ ghostdriver.Session = function(desiredCapabilities) {
         timeoutNames : _const.TIMEOUT_NAMES,
         isLoading : _isLoading,
         getLog: _getLog,
-        getLogTypes: _getLogTypes
+        getLogTypes: _getLogTypes,
+        getFrameOffset: _getFrameOffset
     };
 };
-

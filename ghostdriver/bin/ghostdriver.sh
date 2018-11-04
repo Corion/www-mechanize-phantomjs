@@ -1,7 +1,9 @@
-/*
+#!/usr/bin/env bash
+
+<<License
 This file is part of the GhostDriver by Ivan De Marino <http://ivandemarino.me>.
 
-Copyright (c) 2012-2014, Ivan De Marino <http://ivandemarino.me>
+Copyright (c) 2016, Jason Gowan
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without modification,
@@ -23,42 +25,51 @@ LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
 ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-*/
+License
 
-var ghostdriver = ghostdriver || {};
+if [ -z ${PHANTOMJS_GHOSTDRIVER_PATH+x} ]; then
+  echo ERROR: PHANTOMJS_GHOSTDRIVER_PATH must be set to src/main.js
+  exit 1;
+fi
 
-ghostdriver.StatusReqHand = function() {
-    // private:
-    const
-    _statusObj = {
-        "build" : {
-            "version"   : ghostdriver.version
-        },
-        "os" : {
-            "name"      : ghostdriver.system.os.name,
-            "version"   : ghostdriver.system.os.version,
-            "arch"      : ghostdriver.system.os.architecture
-        }
-    };
+phantomjs_ghostdriver_path=$PHANTOMJS_GHOSTDRIVER_PATH
+phantomjs_path=${PHANTOMJS_PATH:-phantomjs}
+ip='127.0.0.1'
+port='8910'
 
-    var
-    _protoParent = ghostdriver.StatusReqHand.prototype,
+parse_url() {
+  arg=$1
+  url_regex="([0-9\.]+):([0-9]+)"
+  port_regex="([0-9]+)"
 
-    _handle = function(req, res) {
-        _protoParent.handle.call(this, req, res);
+  if [[ $arg =~ $url_regex ]]; then
+    ip=${BASH_REMATCH[1]}
+    port=${BASH_REMATCH[2]}
+  elif [[ $arg =~ $port_regex ]]; then
+    port=${BASH_REMATCH[1]}
+  fi
+}
 
-        if (req.method === "GET" && req.urlParsed.file === "status") {
-            res.success(null, _statusObj);
-            return;
-        }
+# transform phantomjs options to ghostdriver options
+for arg in "$@"; do
+  shift
+  case "$arg" in
+    --webdriver-selenium-grid-hub*) set -- "$@"  "${arg/webdriver-selenium-grid-hub/hub}";;
+    --webdriver-loglevel*) set -- "$@"   "${arg/webdriver-loglevel/logLevel}";;
+    --webdriver-logfile*) set -- "$@"    "${arg/webdriver-logfile/logFile}";;
+    --webdriver*)
+      parse_url $arg;;
+    --wd*)
+      parse_url $arg;;
+    -w*)
+      parse_url $arg;;
+    --version)
+      exec $phantomjs_path --version;;
+    *)        set -- "$@" "$arg"
+  esac
+done
 
-        throw _protoParent.errors.createInvalidReqInvalidCommandMethodEH(req);
-    };
+set -- "$@" "--ip=$ip";
+set -- "$@" "--port=$port";
 
-    // public:
-    return {
-        handle : _handle
-    };
-};
-// prototype inheritance:
-ghostdriver.StatusReqHand.prototype = new ghostdriver.RequestHandler();
+exec $phantomjs_path $phantomjs_ghostdriver_path $@

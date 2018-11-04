@@ -1,7 +1,9 @@
+[![Release](https://jitpack.io/v/detro/ghostdriver.svg)](https://jitpack.io/#detro/ghostdriver)
+
 # Ghost Driver
 
 Ghost Driver is a pure JavaScript implementation of the
-[WebDriver Wire Protocol](http://code.google.com/p/selenium/wiki/JsonWireProtocol)
+[WebDriver Wire Protocol](https://github.com/SeleniumHQ/selenium/wiki/JsonWireProtocol)
 for [PhantomJS](http://phantomjs.org/).
 It's a Remote WebDriver that uses PhantomJS as back-end.
 
@@ -10,8 +12,8 @@ by this Repository.**
 
 * Current _GhostDriver_ stable version:
 see [releases](https://github.com/detro/ghostdriver/releases)
-* Current _PhantomJS-integrated_ version is `"1.0.4"`:
-contained in PhantomJS `"1.9.2"`
+* PhantomJS-integrated version is `"1.2.0"` (detro@2af7099a9) :
+contained in PhantomJS `"2.1.1"`
 * Current _PhantomJSDriver Java bindings_ stable version: see
 [Maven](https://oss.sonatype.org/index.html#nexus-search;quick~phantomjsdriver)
 
@@ -19,10 +21,12 @@ For more info, please take a look at the [changelog](https://github.com/detro/gh
 
 The project was created and is lead by [Ivan De Marino](https://github.com/detro).
 
+IRC channel: [#phantomjs-ghostdriver](http://webchat.freenode.net/?channels=%23phantomjs-ghostdriver).
+
 ## Setup
 
 * Download latest stable PhantomJS from [here](http://phantomjs.org/download.html)
-* Selenium version `">= 2.33.0`"
+* Selenium version `">= 3.1.0`"
 
 **THAT'S IT!!** Because of latest stable GhostDriver being embedded in PhantomJS,
 you shouldn't need anything else to get started.
@@ -36,20 +40,29 @@ you shouldn't need anything else to get started.
 ## (Java) Bindings
 
 This project provides WebDriver bindings for Java under the name _PhantomJSDriver_.
-[Here is the JavaDoc](http://ivandemarino.me/ghostdriver/binding-java/).
+[Here is the JavaDoc](https://cdn.rawgit.com/detro/ghostdriver/master/binding/java/docs/javadoc/index.html).
 
 Bindings for other languages (C#, Python, Ruby, ...) are developed and maintained
 under the same name within the [Selenium project](http://docs.seleniumhq.org/docs/) itself.
 
 ### Include Java Bindings in your Maven project
 
-Just add the following to your `pom.xml`:
+For versions >= 2.0.0, add the following to your `pom.xml`:
+
+```xml
+<repositories>
+  <repository>
+      <id>jitpack.io</id>
+      <url>https://jitpack.io</url>
+  </repository>
+</repositories>
+```
 
 ```xml
 <dependency>
-    <groupId>com.github.detro.ghostdriver</groupId>
-    <artifactId>phantomjsdriver</artifactId>
-    <version>LATEST_VERSION_HERE</version>
+    <groupId>com.github.detro</groupId>
+    <artifactId>ghostdriver</artifactId>
+    <version>2.1.0</version>
 </dependency>
 ```
 
@@ -58,9 +71,17 @@ Just add the following to your `pom.xml`:
 Just add the following to your `build.gradle`:
 
 ```gradle
+allprojects {
+  repositories {
+    maven { url 'https://jitpack.io' }
+  }
+}
+```
+
+```gradle
 dependencies {
     ...
-    testCompile "com.github.detro.ghostdriver:phantomjsdriver:LATEST_VERSION_HERE"
+    testCompile 'com.github.detro:ghostdriver:2.1.0'
     ...
 }
 ```
@@ -77,14 +98,21 @@ Once started, you can use any `RemoteWebDriver` implementation to send commands 
 ## F.A.Q.
 
 ### What extra WebDriver `capabilities` GhostDriver offers?
-* GhostDriver extra Capabilities
+* **GhostDriver** extra Capabilities
     * `phantomjs.page.settings.SETTING = VALUE` - Configure `page.settings`
     on PhantomJS internal page objects (_windows_ in WebDriver context)
-    (see [reference](https://github.com/ariya/phantomjs/wiki/API-Reference-WebPage#wiki-webpage-settings))
+    (see [reference](http://phantomjs.org/api/webpage/property/settings.html))
     * `phantomjs.page.customHeaders.HEADER = VALUE` - Add extra HTTP Headers
     when loading a URL
-    (see [reference](https://github.com/ariya/phantomjs/wiki/API-Reference-WebPage#wiki-webpage-customHeaders))
-* PhantomJSDriver (Java-binding) Capabilities
+    (see [reference](http://phantomjs.org/api/webpage/property/custom-headers.html))
+    * `phantomjs.page.whitelist` - an array of regex expressions of urls to accept. eg. ['my-awesome-website.com']
+    * `phantomjs.page.blacklist` - array of regex expressions of urls to ignore.  The blacklist overrides the whitelist. eg. ['google.com', 'github.com']
+    * `unhandledPromptBehavior` - set to `dismiss` to automatically dismiss
+all user prompts or set to `accept` to automatically accept all user prompts
+    * `loggingPrefs` - ghostdriver has two logs `browser` and `har`. The logs
+default to `"OFF"`.  follow the [DesiredCapabilities](https://github.com/SeleniumHQ/selenium/wiki/DesiredCapabilities#loggingpreferences-json-object)
+documentation to enable the logs.
+* PhantomJSDriver **Java-binding** Capabilities
     * `phantomjs.binary.path` - Specify path to PhantomJS executable to use
     * `phantomjs.ghostdriver.path` - Specify path to GhostDriver `main/src.js`
     script to use; allows to use a different version of GhostDriver then the one
@@ -96,11 +124,18 @@ Once started, you can use any `RemoteWebDriver` implementation to send commands 
 
 ## Want to help? Read on!
 
-### Run validation the tests
+GhostDriver pushed the evolution of PhantomJS from the start. All the features required by PhantomJS to fit GhostDriver were designed to still feel "consistent" and "at home" with PhantomJS alone.
+
+To drive that effort, I worked on a [PhantomJS fork](https://github.com/detro/phantomjs-ghostdriver), and then
+pushed changes to PhantomJS master once agreed with the rest of the team on the changes.
+
+If you are planning to contribute, that is the PhantomJS you should use.
+
+### Run validation tests
 
 Here I show how to clone this repo and kick start the (Java) tests. You need
 [Java SDK](http://www.oracle.com/technetwork/java/javase/downloads/index.html)
-to run them (I tested it with Java 7, but should work with Java 6 too).
+to run them.  ghostdriver requires Java 1.8.
 
 1. `git clone https://github.com/detro/ghostdriver.git`
 2. Configure `phantomjs_exec_path` inside `ghostdriver/test/config.ini` to point at the build of PhantomJS you just did
@@ -147,17 +182,17 @@ Here follows the output of the `tree -hd -L 3` command, trimmed of files and "bu
 Being GhostDriver a WebDriver implementation, it embeds the standard/default WebDriver Atoms to operate inside open
 webpages. In the specific, the Atoms cover scenarios where the "native" PhantomJS `require('webpage')` don't stretch.
 
-Documentation about how those work can be found [here](http://code.google.com/p/selenium/wiki/AutomationAtoms)
+Documentation about how those work can be found [here](https://github.com/SeleniumHQ/selenium/wiki/Automation-Atoms)
 and [here](http://www.aosabook.org/en/selenium.html).
 
 How are those Atoms making their way into GhostDriver? If you look inside the `/tools` directory you can find a bash
 script: `/tools/import_atoms.sh`. That script accepts the path to a Selenium local repo, runs the
-[CrazyFunBuild](http://code.google.com/p/selenium/wiki/CrazyFunBuild) to produce the compressed/minified Atoms,
+[CrazyFunBuild](https://github.com/SeleniumHQ/selenium/wiki/Crazy-Fun-Build) to produce the compressed/minified Atoms,
 grabs those and copies them over to the `/src/third_party/webdriver-atoms` directory.
 
 The Atoms original source lives inside the Selenium repo in the subtree of `/javascript`. To understand how the build
 works, you need to spend a bit of time reading about
-[CrazyFunBuild](http://code.google.com/p/selenium/wiki/CrazyFunBuild): worth your time if you want to contribute to
+[CrazyFunBuild](https://github.com/SeleniumHQ/selenium/wiki/Crazy-Fun-Build): worth your time if you want to contribute to
 GhostDriver (or any WebDriver, as a matter of fact).
 
 One thing it's important to mention, is that CrazyFunBuild relies on the content of `build.desc` file to understand
@@ -167,7 +202,7 @@ The definition of the Atoms that GhostDriver uses lives at `/tools/atoms_build_d
 
 Let's take this small portion of our `build.desc`:
 ```
-js_deps(name = "deps",
+js_library(name = "deps",
   srcs = "*.js",
   deps = ["//javascript/atoms:deps",
           "//javascript/webdriver/atoms:deps"])
@@ -177,21 +212,21 @@ js_fragment(name = "get_element_from_cache",
   function = "bot.inject.cache.getElement",
   deps = [ "//javascript/atoms:deps" ])
 
-js_deps(name = "build_atoms",
+js_library(name = "build_atoms",
   deps = [
     ...
     "//javascript/webdriver/atoms:execute_script",
     ...
   ]
 ```
-The first part (`js_deps(name = "deps"...`) declares what are the dependency of this `build.desc`: with that CrazyFunBuild knows
+The first part (`js_library(name = "deps"...`) declares what are the dependency of this `build.desc`: with that CrazyFunBuild knows
 what to build before fulfilling our build.
 
 The second part (`js_fragment(...`) defines an Atom: the `get_element_from_cache` is going to be the name of
 an Atom to build; it can be found in the module `bot.inject.cache` and is realised by the function named
 `bot.inject.cache.getElement`.
 
-The third part (`js_deps(name = "build_atoms"...`) is a list of the Atoms (either defined by something like the second
+The third part (`js_library(name = "build_atoms"...`) is a list of the Atoms (either defined by something like the second
 part or in one of the files we declared as dependency) that we want to build.
 
 If you reached this stage in understanding the Atoms, you are ready to go further by yourself.
@@ -205,7 +240,7 @@ Any **help is welcome**, but bear in mind the following base principles:
 * Squash your commits by theme: I prefer a clean, readable log
 * Maintain consistency with the code-style you are surrounded by
 * If you are going to make a big, substantial change, let's discuss it first
-* I **HATE** CoffeeScript: assume I'm going to laugh off any "contribution" that contains such _aberrating crap_!
+* I **HATE** CoffeeScript: assume I'm going to laugh off any "contribution" that contains such _aberrational crap_!
 * Open Source is NOT a democracy (and I mean it!)
 
 ## License
