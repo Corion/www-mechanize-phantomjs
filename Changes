@@ -6,11 +6,11 @@ TO DO:
         . PhantomJS 2.0.0
         . PhantomJS 2.1.1
 
-0.21 2018-11-04
+0.22 2018-11-04
     * Dropped (test) compatibility with PhantomJS 1.9.x
       All tests still pass but are sometimes flakey
     * Upgraded to Ghostdriver 2.1.0
-    * Tentative fix for RT xxx
+    * Tentative fix for RT 125559
     * More robust free port selection
 
 0.21 2018-10-29
