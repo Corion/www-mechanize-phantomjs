@@ -102,8 +102,13 @@ t::helper::run_across_instances(\@instances, undef, \&new_mech, 25, sub {
     is scalar @errors, 1, "One error message found";
     (my $msg) = @errors;
     like $msg->{message}, qr/^ReferenceError: Can't find variable: nonexisting_function/, "Errors message";
-    like $msg->{trace}->[0]->{file}, qr!\Q53-mech-capture-js-error.html\E!, "File name";
-    is $msg->{trace}->[0]->{line}, 6, "Line number";
+    SKIP: {
+        if( "" eq$msg->{trace}->[0]->{file} ) {
+           skip "This PhantomJS version doesn't signal the error location", 2;
+       };
+        like $msg->{trace}->[0]->{file}, qr!\Q53-mech-capture-js-error.html\E!, "File name";
+        is $msg->{trace}->[0]->{line}, 6, "Line number";
+    };
 
     $mech->clear_js_errors;
     is_deeply [filter( $mech->js_errors )], [], "No errors reported on page after clearing errors";

@@ -250,8 +250,8 @@ sub new {
              page.errors.push({ "message": msg, "trace": trace });
          };
          page.onConsoleMessage= function(msg, line, file) {
-             //_log.warn("Caught JS error", msg);
-             page.errors.push({ "message": msg, "trace": [] });
+            // line and file are declared but will never be used :(
+             page.errors.push({ "message": msg, "trace": [{"line":line,"file":file}] });
          };
          page.onAlert = function(msg) {
              page.alerts.push(msg);
