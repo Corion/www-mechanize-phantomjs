@@ -36,5 +36,5 @@ t::helper::run_across_instances(\@instances, undef, \&new_mech, 3, sub {
 
     ok( $mech, "instance 1 started" );
     ok( $other_instance, "instance 2 started") ;
-    ok( $mech->{port} != $other_instance->{port}, "using two different ports" ) ;
+    isn't $mech->{port}, $other_instance->{port}, "using two different ports";
 });

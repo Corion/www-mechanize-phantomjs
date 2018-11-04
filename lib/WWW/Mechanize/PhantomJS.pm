@@ -162,12 +162,18 @@ sub new {
     unless ( defined $options{ port } ) {
         my $port = 8910;
         while (1) {
-            $port++, next unless IO::Socket::INET->new(
-                Listen    => 5,
-                Proto     => 'tcp',
-                Reuse     => 1,
-                LocalPort => $port
+            my $sock = IO::Socket::INET->new(
+                Proto    => 'tcp',
+                PeerAddr => $localhost,
+                PeerPort => $port,
+                Timeout => 1,
+                #V6Only   => 1,
             );
+            if( $sock ) {
+                $port++;
+                $sock->close;
+                next;
+            };
             last;
         }
         $options{ port } = $port;
