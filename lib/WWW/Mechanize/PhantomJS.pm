@@ -249,9 +249,9 @@ sub new {
              //_log.warn("Caught JS error", msg);
              page.errors.push({ "message": msg, "trace": trace });
          };
-         page.onConsoleMessage= function(msg, trace) {
+         page.onConsoleMessage= function(msg, line, file) {
              //_log.warn("Caught JS error", msg);
-             page.errors.push({ "message": msg, "trace": trace });
+             page.errors.push({ "message": msg, "trace": [] });
          };
          page.onAlert = function(msg) {
              page.alerts.push(msg);
