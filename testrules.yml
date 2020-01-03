@@ -1,0 +1,6 @@
+---
+# This test suite can only be run sequentially
+seq:
+    - t/*.t
+    - par:
+        - xt/*.t
