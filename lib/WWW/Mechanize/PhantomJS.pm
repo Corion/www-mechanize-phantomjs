@@ -9,6 +9,7 @@ use File::Basename;
 use Carp qw(croak carp);
 use WWW::Mechanize::Link;
 use IO::Socket::INET;
+use Time::HiRes qw(time sleep);
 
 our $VERSION= '0.22';
 our @CARP_NOT=qw(Selenium::Remote::Driver);
@@ -209,10 +210,10 @@ sub new {
             );
             if( $socket ) {
                 close $socket;
-                sleep 1;
+                sleep 0.1;
                 last;
             };
-            sleep 1 if time - $t < 1;
+            sleep 0.1 if time - $t < 1;
         }
     }
 
