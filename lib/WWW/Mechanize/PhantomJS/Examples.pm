@@ -15,8 +15,7 @@ package WWW::Mechanize::PhantomJS::Examples;
 #
 
 use strict;
-use vars qw($VERSION);
-$VERSION= '0.22';
+our $VERSION= '0.22';
 
 1;
 

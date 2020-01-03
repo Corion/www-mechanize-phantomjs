@@ -10,9 +10,8 @@ use Carp qw(croak carp);
 use WWW::Mechanize::Link;
 use IO::Socket::INET;
 
-use vars qw($VERSION %link_spec @CARP_NOT);
-$VERSION= '0.22';
-@CARP_NOT=qw(Selenium::Remote::Driver);
+our $VERSION= '0.22';
+our @CARP_NOT=qw(Selenium::Remote::Driver);
 
 =head1 NAME
 
@@ -1117,7 +1116,7 @@ or C<< ->selector >> when you want more control.
 
 =cut
 
-%link_spec = (
+our %link_spec = (
     a      => { url => 'href', },
     area   => { url => 'href', },
     frame  => { url => 'src', },
@@ -1267,8 +1266,7 @@ it also C<croak>s when more than one link is found.
 
 =cut
 
-use vars '%xpath_quote';
-%xpath_quote = (
+our %xpath_quote = (
     '"' => '\"',
     #"'" => "\\'",
     #'[' => '&#91;',
