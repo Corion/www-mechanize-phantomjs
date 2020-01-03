@@ -50,7 +50,8 @@ sub run_across_instances {
         };
         my @launch = $browser_instance
                    ? ( launch_exe => $browser_instance,
-                       port => $port )
+                       #port => $port
+                     )
                    : ();
 
         my $mech = eval { $new_mech->(@launch) };
