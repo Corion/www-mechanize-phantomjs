@@ -9,9 +9,6 @@ use ExtUtils::MakeMaker qw(WriteMakefile);
 # See lib/ExtUtils/MakeMaker.pm for details of how to influence
 # the contents of the Makefile that is written.
 
-# I should maybe use something like Shipwright...
-my $main_file = 'lib/WWW/Mechanize/PhantomJS.pm';
-
 my $source_dir= 'ghostdriver/src';
 if( -d $source_dir ) {
     # Copy the latest files for distribution
@@ -23,37 +20,55 @@ if( -d $source_dir ) {
             cp( $File::Find::name => $target );
         },
     }, $source_dir );
+}
+# Normalize version strings like 6.30_02 to 6.3002,
+# so that we can do numerical comparisons on it.
+my $eumm_version = $ExtUtils::MakeMaker::VERSION;
+$eumm_version =~ s/_//;
 
-};
+my $module = 'WWW::Mechanize::PhantomJS';
+(my $main_file = "lib/$module.pm" ) =~ s!::!/!g;
+(my $distbase = $module) =~ s!::!-!g;
+my $distlink = lc $distbase;
 
 my @tests = map { glob $_ } 't/*.t', 't/*/*.t';
 
 my %module = (
-    MIN_PERL_VERSION => '5.006',
+    NAME                => $module,
+    AUTHOR              => q{Max Maischein <corion@cpan.org>},
+    VERSION_FROM        => $main_file,
+    ABSTRACT_FROM       => $main_file,
     META_MERGE => {
         "meta-spec" => { version => 2 },
         resources => {
             repository => {
-                type => "git",
-                url  => 'https://github.com/Corion/www-mechanize-phantomjs.git',
-                web  => 'https://github.com/Corion/www-mechanize-phantomjs'
+                web => "https://github.com/Corion/$distlink",
+                url => "git://github.com/Corion/$distlink.git",
+                type => 'git',
             },
+            bugtracker => "https://rt.cpan.org/Public/Dist/Display.html?Name=$distbase",
+            license    => "https://dev.perl.org/licenses/",
         },
         dynamic_config   => 0, # we promise to keep META.* up-to-date
         #x_static_install => 1, # we are pure Perl and don't do anything fancy
         # This doesn't work, as we have non-.pm files to copy+install
     },
+
+    MIN_PERL_VERSION => '5.006',
+
+    'LICENSE'=> 'perl',
+
+    PL_FILES            => {},
     BUILD_REQUIRES => {
         # Fairly long in core
         'File::Path' => 0,
         'File::Copy' => 0,
         'File::Find' => 0,
         'File::Basename' => 0,
+        'ExtUtils::MakeMaker' => 0,
     },
-    'NAME'          => 'WWW::Mechanize::PhantomJS',
-    'LICENSE'       => 'perl',
-    'VERSION_FROM'  => 'lib/WWW/Mechanize/PhantomJS.pm', # finds $VERSION
-    'PREREQ_PM'     => {
+
+    PREREQ_PM => {
                         'Carp' => 0,
                         'Scalar::Util' => 0, # for blessed()
                         'HTTP::Response' => 0,
@@ -63,9 +78,7 @@ my %module = (
                         'Object::Import' => 0,
                         'WWW::Mechanize::Link' => 0,
 
-                        'HTTP::Daemon' => 0, # just for testing
-                        'LWP::Simple' => 0, # just for testing
-                      }, # e.g., Module::Name => 1.1
+    },
     TEST_REQUIRES => {
         'Test::More'              => 0,
         'File::Temp'              => 0,
@@ -73,9 +86,13 @@ my %module = (
         'URI'                     => 0,
         'URI::file'               => 0,
         'Test::HTTP::LocalServer' => 0,
+        'HTTP::Daemon'            => 0,
+        'LWP::Simple'             => 0,
     },
-    ABSTRACT_FROM   => 'lib/WWW/Mechanize/PhantomJS.pm', # retrieve abstract from module
-    AUTHOR          => 'Max Maischein <corion@cpan.org>',
+
+    dist                => { COMPRESS => 'gzip -9f', SUFFIX => 'gz', },
+    clean               => { FILES => "$distbase-*" },
+
     test            => { TESTS => join( ' ', @tests ) },
 );
 
@@ -88,7 +105,7 @@ sub get_module_info { %module }
 if( ! caller ) {
     # I should maybe use something like Shipwright...
     regen_README($main_file);
-    regen_EXAMPLES();
+    regen_EXAMPLES() if -d 'examples';
     WriteMakefile1(get_module_info);
 };
 
@@ -106,7 +123,6 @@ sub WriteMakefile1 {  #Written by Alexandr Ciornii, version 0.21. Added by eumm-
         delete $params{BUILD_REQUIRES};
     }
     if ($params{TEST_REQUIRES} and $eumm_version < 6.64) {
-        #EUMM 6.5502 has problems with BUILD_REQUIRES
         $params{PREREQ_PM}={ %{$params{PREREQ_PM} || {}} , %{$params{TEST_REQUIRES}} };
         delete $params{TEST_REQUIRES};
     }
@@ -141,7 +157,7 @@ tool you use to manage your installation of Perl, e.g. any of
   cpan  .
   cpanp -i .
 
-Consult http://www.cpan.org/modules/INSTALL.html for further instruction.
+Consult https://www.cpan.org/modules/INSTALL.html for further instruction.
 Should you wish to install this module manually, the procedure is
 
   perl Makefile.PL
@@ -152,7 +168,11 @@ Should you wish to install this module manually, the procedure is
 INSTALL
             pod_section($_[0], 'REPOSITORY'),
             pod_section($_[0], 'SUPPORT'),
+            pod_section($_[0], 'TALKS'),
+            pod_section($_[0], 'KNOWN ISSUES'),
             pod_section($_[0], 'BUG TRACKER'),
+            pod_section($_[0], 'CONTRIBUTING'),
+            pod_section($_[0], 'SEE ALSO'),
             pod_section($_[0], 'AUTHOR'),
             pod_section($_[0], 'LICENSE' ),
             pod_section($_[0], 'COPYRIGHT' ),
@@ -171,7 +191,8 @@ INSTALL
         $parser->parse_from_file($_[0]);
         my $readme_mkdn = <<STATUS . $parser->as_markdown;
 
-[![Build Status](https://travis-ci.org/Corion/www-mechanize-phantomjs.svg?branch=master)](https://github.com/Corion/www-mechanize-phantomjs)
+[![Travis Build Status](https://travis-ci.org/Corion/$distlink.svg?branch=master)](https://travis-ci.org/Corion/$distlink)
+[![AppVeyor Build Status](https://ci.appveyor.com/api/projects/status/github/Corion/$distlink?branch=master&svg=true)](https://ci.appveyor.com/project/Corion/$distlink)
 
 STATUS
         update_file( 'README.mkdn', $readme_mkdn );
@@ -185,20 +206,35 @@ sub pod_section {
 
     my @section =
         grep { /^=head1\s+$section/.../^=/ } <$fh>;
-    pop @section if $section[-1] =~ /^=/;
-    shift @section if $remove_heading;
 
     # Trim the section
     if( @section ) {
+        pop @section if $section[-1] =~ /^=/;
+        shift @section if $remove_heading;
+
         pop @section
-            while $section[-1] =~ /^\s*$/;
+            while @section and $section[-1] =~ /^\s*$/;
         shift @section
-            while $section[0] =~ /^\s*$/;
+            while @section and $section[0] =~ /^\s*$/;
     };
 
     @section = map { $_ =~ s!^=\w+\s+!!; $_ } @section;
     return join "", @section;
 }
+
+sub regen_EXAMPLES {
+    my $perl = $^X;
+    if ($perl =~/\s/) {
+        $perl = qq{"$perl"};
+    };
+    (my $example_file = $main_file) =~ s!\.pm$!/Examples.pm!;
+    my $examples = `$perl -w examples/gen_examples_pod.pl`;
+    if ($examples) {
+        warn "(Re)Creating $example_file\n";
+        $examples =~ s/\r\n/\n/g;
+        update_file( $example_file, $examples );
+    };
+};
 
 sub update_file {
     my( $filename, $new_content ) = @_;
@@ -220,19 +256,3 @@ sub update_file {
         };
     };
 }
-
-sub regen_EXAMPLES {
-    my $perl = $^X;
-    warn "(Re)Creating lib/WWW/Mechanize/PhantomJS/Examples.pm\n";
-    if ($perl =~/\s/) {
-        $perl = qq{"$perl"};
-    };
-    my $examples = `$perl -w examples/gen_examples_pod.pl`;
-    if ($examples) {
-        $examples =~ s/\r\n/\n/g;
-        if (open my $out, '>', 'lib/WWW/Mechanize/PhantomJS/Examples.pm') {
-            binmode $out;
-            print $out $examples;
-        };
-    };
-};

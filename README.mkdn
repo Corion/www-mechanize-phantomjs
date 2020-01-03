@@ -1,5 +1,6 @@
 
-[![Build Status](https://travis-ci.org/Corion/www-mechanize-phantomjs.svg?branch=master)](https://github.com/Corion/www-mechanize-phantomjs)
+[![Travis Build Status](https://travis-ci.org/Corion/www-mechanize-phantomjs.svg?branch=master)](https://travis-ci.org/Corion/www-mechanize-phantomjs)
+[![AppVeyor Build Status](https://ci.appveyor.com/api/projects/status/github/Corion/www-mechanize-phantomjs?branch=master&svg=true)](https://ci.appveyor.com/project/Corion/www-mechanize-phantomjs)
 
 # NAME
 
