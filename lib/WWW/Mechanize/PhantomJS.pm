@@ -1169,6 +1169,15 @@ sub make_link {
     };
 }
 
+sub links {
+    my ($self) = @_;
+    my @links = $self->selector( join ",", sort keys %link_spec);
+    my $base = $self->base;
+    return map {
+        $self->make_link($_,$base)
+    } @links;
+};
+
 =head2 C<< $mech->selector( $css_selector, %options ) >>
 
   my @text = $mech->selector('p.content');
