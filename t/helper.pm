@@ -5,6 +5,7 @@ use Test::More;
 use File::Glob qw(bsd_glob);
 use Config '%Config';
 use File::Spec;
+use Time::HiRes qw( time sleep );
 use Carp qw(croak);
 
 delete $ENV{HTTP_PROXY};
@@ -74,8 +75,13 @@ sub run_across_instances {
         $code->($browser_instance, $mech);
 
         # Quit in 500ms, so we have time to shut our socket down
+        my $pid = $mech->{pid};
         undef $mech;
-        sleep 2; # So the browser can shut down before we try to connect
+
+        my $timeout = time + 2;
+        while( kill 0 => $pid and time < $timeout ) {
+            sleep 0.1; # So the browser can shut down before we try to connect
+        };
         # to the new instance
     };
 };
