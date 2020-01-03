@@ -12,10 +12,9 @@ release date is mentioned as well
 
 =cut
 
-use vars '%module';
 require './Makefile.PL';
 # Loaded from Makefile.PL
-%module = get_module_info();
+our %module = get_module_info();
 my $module = $module{NAME};
 
 (my $file = $module) =~ s!::!/!g;

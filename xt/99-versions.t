@@ -8,9 +8,17 @@ use strict;
 use File::Find;
 use Test::More;
 
-plan 'no_plan';
+require './Makefile.PL';
+# Loaded from Makefile.PL
+our %module = get_module_info();
 
-my $last_version = undef;
+my @files;
+my $blib = File::Spec->catfile(qw(blib lib));
+find(\&wanted, grep { -d } ($blib));
+
+if( my $exe = $module{EXE_FILES}) {
+    push @files, @$exe;
+};
 
 sub read_file {
     open my $fh, '<', $_[0]
@@ -20,9 +28,15 @@ sub read_file {
     <$fh>
 }
 
-sub check {
-      return if (! m{blib/script/}xms && ! m{\.pm \z}xms);
+sub wanted {
+  push @files, $File::Find::name if /\.p(l|m|od)$/;
+}
 
+plan tests => 0+@files;
+
+my $last_version = undef;
+
+sub check {
       my $content = read_file($_);
 
       # only look at perl scripts, not sh scripts
@@ -45,7 +59,9 @@ sub check {
       }
 }
 
-find({wanted => \&check, no_chdir => 1}, 'blib');
+for (@files) {
+    check();
+};
 
 if (! defined $last_version) {
       fail('Failed to find any files with $VERSION');

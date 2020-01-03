@@ -9,10 +9,18 @@ use strict;
 # or have been resolved.
 # The test was provided by Andy Lester.
 
+require './Makefile.PL';
+# Loaded from Makefile.PL
+our %module = get_module_info();
+
 my @files;
 my $blib = File::Spec->catfile(qw(blib lib));
+find(\&wanted, grep { -d } ($blib));
 
-find(\&wanted, grep { -d } ($blib, 'bin'));
+if( my $exe = $module{EXE_FILES}) {
+    push @files, @$exe;
+};
+
 plan tests => 2* @files;
 foreach my $file (@files) {
   source_file_ok($file);
@@ -25,7 +33,7 @@ sub wanted {
 sub source_file_ok {
     my $file = shift;
 
-    open( my $fh,'<',$file ) or die "Can't open $file: $!";
+    open( my $fh, '<', $file ) or die "Can't open $file: $!";
     my @lines = <$fh>;
     close $fh;
 

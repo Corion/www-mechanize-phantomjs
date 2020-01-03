@@ -14,6 +14,10 @@ eval {
   Test::Pod->import;
 };
 
+require './Makefile.PL';
+# Loaded from Makefile.PL
+our %module = get_module_info();
+
 my @files;
 
 if ($@) {
@@ -24,7 +28,12 @@ elsif ($Test::Pod::VERSION < 0.95) {
 }
 else {
   my $blib = File::Spec->catfile(qw(blib lib));
-  find(\&wanted, grep { -d } ($blib, 'bin'));
+  find(\&wanted, grep { -d } ($blib));
+
+  if( my $exe = $module{EXE_FILES}) {
+    push @files, @$exe;
+  };
+
   plan tests => scalar @files;
   foreach my $file (@files) {
     pod_file_ok($file);

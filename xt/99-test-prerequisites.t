@@ -39,7 +39,9 @@ my @tests;
 if( @ARGV ) {
     @tests = @ARGV;
 } else {
-    @tests = grep { -f $_ } map { glob $_ } 't/*.t', 'scripts/*'
+    open my $manifest, '<', 'MANIFEST'
+        or die "Couldn't read MANIFEST: $!";
+    @tests = grep { -f $_ } grep { m!^(t/.*\.t|scripts/.*\.pl)$! } map { s!\s*$!!; $_ } <$manifest>
 }
 plan tests => 0+@tests;
 

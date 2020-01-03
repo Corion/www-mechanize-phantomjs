@@ -7,11 +7,20 @@ use File::Spec;
 use File::Find;
 use strict;
 
-my @files;
+my @files = ('Makefile.PL', 'MANIFEST', 'MANIFEST.SKIP', glob 't/*.t');
 
+require './Makefile.PL';
+# Loaded from Makefile.PL
+our %module = get_module_info();
+
+my @files;
 my $blib = File::Spec->catfile(qw(blib lib));
-find(\&wanted, grep { -d } ($blib, 'bin', 'examples'));
-push @files, 'Makefile.PL';
+find(\&wanted, grep { -d } ($blib));
+
+if( my $exe = $module{EXE_FILES}) {
+    push @files, @$exe;
+};
+
 plan tests => scalar @files;
 foreach my $file (@files) {
   unix_file_ok($file);
@@ -24,7 +33,7 @@ sub wanted {
 sub unix_file_ok {
   my ($filename) = @_;
   local $/;
-  open my $fh,'<',$filename
+  open my $fh, '<', $filename
     or die "Couldn't open '$filename' : $!\n";
   binmode $fh;
   my $content = <$fh>;
