@@ -70,6 +70,7 @@ my %module = (
         'Test::More'              => 0,
         'File::Temp'              => 0,
         'Time::HiRes'             => 0,
+        'URI'                     => 0,
         'URI::file'               => 0,
         'Test::HTTP::LocalServer' => 0,
     },

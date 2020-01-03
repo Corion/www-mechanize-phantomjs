@@ -11,6 +11,7 @@ build_requires:
   Test::HTTP::LocalServer: '0'
   Test::More: '0'
   Time::HiRes: '0'
+  URI: '0'
   URI::file: '0'
 configure_requires:
   ExtUtils::MakeMaker: '0'
