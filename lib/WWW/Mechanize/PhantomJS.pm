@@ -11,7 +11,7 @@ use WWW::Mechanize::Link;
 use IO::Socket::INET;
 use Time::HiRes qw(time sleep);
 
-our $VERSION= '0.22';
+our $VERSION= '0.23';
 our @CARP_NOT=qw(Selenium::Remote::Driver);
 
 =head1 NAME
