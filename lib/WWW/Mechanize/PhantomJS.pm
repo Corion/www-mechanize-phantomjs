@@ -159,7 +159,7 @@ sub new {
     my ($class, %options) = @_;
 
     my $localhost = '127.0.0.1';
-    unless ( defined $options{ port } ) {
+    unless ( defined $options{ port } and !$options{pid}) {
         my $port = 8910;
         while (1) {
             my $sock = IO::Socket::INET->new(
@@ -172,6 +172,7 @@ sub new {
             if( $sock ) {
                 $port++;
                 $sock->close;
+                sleep 0.1+rand(0.1);
                 next;
             };
             last;
