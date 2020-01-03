@@ -13,7 +13,7 @@ if( ! -d 'examples' ) {
 plan 'no_plan';
 
 sub check {
-    return if (! m{\.pl \z}xms);    
+    return if (! m{\.pl \z}xms);
     my $output = `"$^X" -c $_ 2>&1`;
     like( $output, qr/$_ syntax OK/, "$_ compiles" )
 }

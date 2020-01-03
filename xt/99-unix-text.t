@@ -28,7 +28,7 @@ sub unix_file_ok {
     or die "Couldn't open '$filename' : $!\n";
   binmode $fh;
   my $content = <$fh>;
-  
+
   my $i;
   my @lines = grep { /\x0D\x0A$/sm } map { sprintf "%s: %s\x0A", $i++, $_ } split /\x0A/, $content;
   unless (is(scalar @lines, 0,"'$filename' contains no windows newlines")) {

@@ -26,11 +26,11 @@ for my $meta_file ('META.yml', 'META.json') {
     my $meta = Parse::CPAN::Meta->load_file($meta_file);
 
     my $cmv = CPAN::Meta::Validator->new( $meta );
-    
+
     if(! ok $cmv->is_valid, "$meta_file is valid" ) {
         diag $_ for $cmv->errors;
     };
-    
+
     # Also check that the declared version matches the version in META.*
     is $meta->{version}, $version, "$meta_file version matches module version ($version)";
 };
