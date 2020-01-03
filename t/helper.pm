@@ -24,7 +24,7 @@ sub browser_instances {
 
     # add author tests with local versions
     my $spec = $ENV{TEST_WWW_MECHANIZE_PHANTOMJS_VERSIONS}
-             || 'phantomjs-versions/*/{*/,}phantomjs*'; # sorry, likely a bad default
+             || 'phantomjs-versions/*/{*/,}phantomjs*$Config{_exe}'; # sorry, likely a bad default
     push @instances, sort {$a cmp $b} grep { -x } bsd_glob $spec;
 
     # Consider filtering for unsupported PhantomJS versions here
