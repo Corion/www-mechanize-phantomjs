@@ -90,8 +90,7 @@ sub print_header {
     print "#\n\n";
 
     print "use strict;\n";
-    print "use vars qw(\$VERSION);\n";
-    print "\$VERSION= '$version';\n\n";
+    print "our \$VERSION= '$version';\n\n";
 
     print "1;\n";
     print "\n";
@@ -254,11 +253,11 @@ sub print_image_html {
 
     my $example = shift;
     my $image   = $example;
-    
+
     $image =~ s/pl$/jpg/;
 
     return unless exists $images{$image};
-    
+
     warn "Image linking is not supported yet! ($image)";
 
     my $url    = 'http://homepage.eircom.net/~jmcnamara/perl/images';
