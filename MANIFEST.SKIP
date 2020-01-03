@@ -3,6 +3,7 @@
 ^.lwpcookies
 ^.releaserc
 ^.travis.yml
+^.prove
 ^blib/
 ^WWW-Mechanize-PhantomJS-.*$
 CVS/
