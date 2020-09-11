@@ -22,6 +22,7 @@
    "prereqs" : {
       "build" : {
          "requires" : {
+            "ExtUtils::MakeMaker" : "0",
             "File::Basename" : "0",
             "File::Copy" : "0",
             "File::Find" : "0",
@@ -36,11 +37,10 @@
       "runtime" : {
          "requires" : {
             "Carp" : "0",
+            "Filter::signatures" : "0.16",
             "HTML::Selector::XPath" : "0",
-            "HTTP::Daemon" : "0",
             "HTTP::Response" : "0",
             "IO::Socket::INET" : "0",
-            "LWP::Simple" : "0",
             "Object::Import" : "0",
             "Scalar::Util" : "0",
             "Selenium::Remote::Driver" : "0.18",
@@ -51,6 +51,8 @@
       "test" : {
          "requires" : {
             "File::Temp" : "0",
+            "HTTP::Daemon" : "0",
+            "LWP::Simple" : "0",
             "Test::HTTP::LocalServer" : "0",
             "Test::More" : "0",
             "Time::HiRes" : "0",
@@ -61,9 +63,12 @@
    },
    "release_status" : "stable",
    "resources" : {
+      "license" : [
+         "https://dev.perl.org/licenses/"
+      ],
       "repository" : {
          "type" : "git",
-         "url" : "https://github.com/Corion/www-mechanize-phantomjs.git",
+         "url" : "git://github.com/Corion/www-mechanize-phantomjs.git",
          "web" : "https://github.com/Corion/www-mechanize-phantomjs"
       }
    },

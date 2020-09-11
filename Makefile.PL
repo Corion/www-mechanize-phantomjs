@@ -69,6 +69,7 @@ my %module = (
     },
 
     PREREQ_PM => {
+                        'Filter::signatures' => 0.16,
                         'Carp' => 0,
                         'Scalar::Util' => 0, # for blessed()
                         'HTTP::Response' => 0,
