@@ -1,5 +1,6 @@
 package WWW::Mechanize::PhantomJS;
 use strict;
+use 5.010;
 use Selenium::Remote::Driver;
 use WWW::Mechanize::Plugin::Selector;
 use HTTP::Response;

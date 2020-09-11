@@ -54,7 +54,7 @@ my %module = (
         # This doesn't work, as we have non-.pm files to copy+install
     },
 
-    MIN_PERL_VERSION => '5.006',
+    MIN_PERL_VERSION => '5.010',
 
     'LICENSE'=> 'perl',
 

@@ -45,7 +45,7 @@
             "Scalar::Util" : "0",
             "Selenium::Remote::Driver" : "0.18",
             "WWW::Mechanize::Link" : "0",
-            "perl" : "5.006"
+            "perl" : "5.010"
          }
       },
       "test" : {
