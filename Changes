@@ -9,6 +9,7 @@ TO DO:
 0.24 2020-09-11
     * Copy code _match_any_link_params from WWW::Mechanize instead of trying
       to reuse it, this addresses RT #133307
+    * We now need Perl 5.010 and Filter::signatures
 
 0.23 2020-01-03
     * Implement ->links() method, this addresses RT #131310
