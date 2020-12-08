@@ -22,6 +22,6 @@ jobs:
       - name: perl -V
         run: perl -V
       - name: Install Dependencies
-        run: curl -sL https://git.io/cpm | perl - install -g --show-build-log-on-failure
+        run: curl -L https://cpanmin.us | perl - --installdeps .
       - name: Run Tests
         run: prove -l t
