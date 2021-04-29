@@ -18,6 +18,8 @@ use WWW::Mechanize::Link;
 use IO::Socket::INET;
 use Time::HiRes qw(time sleep);
 
+use Carp 'croak';
+
 our $VERSION= '0.24';
 our @CARP_NOT=qw(Selenium::Remote::Driver);
 
@@ -199,12 +201,12 @@ sub new {
             # We can do a proper pipe-open
             my $mode = shift @cmd;
             $options{ pid } = open $options{fh}, $mode, @cmd
-                or die "Couldn't launch [@cmd]: $! / $?";
+                or croak "Couldn't launch [@cmd]: $! / $?";
         } else {
             # We can't do a proper pipe-open, so do the single-arg open
             # in the hope that everything has been set up properly
             $options{ pid } = open $options{fh}, $cmd[0]
-                or die "Couldn't launch [$cmd[0]]: $! / $?";
+                or croak "Couldn't launch [$cmd[0]]: $! / $?";
         };
 
         # Just to give PhantomJS time to start up, make sure it accepts connections
