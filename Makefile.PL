@@ -47,7 +47,7 @@ my %module = (
                 type => 'git',
             },
             bugtracker  => {
-              web    => "http://github.com/Corion/$distbase/issues",
+              web    => "https://github.com/Corion/$distbase/issues",
               # mailto => 'meta-bugs@example.com',
             },
             license    => "https://dev.perl.org/licenses/",
