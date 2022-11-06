@@ -244,16 +244,14 @@ sub update_file {
     my( $filename, $new_content ) = @_;
     my $content;
     if( -f $filename ) {
-        open my $fh, '<', $filename
+        open my $fh, '<:raw:encoding(UTF-8)', $filename
             or die "Couldn't read '$filename': $!";
-        binmode $fh;
         local $/;
         $content = <$fh>;
     };
 
     if( $content ne $new_content ) {
-        if( open my $fh, '>', $filename ) {
-            binmode $fh;
+        if( open my $fh, '>:raw:encoding(UTF-8)', $filename ) {
             print $fh $new_content;
         } else {
             warn "Couldn't (re)write '$filename': $!";
