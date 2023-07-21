@@ -13,7 +13,7 @@ eval {
   require Parse::CPAN::Meta;
   Parse::CPAN::Meta->import();
   require CPAN::Meta::Validator;
-  CPAN::Meta::Validator->import(2.15);
+  CPAN::Meta::Validator->VERSION(2.15);
 };
 if ($@) {
   plan skip_all => "CPAN::Meta::Validator version 2.15 required for testing META files";
