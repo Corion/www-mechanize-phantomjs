@@ -72,6 +72,7 @@ t/49-mech-get-file-lc-ct.html
 t/49-mech-get-file.html
 t/49-mech-get-file.t
 t/49-mech-nav.t
+t/49-port-twice.t
 t/49-port.t
 t/50-click.html
 t/50-click.t
