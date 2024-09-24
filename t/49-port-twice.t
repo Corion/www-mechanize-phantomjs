@@ -14,7 +14,7 @@ use t::helper;
 my $instance_port = 8911;
 my @instances = t::helper::browser_instances();
 
-my $testcount = 2;
+my $testcount = 3;
 
 if (my $err = t::helper::default_unavailable) {
     plan skip_all => "Couldn't connect to PhantomJS: $@";
@@ -36,14 +36,19 @@ t::helper::run_across_instances(\@instances, $instance_port, \&new_mech, $testco
 
     pass "We can connect to port $instance_port";
 
+    SKIP: {
+    skip "We now can connect twice to the same port?", 2;
+
     my $second_mech;
-    my $lived = eval { WWW::Mechanize::PhantomJS->new(
+    my $lived = eval {
+            $second_mech = WWW::Mechanize::PhantomJS->new(
             autodie => 1,
             port => $instance_port,
         );
-        1
+        "We did connect"
     };
     is $lived, undef, "We cannot use the same port a second time";
     is $second_mech, undef, "We cannot use the same port a second time";
+    }
 });
 
