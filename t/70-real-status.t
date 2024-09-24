@@ -37,7 +37,7 @@ t::helper::run_across_instances(\@instances, $instance_port, \&new_mech, 11, sub
 
     my $response = $mech->response;
 
-    isn't $response, undef, "We identified a response";
+    isnt $response, undef, "We identified a response";
     is $response->code, 200, 'We got a good response';
 
     undef $mech->{response};
@@ -46,20 +46,20 @@ t::helper::run_across_instances(\@instances, $instance_port, \&new_mech, 11, sub
     $mech->get($site);
     $response = $mech->response;
 
-    isn't $response, undef, "We identified a response";
+    isnt $response, undef, "We identified a response";
     like $response->code, qr/^(404|5\d\d)$/, 'We got a good response for a nonexistent domain';
     ok ! $mech->success, "And the response is not considered a success";
 
     $response = $mech->get($site);
 
-    isn't $response, undef, "We identified a response, directly";
+    isnt $response, undef, "We identified a response, directly";
     like $response->code, qr/^(404|5\d\d)$/, 'We got a good response for a nonexistent domain';
     ok ! $mech->success, "And the response is not considered a success";
 
     $mech->get($server->error_notfound('foo'));
     $response = $mech->response;
 
-    isn't $response, undef, "We identified a response";
+    isnt $response, undef, "We identified a response";
     ok !$mech->success, "The response is an error response";
     like $response->code, qr/^4..$/, "We got a 4xx error (Selenium doesn't do error codes)";
 
@@ -68,7 +68,7 @@ t::helper::run_across_instances(\@instances, $instance_port, \&new_mech, 11, sub
     #$mech->get($server->error_after_headers);
     #$response = $mech->response;
 
-    #isn't $response, undef, "We identified a response";
+    #isnt $response, undef, "We identified a response";
     #ok !$mech->success, "The response is an error response";
     #is $response->code, 500, 'We got the correct error number (500)';
 
