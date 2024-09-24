@@ -6,6 +6,12 @@ TO DO:
         . PhantomJS 2.0.0
         . PhantomJS 2.1.1
 
+0.25 2024-09-24
+    * Fix usage of isn't() to isnt(), to make things work with Perl 5.42
+    * Skip tests in double-connect tests. Two connections seem to be possible
+      in PhantomJS 2.1.1.
+    * Remove a prototype from a function
+
 0.24 2020-09-11
     * Copy code _match_any_link_params from WWW::Mechanize instead of trying
       to reuse it, this addresses RT #133307
