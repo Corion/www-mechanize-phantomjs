@@ -48,7 +48,7 @@ sub collect {
     open my $fh, '<', $file
         or die "Couldn't read $file: $!";
     my @copyright = map {
-                        /\bcopyright\b.*?\d{4}-(\d{4})\b/i
+                        (/\bcopyright\b.*?\d{4}-(\d{4})\b/i && ! /\bmcnamara\b/i) # skip lines in Examples
                         ? [ $_ => $1 ]
                         : ()
                     }
